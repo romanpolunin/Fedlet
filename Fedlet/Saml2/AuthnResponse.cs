@@ -35,331 +35,334 @@ using Sun.Identity.Saml2.Exceptions;
 
 namespace Sun.Identity.Saml2
 {
-    /// <summary>
-    /// SAMLv2 AuthnResponse object constructed from a response obtained from
-    /// an Identity Provider for the hosted Service Provider.
-    /// </summary>
-    public class AuthnResponse
-    {
-        #region Members
-        /// <summary>
-        /// Namespace Manager for this authn response.
-        /// </summary>
-        private XmlNamespaceManager nsMgr;
+	/// <summary>
+	/// SAMLv2 AuthnResponse object constructed from a response obtained from
+	/// an Identity Provider for the hosted Service Provider.
+	/// </summary>
+	public class AuthnResponse
+	{
+		#region Members
 
-        /// <summary>
-        /// XML representation of the authn response.
-        /// </summary>
-        private XmlDocument xml;
-        #endregion
+		/// <summary>
+		/// Namespace Manager for this authn response.
+		/// </summary>
+		private readonly XmlNamespaceManager nsMgr;
 
-        #region Constructors
-        /// <summary>
-        /// Initializes a new instance of the AuthnResponse class.
-        /// </summary>
-        /// <param name="samlResponse">Decoded SAMLv2 Response</param>
-        public AuthnResponse(string samlResponse)
-        {
-            try
-            {
-                this.xml = new XmlDocument();
-                this.xml.PreserveWhitespace = true;
-                this.xml.LoadXml(samlResponse);
-                this.nsMgr = new XmlNamespaceManager(this.xml.NameTable);
-                this.nsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
-                this.nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
-                this.nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
-            }
-            catch (ArgumentNullException ane)
-            {
-                throw new Saml2Exception(Resources.AuthnResponseNullArgument, ane);
-            }
-            catch (XmlException xe)
-            {
-                throw new Saml2Exception(Resources.AuthnResponseXmlException, xe);
-            }
-        }
-        #endregion
+		/// <summary>
+		/// XML representation of the authn response.
+		/// </summary>
+		private readonly XmlDocument xml;
 
-        #region Properties
+		#endregion
 
-        /// <summary>
-        /// Gets the XML representation of the received authn response.
-        /// </summary>
-        public IXPathNavigable XmlDom
-        {
-            get
-            {
-                return this.xml;
-            }
-        }
+		#region Constructors
 
-        /// <summary>
-        /// Gets the signature of the authn response attached to the 
-        /// assertion as an XML element.
-        /// </summary>
-        public IXPathNavigable XmlAssertionSignature
-        {
-            get
-            {
-                string xpath = "/samlp:Response/saml:Assertion/ds:Signature";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode signatureElement = root.SelectSingleNode(xpath, this.nsMgr);
-                return signatureElement;
-            }
-        }
+		/// <summary>
+		/// Initializes a new instance of the AuthnResponse class.
+		/// </summary>
+		/// <param name="samlResponse">Decoded SAMLv2 Response</param>
+		public AuthnResponse(string samlResponse)
+		{
+			try
+			{
+				xml = new XmlDocument();
+				xml.PreserveWhitespace = true;
+				xml.LoadXml(samlResponse);
+				nsMgr = new XmlNamespaceManager(xml.NameTable);
+				nsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
+				nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
+				nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
+			}
+			catch (ArgumentNullException ane)
+			{
+				throw new Saml2Exception(Resources.AuthnResponseNullArgument, ane);
+			}
+			catch (XmlException xe)
+			{
+				throw new Saml2Exception(Resources.AuthnResponseXmlException, xe);
+			}
+		}
 
-        /// <summary>
-        /// Gets the signature of the authn response attached to the 
-        /// response as an XML element.
-        /// </summary>
-        public IXPathNavigable XmlResponseSignature
-        {
-            get
-            {
-                string xpath = "/samlp:Response/ds:Signature";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode signatureElement = root.SelectSingleNode(xpath, this.nsMgr);
-                return signatureElement;
-            }
-        }
+		#endregion
 
-        /// <summary>
-        /// Gets the Assertion ID attribute value of the response.
-        /// </summary>
-        public string AssertionId
-        {
-            get
-            {
-                string xpath = "/samlp:Response/saml:Assertion";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode node = root.SelectSingleNode(xpath, this.nsMgr);
-                return node.Attributes["ID"].Value.Trim();
-            }
-        }
+		#region Properties
 
-        /// <summary>
-        /// Gets the ID attribute value of the response.
-        /// </summary>
-        public string Id
-        {
-            get
-            {
-                string xpath = "/samlp:Response";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode node = root.SelectSingleNode(xpath, this.nsMgr);
-                return node.Attributes["ID"].Value.Trim();
-            }
-        }
+		/// <summary>
+		/// Gets the XML representation of the received authn response.
+		/// </summary>
+		public IXPathNavigable XmlDom
+		{
+			get { return xml; }
+		}
 
-        /// <summary>
-        /// Gets the InResponseTo attribute value of the authn response, null
-        /// if not present.
-        /// </summary>
-        public string InResponseTo
-        {
-            get
-            {
-                string xpath = "/samlp:Response";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode node = root.SelectSingleNode(xpath, this.nsMgr);
+		/// <summary>
+		/// Gets the signature of the authn response attached to the 
+		/// assertion as an XML element.
+		/// </summary>
+		public IXPathNavigable XmlAssertionSignature
+		{
+			get
+			{
+				string xpath = "/samlp:Response/saml:Assertion/ds:Signature";
+				XmlNode root = xml.DocumentElement;
+				XmlNode signatureElement = root.SelectSingleNode(xpath, nsMgr);
+				return signatureElement;
+			}
+		}
 
-                if (node.Attributes["InResponseTo"] == null)
-                {
-                    return null;
-                }
+		/// <summary>
+		/// Gets the signature of the authn response attached to the 
+		/// response as an XML element.
+		/// </summary>
+		public IXPathNavigable XmlResponseSignature
+		{
+			get
+			{
+				string xpath = "/samlp:Response/ds:Signature";
+				XmlNode root = xml.DocumentElement;
+				XmlNode signatureElement = root.SelectSingleNode(xpath, nsMgr);
+				return signatureElement;
+			}
+		}
 
-                return node.Attributes["InResponseTo"].Value.Trim();
-            }
-        }
+		/// <summary>
+		/// Gets the Assertion ID attribute value of the response.
+		/// </summary>
+		public string AssertionId
+		{
+			get
+			{
+				string xpath = "/samlp:Response/saml:Assertion";
+				XmlNode root = xml.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
+				return node.Attributes["ID"].Value.Trim();
+			}
+		}
 
-        /// <summary>
-        /// Gets the name of the issuer of the authn response.
-        /// </summary>
-        public string Issuer
-        {
-            get
-            {
-                string xpath = "/samlp:Response/saml:Issuer";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode node = root.SelectSingleNode(xpath, this.nsMgr);
-                return node.InnerText.Trim();
-            }
-        }
+		/// <summary>
+		/// Gets the ID attribute value of the response.
+		/// </summary>
+		public string Id
+		{
+			get
+			{
+				string xpath = "/samlp:Response";
+				XmlNode root = xml.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
+				return node.Attributes["ID"].Value.Trim();
+			}
+		}
 
-        /// <summary>
-        /// Gets the status code of the authn response within the status element.
-        /// </summary>
-        public string StatusCode
-        {
-            get
-            {
-                string xpath = "/samlp:Response/samlp:Status/samlp:StatusCode";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode node = root.SelectSingleNode(xpath, this.nsMgr);
-                return node.Attributes["Value"].Value.Trim();
-            }
-        }
+		/// <summary>
+		/// Gets the InResponseTo attribute value of the authn response, null
+		/// if not present.
+		/// </summary>
+		public string InResponseTo
+		{
+			get
+			{
+				string xpath = "/samlp:Response";
+				XmlNode root = xml.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
 
-        /// <summary>
-        /// Gets the X509 signature certificate of the authn response attached
-        /// to the assertion, null if none provided.
-        /// </summary>
-        public string AssertionSignatureCertificate
-        {
-            get
-            {
-                string xpath = "/samlp:Response/saml:Assertion/ds:Signature/ds:KeyInfo/ds:X509Data/ds:X509Certificate";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode node = root.SelectSingleNode(xpath, this.nsMgr);
-                if (node == null)
-                {
-                    return null;
-                }
+				if (node.Attributes["InResponseTo"] == null)
+				{
+					return null;
+				}
 
-                string value = node.InnerText.Trim();
-                return value;
-            }
-        }
+				return node.Attributes["InResponseTo"].Value.Trim();
+			}
+		}
 
-        /// <summary>
-        /// Gets the X509 signature certificate of the authn response attached
-        /// to the response, null if none provided.
-        /// </summary>
-        public string ResponseSignatureCertificate
-        {
-            get
-            {
-                string xpath = "/samlp:Response/ds:Signature/ds:KeyInfo/ds:X509Data/ds:X509Certificate";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode node = root.SelectSingleNode(xpath, this.nsMgr);
-                if (node == null)
-                {
-                    return null;
-                }
+		/// <summary>
+		/// Gets the name of the issuer of the authn response.
+		/// </summary>
+		public string Issuer
+		{
+			get
+			{
+				string xpath = "/samlp:Response/saml:Issuer";
+				XmlNode root = xml.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
+				return node.InnerText.Trim();
+			}
+		}
 
-                string value = node.InnerText.Trim();
-                return value;
-            }
-        }
+		/// <summary>
+		/// Gets the status code of the authn response within the status element.
+		/// </summary>
+		public string StatusCode
+		{
+			get
+			{
+				string xpath = "/samlp:Response/samlp:Status/samlp:StatusCode";
+				XmlNode root = xml.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
+				return node.Attributes["Value"].Value.Trim();
+			}
+		}
 
-        /// <summary>
-        /// Gets the session index within the authn statement within the authn
-        /// response assertion.
-        /// </summary>
-        public string SessionIndex
-        {
-            get
-            {
-                string xpath = "/samlp:Response/saml:Assertion/saml:AuthnStatement";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode node = root.SelectSingleNode(xpath, this.nsMgr);
-                return node.Attributes["SessionIndex"].Value.Trim();
-            }
-        }
+		/// <summary>
+		/// Gets the X509 signature certificate of the authn response attached
+		/// to the assertion, null if none provided.
+		/// </summary>
+		public string AssertionSignatureCertificate
+		{
+			get
+			{
+				string xpath = "/samlp:Response/saml:Assertion/ds:Signature/ds:KeyInfo/ds:X509Data/ds:X509Certificate";
+				XmlNode root = xml.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
+				if (node == null)
+				{
+					return null;
+				}
 
-        /// <summary>
-        /// Gets the name ID of the subject within the authn response assertion.
-        /// </summary>
-        public string SubjectNameId
-        {
-            get
-            {
-                string xpath = "/samlp:Response/saml:Assertion/saml:Subject/saml:NameID";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode node = root.SelectSingleNode(xpath, this.nsMgr);
-                return node.InnerText.Trim();
-            }
-        }
+				string value = node.InnerText.Trim();
+				return value;
+			}
+		}
 
-        /// <summary>
-        /// Gets the extracted "NotBefore" condition from the authn response.
-        /// </summary>
-        public DateTime ConditionNotBefore
-        {
-            get
-            {
-                string xpath = "/samlp:Response/saml:Assertion/saml:Conditions";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode node = root.SelectSingleNode(xpath, this.nsMgr);
-                return DateTime.Parse(node.Attributes["NotBefore"].Value.Trim(), CultureInfo.InvariantCulture);
-            }
-        }
+		/// <summary>
+		/// Gets the X509 signature certificate of the authn response attached
+		/// to the response, null if none provided.
+		/// </summary>
+		public string ResponseSignatureCertificate
+		{
+			get
+			{
+				string xpath = "/samlp:Response/ds:Signature/ds:KeyInfo/ds:X509Data/ds:X509Certificate";
+				XmlNode root = xml.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
+				if (node == null)
+				{
+					return null;
+				}
 
-        /// <summary>
-        /// Gets the extracted "NotOnOrAfter" condition from the authn response.
-        /// </summary>
-        public DateTime ConditionNotOnOrAfter
-        {
-            get
-            {
-                string xpath = "/samlp:Response/saml:Assertion/saml:Conditions";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode node = root.SelectSingleNode(xpath, this.nsMgr);
-                return DateTime.Parse(node.Attributes["NotOnOrAfter"].Value.Trim(), CultureInfo.InvariantCulture);
-            }
-        }
+				string value = node.InnerText.Trim();
+				return value;
+			}
+		}
 
-        /// <summary>
-        /// Gets the list containing string of entity ID's that are considered
-        /// appropriate audiences for this authn response.
-        /// </summary>
-        public ArrayList ConditionAudiences
-        {
-            get
-            {
-                string xpath = "/samlp:Response/saml:Assertion/saml:Conditions/saml:AudienceRestriction/saml:Audience";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNodeList nodeList = root.SelectNodes(xpath, this.nsMgr);
-                IEnumerator nodes = (IEnumerator)nodeList.GetEnumerator();
+		/// <summary>
+		/// Gets the session index within the authn statement within the authn
+		/// response assertion.
+		/// </summary>
+		public string SessionIndex
+		{
+			get
+			{
+				string xpath = "/samlp:Response/saml:Assertion/saml:AuthnStatement";
+				XmlNode root = xml.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
+				return node.Attributes["SessionIndex"].Value.Trim();
+			}
+		}
 
-                ArrayList audiences = new ArrayList();
-                while (nodes.MoveNext())
-                {
-                    XmlNode node = (XmlNode)nodes.Current;
-                    audiences.Add(node.InnerText.Trim());
-                }
+		/// <summary>
+		/// Gets the name ID of the subject within the authn response assertion.
+		/// </summary>
+		public string SubjectNameId
+		{
+			get
+			{
+				string xpath = "/samlp:Response/saml:Assertion/saml:Subject/saml:NameID";
+				XmlNode root = xml.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
+				return node.InnerText.Trim();
+			}
+		}
 
-                return audiences;
-            }
-        }
+		/// <summary>
+		/// Gets the extracted "NotBefore" condition from the authn response.
+		/// </summary>
+		public DateTime ConditionNotBefore
+		{
+			get
+			{
+				string xpath = "/samlp:Response/saml:Assertion/saml:Conditions";
+				XmlNode root = xml.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
+				return DateTime.Parse(node.Attributes["NotBefore"].Value.Trim(), CultureInfo.InvariantCulture);
+			}
+		}
 
-        /// <summary>
-        /// Gets the property containing the attributes provided in the SAML2
-        /// assertion, if provided, otherwise an empty hashtable.
-        /// </summary>
-        public Hashtable Attributes
-        {
-            get
-            {   
-                string xpath = "/samlp:Response/saml:Assertion/saml:AttributeStatement/saml:Attribute";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNodeList nodeList = root.SelectNodes(xpath, this.nsMgr);
-                IEnumerator nodes = (IEnumerator)nodeList.GetEnumerator();
+		/// <summary>
+		/// Gets the extracted "NotOnOrAfter" condition from the authn response.
+		/// </summary>
+		public DateTime ConditionNotOnOrAfter
+		{
+			get
+			{
+				string xpath = "/samlp:Response/saml:Assertion/saml:Conditions";
+				XmlNode root = xml.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
+				return DateTime.Parse(node.Attributes["NotOnOrAfter"].Value.Trim(), CultureInfo.InvariantCulture);
+			}
+		}
 
-                Hashtable attributes = new Hashtable();
-                while (nodes.MoveNext())
-                {
-                    XmlNode samlAttribute = (XmlNode)nodes.Current;
-                    string name = samlAttribute.Attributes["Name"].Value.Trim();
+		/// <summary>
+		/// Gets the list containing string of entity ID's that are considered
+		/// appropriate audiences for this authn response.
+		/// </summary>
+		public ArrayList ConditionAudiences
+		{
+			get
+			{
+				string xpath = "/samlp:Response/saml:Assertion/saml:Conditions/saml:AudienceRestriction/saml:Audience";
+				XmlNode root = xml.DocumentElement;
+				XmlNodeList nodeList = root.SelectNodes(xpath, nsMgr);
+				IEnumerator nodes = nodeList.GetEnumerator();
 
-                    XmlNodeList samlAttributeValues = samlAttribute.SelectNodes("descendant::saml:AttributeValue", this.nsMgr);
-                    ArrayList values = new ArrayList();
-                    foreach (XmlNode node in samlAttributeValues)
-                    {
-                        string value = node.InnerText.Trim();
-                        values.Add(value);
-                    }
+				var audiences = new ArrayList();
+				while (nodes.MoveNext())
+				{
+					var node = (XmlNode) nodes.Current;
+					audiences.Add(node.InnerText.Trim());
+				}
 
-                    attributes.Add(name, values);
-                }
+				return audiences;
+			}
+		}
 
-                return attributes;
-            }
-        }
-        #endregion
+		/// <summary>
+		/// Gets the property containing the attributes provided in the SAML2
+		/// assertion, if provided, otherwise an empty hashtable.
+		/// </summary>
+		public Hashtable Attributes
+		{
+			get
+			{
+				string xpath = "/samlp:Response/saml:Assertion/saml:AttributeStatement/saml:Attribute";
+				XmlNode root = xml.DocumentElement;
+				XmlNodeList nodeList = root.SelectNodes(xpath, nsMgr);
+				IEnumerator nodes = nodeList.GetEnumerator();
 
-        #region Methods
-        #endregion
-    }
+				var attributes = new Hashtable();
+				while (nodes.MoveNext())
+				{
+					var samlAttribute = (XmlNode) nodes.Current;
+					string name = samlAttribute.Attributes["Name"].Value.Trim();
+
+					XmlNodeList samlAttributeValues = samlAttribute.SelectNodes("descendant::saml:AttributeValue", nsMgr);
+					var values = new ArrayList();
+					foreach (XmlNode node in samlAttributeValues)
+					{
+						string value = node.InnerText.Trim();
+						values.Add(value);
+					}
+
+					attributes.Add(name, values);
+				}
+
+				return attributes;
+			}
+		}
+
+		#endregion
+
+		#region Methods
+
+		#endregion
+	}
 }

@@ -30,47 +30,46 @@ using System.Runtime.Serialization;
 
 namespace Sun.Identity.Saml2.Exceptions
 {
-    /// <summary>
-    /// Exception class specific for Saml2 business logic.
-    /// </summary>
-    [SerializableAttribute]
-    public class Saml2Exception : Exception, ISerializable
-    {
-        /// <summary>
-        /// Initializes a new instance of the Saml2Exception class.
-        /// </summary>
-        public Saml2Exception()
-            : base()
-        {
-        }
+	/// <summary>
+	/// Exception class specific for Saml2 business logic.
+	/// </summary>
+	[SerializableAttribute]
+	public class Saml2Exception : Exception, ISerializable
+	{
+		/// <summary>
+		/// Initializes a new instance of the Saml2Exception class.
+		/// </summary>
+		public Saml2Exception()
+		{
+		}
 
-        /// <summary>
-        /// Initializes a new instance of the Saml2Exception class.
-        /// </summary>
-        /// <param name="message">Message associated with this exception.</param>
-        public Saml2Exception(string message)
-            : base(message)
-        {
-        }
+		/// <summary>
+		/// Initializes a new instance of the Saml2Exception class.
+		/// </summary>
+		/// <param name="message">Message associated with this exception.</param>
+		public Saml2Exception(string message)
+			: base(message)
+		{
+		}
 
-        /// <summary>
-        /// Initializes a new instance of the Saml2Exception class.
-        /// </summary>
-        /// <param name="message">Message associated with this exception.</param>
-        /// <param name="inner">Inner exception associated with this exception.</param>
-        public Saml2Exception(string message, Exception inner)
-            : base(message, inner)
-        {
-        }
+		/// <summary>
+		/// Initializes a new instance of the Saml2Exception class.
+		/// </summary>
+		/// <param name="message">Message associated with this exception.</param>
+		/// <param name="inner">Inner exception associated with this exception.</param>
+		public Saml2Exception(string message, Exception inner)
+			: base(message, inner)
+		{
+		}
 
-        /// <summary>
-        /// Initializes a new instance of the Saml2Exception class.
-        /// </summary>
-        /// <param name="info">SerializationInfo used for base class support.</param>
-        /// <param name="context">StreamingContext used for base class support.</param>
-        protected Saml2Exception(SerializationInfo info, StreamingContext context)
-            : base(info, context)
-        {
-        }
-    }
+		/// <summary>
+		/// Initializes a new instance of the Saml2Exception class.
+		/// </summary>
+		/// <param name="info">SerializationInfo used for base class support.</param>
+		/// <param name="context">StreamingContext used for base class support.</param>
+		protected Saml2Exception(SerializationInfo info, StreamingContext context)
+			: base(info, context)
+		{
+		}
+	}
 }

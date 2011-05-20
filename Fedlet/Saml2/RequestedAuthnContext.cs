@@ -33,144 +33,148 @@ using Sun.Identity.Saml2.Exceptions;
 
 namespace Sun.Identity.Saml2
 {
-    /// <summary>
-    /// Class representing the RequestedAuthnContext.
-    /// </summary>
-    public class RequestedAuthnContext
-    {
-        #region Members
-        #endregion
+	/// <summary>
+	/// Class representing the RequestedAuthnContext.
+	/// </summary>
+	public class RequestedAuthnContext
+	{
+		#region Members
 
-        #region Constructors
-        /// <summary>
-        /// Initializes a new instance of the RequestedAuthnContext class.
-        /// </summary>
-        public RequestedAuthnContext()
-        {
-            this.Comparison = null;
-            this.AuthnContextClassRef = new ArrayList();
-            this.AuthnContextDeclRef = new ArrayList();
-        }
-        #endregion
+		#endregion
 
-        #region Properties
-        /// <summary>
-        /// Gets or sets the Comparison.
-        /// </summary>
-        public string Comparison { get; set; }
+		#region Constructors
 
-        /// <summary>
-        /// Gets the AuthnContextClassRef.
-        /// </summary>
-        public ArrayList AuthnContextClassRef { get; private set; }
+		/// <summary>
+		/// Initializes a new instance of the RequestedAuthnContext class.
+		/// </summary>
+		public RequestedAuthnContext()
+		{
+			Comparison = null;
+			AuthnContextClassRef = new ArrayList();
+			AuthnContextDeclRef = new ArrayList();
+		}
 
-        /// <summary>
-        /// Gets the AuthnContextDeclRef.
-        /// </summary>
-        public ArrayList AuthnContextDeclRef { get; private set; }
+		#endregion
 
-        #endregion
+		#region Properties
 
-        #region Methods
+		/// <summary>
+		/// Gets or sets the Comparison.
+		/// </summary>
+		public string Comparison { get; set; }
 
-        /// <summary>
-        /// Generates the XML string of the RequestedAuthnContext using
-        /// the Comparison, AuthnContextClassRef, and AuthnContextDeclRef
-        /// information.
-        /// </summary>
-        /// <returns>Returns the RequestedAuthnContext XML as a string.</returns>
-        public string GenerateXmlString()
-        {
-            if (this.AuthnContextClassRef.Count == 0 && this.AuthnContextDeclRef.Count == 0)
-            {
-                throw new Saml2Exception(Resources.RequestedAuthnContextClassRefOrDeclRefNotDefined);
-            }
+		/// <summary>
+		/// Gets the AuthnContextClassRef.
+		/// </summary>
+		public ArrayList AuthnContextClassRef { get; private set; }
 
-            if (String.IsNullOrEmpty(this.Comparison))
-            {
-                this.Comparison = "exact";
-            }
-            else if (!this.ValidComparison())
-            {
-                throw new Saml2Exception(Resources.RequestedAuthnContextInvalidComparison);
-            }
+		/// <summary>
+		/// Gets the AuthnContextDeclRef.
+		/// </summary>
+		public ArrayList AuthnContextDeclRef { get; private set; }
 
-            StringBuilder rawXml = new StringBuilder();
+		#endregion
 
-            rawXml.Append("<RequestedAuthnContext Comparison=\"");
-            rawXml.Append(this.Comparison);
-            rawXml.Append("\">");
+		#region Methods
 
-            if (this.AuthnContextClassRef != null)
-            {
-                foreach (string value in this.AuthnContextClassRef)
-                {
-                    rawXml.Append("<AuthnContextClassRef>");
-                    rawXml.Append(value);
-                    rawXml.Append("</AuthnContextClassRef>");
-                }
-            }
+		/// <summary>
+		/// Generates the XML string of the RequestedAuthnContext using
+		/// the Comparison, AuthnContextClassRef, and AuthnContextDeclRef
+		/// information.
+		/// </summary>
+		/// <returns>Returns the RequestedAuthnContext XML as a string.</returns>
+		public string GenerateXmlString()
+		{
+			if (AuthnContextClassRef.Count == 0 && AuthnContextDeclRef.Count == 0)
+			{
+				throw new Saml2Exception(Resources.RequestedAuthnContextClassRefOrDeclRefNotDefined);
+			}
 
-            if (this.AuthnContextDeclRef != null)
-            {
-                foreach (string value in this.AuthnContextDeclRef)
-                {
-                    rawXml.Append("<AuthnContextDeclRef>");
-                    rawXml.Append(value);
-                    rawXml.Append("</AuthnContextDeclRef>");
-                }
-            }
+			if (String.IsNullOrEmpty(Comparison))
+			{
+				Comparison = "exact";
+			}
+			else if (!ValidComparison())
+			{
+				throw new Saml2Exception(Resources.RequestedAuthnContextInvalidComparison);
+			}
 
-            rawXml.Append("</RequestedAuthnContext>");
+			var rawXml = new StringBuilder();
 
-            return rawXml.ToString();
-        }
+			rawXml.Append("<RequestedAuthnContext Comparison=\"");
+			rawXml.Append(Comparison);
+			rawXml.Append("\">");
 
-        /// <summary>
-        /// Sets the AuthnContextClassRef list.
-        /// </summary>
-        /// <param name="list">The list to become the AuthnContextClassRef.</param>
-        public void SetAuthnContextClassRef(ArrayList list)
-        {
-            if (list == null)
-            {
-                this.AuthnContextClassRef = new ArrayList();
-            }
-            else
-            {
-                this.AuthnContextClassRef = list;
-            }
-        }
+			if (AuthnContextClassRef != null)
+			{
+				foreach (string value in AuthnContextClassRef)
+				{
+					rawXml.Append("<AuthnContextClassRef>");
+					rawXml.Append(value);
+					rawXml.Append("</AuthnContextClassRef>");
+				}
+			}
 
-        /// <summary>
-        /// Sets the SetAuthnContextDeclRef list.
-        /// </summary>
-        /// <param name="list">The list to become the SetAuthnContextDeclRef.</param>
-        public void SetAuthnContextDeclRef(ArrayList list)
-        {
-            if (list == null)
-            {
-                this.AuthnContextDeclRef = new ArrayList();
-            }
-            else
-            {
-                this.AuthnContextDeclRef = list;
-            }
-        }
+			if (AuthnContextDeclRef != null)
+			{
+				foreach (string value in AuthnContextDeclRef)
+				{
+					rawXml.Append("<AuthnContextDeclRef>");
+					rawXml.Append(value);
+					rawXml.Append("</AuthnContextDeclRef>");
+				}
+			}
 
-        /// <summary>
-        /// Checks to see if the Comparison property is set to a valid
-        /// value based on the SAML specification.
-        /// </summary>
-        /// <returns>True if it is a valid comparison, false otherwise.</returns>
-        private bool ValidComparison()
-        {
-            return this.Comparison == "exact"
-                || this.Comparison == "maximum"
-                || this.Comparison == "minimum"
-                || this.Comparison == "better";
-        }
+			rawXml.Append("</RequestedAuthnContext>");
 
-        #endregion
-    }
+			return rawXml.ToString();
+		}
+
+		/// <summary>
+		/// Sets the AuthnContextClassRef list.
+		/// </summary>
+		/// <param name="list">The list to become the AuthnContextClassRef.</param>
+		public void SetAuthnContextClassRef(ArrayList list)
+		{
+			if (list == null)
+			{
+				AuthnContextClassRef = new ArrayList();
+			}
+			else
+			{
+				AuthnContextClassRef = list;
+			}
+		}
+
+		/// <summary>
+		/// Sets the SetAuthnContextDeclRef list.
+		/// </summary>
+		/// <param name="list">The list to become the SetAuthnContextDeclRef.</param>
+		public void SetAuthnContextDeclRef(ArrayList list)
+		{
+			if (list == null)
+			{
+				AuthnContextDeclRef = new ArrayList();
+			}
+			else
+			{
+				AuthnContextDeclRef = list;
+			}
+		}
+
+		/// <summary>
+		/// Checks to see if the Comparison property is set to a valid
+		/// value based on the SAML specification.
+		/// </summary>
+		/// <returns>True if it is a valid comparison, false otherwise.</returns>
+		private bool ValidComparison()
+		{
+			return Comparison == "exact"
+			       || Comparison == "maximum"
+			       || Comparison == "minimum"
+			       || Comparison == "better";
+		}
+
+		#endregion
+	}
 }

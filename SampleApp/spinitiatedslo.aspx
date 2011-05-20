@@ -27,13 +27,10 @@
  */
 --%>
 <%@ Page Language="C#" Debug="true" %>
-<%@ Import Namespace="System.IO" %>
-<%@ Import Namespace="System.Net" %>
-<%@ Import Namespace="System.Xml" %>
 <%@ Import Namespace="Sun.Identity.Saml2" %>
 <%@ Import Namespace="Sun.Identity.Saml2.Exceptions" %>
 <%
-    /*
+	/*
      * Following are the list of supported query parameters:
      * 
      * Query Parameter    Description
@@ -62,68 +59,68 @@
      *                    
      */
 
-    ServiceProviderUtility serviceProviderUtility = (ServiceProviderUtility)Cache["spu"];
-    if (serviceProviderUtility == null)
-    {
-        serviceProviderUtility = new ServiceProviderUtility(Context);
-        Cache["spu"] = serviceProviderUtility;
-    }
+	var serviceProviderUtility = (ServiceProviderUtility) Cache["spu"];
+	if (serviceProviderUtility == null)
+ {
+ 	serviceProviderUtility = new ServiceProviderUtility(Context);
+ 	Cache["spu"] = serviceProviderUtility;
+ }
 
-    // Store parameters for initializing SLO
-    NameValueCollection parameters = Saml2Utils.GetRequestParameters(Request);
-    string idpEntityId = parameters[Saml2Constants.IdpEntityId];
+	// Store parameters for initializing SLO
+	NameValueCollection parameters = Saml2Utils.GetRequestParameters(Request);
+	string idpEntityId = parameters[Saml2Constants.IdpEntityId];
 
-    if (String.IsNullOrEmpty(parameters[Saml2Constants.Binding]))
-    {
-        // If the binding is null, use HttpRedirect.
-        parameters[Saml2Constants.Binding] = Saml2Constants.HttpRedirectProtocolBinding;
-    }
-    
-    if (String.IsNullOrEmpty(parameters[Saml2Constants.RelayState]))
-    {
-        // If the relay state is null, use the fedlet's default page.
-        string fedletUrl = Request.Url.AbsoluteUri.Substring(0, Request.Url.AbsoluteUri.LastIndexOf("/"));
-        parameters[Saml2Constants.RelayState] = fedletUrl;
-    }
+	if (String.IsNullOrEmpty(parameters[Saml2Constants.Binding]))
+ {
+ 	// If the binding is null, use HttpRedirect.
+ 	parameters[Saml2Constants.Binding] = Saml2Constants.HttpRedirectProtocolBinding;
+ }
 
-    try
-    {
-        // Check for required parameters...
-        if (String.IsNullOrEmpty(idpEntityId))
-        {
-            throw new ServiceProviderUtilityException("IDP Entity ID not specified.");
-        }
-        else if (String.IsNullOrEmpty(parameters[Saml2Constants.SubjectNameId]))
-        {
-            throw new ServiceProviderUtilityException("SubjectNameId not specified.");
-        }
-        else if (String.IsNullOrEmpty(parameters[Saml2Constants.SessionIndex]))
-        {
-            throw new ServiceProviderUtilityException("SessionIndex not specified.");
-        }
+	if (String.IsNullOrEmpty(parameters[Saml2Constants.RelayState]))
+ {
+ 	// If the relay state is null, use the fedlet's default page.
+ 	string fedletUrl = Request.Url.AbsoluteUri.Substring(0, Request.Url.AbsoluteUri.LastIndexOf("/"));
+ 	parameters[Saml2Constants.RelayState] = fedletUrl;
+ }
 
-        // Perform SP initiated SSO
-        serviceProviderUtility.SendLogoutRequest(Context, idpEntityId, parameters);
-        
-        // If SOAP was the binding and no exception thrown, redirect to the relay state
-        if (parameters[Saml2Constants.Binding] == Saml2Constants.HttpSoapProtocolBinding)
-        {
-            string relayState = parameters[Saml2Constants.RelayState];
-            Saml2Utils.ValidateRelayState(relayState, serviceProviderUtility.ServiceProvider.RelayStateUrlList);
-            Response.Redirect(relayState);
-        }
-    }
-    catch (Saml2Exception se)
-    {
-        Response.StatusCode = 400;
-        Response.StatusDescription = se.Message;
-        Response.End();
-    }
-    catch (ServiceProviderUtilityException spue)
-    {
-        Response.StatusCode = 400;
-        Response.StatusDescription = spue.Message;
-        Response.End();
-    }
-    
+	try
+ {
+ 	// Check for required parameters...
+ 	if (String.IsNullOrEmpty(idpEntityId))
+ 	{
+ 		throw new ServiceProviderUtilityException("IDP Entity ID not specified.");
+ 	}
+ 	else if (String.IsNullOrEmpty(parameters[Saml2Constants.SubjectNameId]))
+ 	{
+ 		throw new ServiceProviderUtilityException("SubjectNameId not specified.");
+ 	}
+ 	else if (String.IsNullOrEmpty(parameters[Saml2Constants.SessionIndex]))
+ 	{
+ 		throw new ServiceProviderUtilityException("SessionIndex not specified.");
+ 	}
+
+ 	// Perform SP initiated SSO
+ 	serviceProviderUtility.SendLogoutRequest(Context, idpEntityId, parameters);
+
+ 	// If SOAP was the binding and no exception thrown, redirect to the relay state
+ 	if (parameters[Saml2Constants.Binding] == Saml2Constants.HttpSoapProtocolBinding)
+ 	{
+ 		string relayState = parameters[Saml2Constants.RelayState];
+ 		Saml2Utils.ValidateRelayState(relayState, serviceProviderUtility.ServiceProvider.RelayStateUrlList);
+ 		Response.Redirect(relayState);
+ 	}
+ }
+ catch (Saml2Exception se)
+ {
+ 	Response.StatusCode = 400;
+ 	Response.StatusDescription = se.Message;
+ 	Response.End();
+ }
+ catch (ServiceProviderUtilityException spue)
+ {
+ 	Response.StatusCode = 400;
+ 	Response.StatusDescription = spue.Message;
+ 	Response.End();
+ }
+
 %>

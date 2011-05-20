@@ -31,105 +31,113 @@ using Sun.Identity.Saml2.Exceptions;
 
 namespace Sun.Identity.Saml2
 {
-    /// <summary>
-    /// Class representing the SAMLv2 Artifact object. Per the specification,
-    /// the artifact is constructed as follows:
-    /// <para>
-    ///  Artifact = Base64(TypeCode EndpointIndex RemainingArtifact)
-    /// </para>
-    /// <para>
-    ///  TypeCode      = Byte1Byte2
-    ///  EndpointIndex = Byte1Byte2
-    /// </para>
-    /// <para>
-    ///  TypeCode          = 0x0004
-    ///  RemainingArtifact = SourceID MessageHandle
-    /// </para>
-    /// <para>
-    ///  SourceId      = 20-byte sequence, typically the entity id of the issuer
-    ///  MessageHandle = 20-byte sequence
-    /// </para>
-    /// </summary>
-    public class Artifact
-    {
-        #region Members
-        /// <summary>
-        /// Constant for the expected length of SAMLv2 artifacts before encoding.
-        /// </summary>
-        public const int RequiredByteLength = 44;
+	/// <summary>
+	/// Class representing the SAMLv2 Artifact object. Per the specification,
+	/// the artifact is constructed as follows:
+	/// <para>
+	///  Artifact = Base64(TypeCode EndpointIndex RemainingArtifact)
+	/// </para>
+	/// <para>
+	///  TypeCode      = Byte1Byte2
+	///  EndpointIndex = Byte1Byte2
+	/// </para>
+	/// <para>
+	///  TypeCode          = 0x0004
+	///  RemainingArtifact = SourceID MessageHandle
+	/// </para>
+	/// <para>
+	///  SourceId      = 20-byte sequence, typically the entity id of the issuer
+	///  MessageHandle = 20-byte sequence
+	/// </para>
+	/// </summary>
+	public class Artifact
+	{
+		#region Members
 
-        /// <summary>
-        /// Original string representation of the Artifact object.
-        /// </summary>
-        private string artifact;
-        #endregion
+		/// <summary>
+		/// Constant for the expected length of SAMLv2 artifacts before encoding.
+		/// </summary>
+		public const int RequiredByteLength = 44;
 
-        #region Constructors
-        /// <summary>
-        /// Initializes a new instance of the Artifact class.
-        /// </summary>
-        /// <param name="samlArt">String representing the artifact.</param>
-        public Artifact(string samlArt)
-        {
-            if (String.IsNullOrEmpty(samlArt))
-            {
-                throw new Saml2Exception(Resources.ArtifactNullOrEmpty);
-            }
+		/// <summary>
+		/// Original string representation of the Artifact object.
+		/// </summary>
+		private readonly string artifact;
 
-            this.artifact = samlArt;
+		#endregion
 
-            try
-            {
-                byte[] byteArray = Convert.FromBase64String(this.artifact);
+		#region Constructors
 
-                if (byteArray.Length != Artifact.RequiredByteLength)
-                {
-                    throw new Saml2Exception(Resources.ArtifactInvalidLength);
-                }
+		/// <summary>
+		/// Initializes a new instance of the Artifact class.
+		/// </summary>
+		/// <param name="samlArt">String representing the artifact.</param>
+		public Artifact(string samlArt)
+		{
+			if (String.IsNullOrEmpty(samlArt))
+			{
+				throw new Saml2Exception(Resources.ArtifactNullOrEmpty);
+			}
 
-                this.TypeCode = BitConverter.ToString(byteArray, 0, 2).Replace("-", string.Empty);
-                this.EndpointIndex = BitConverter.ToString(byteArray, 2, 2).Replace("-", string.Empty);
-                this.SourceId = BitConverter.ToString(byteArray, 4, 20).Replace("-", string.Empty);
-                this.MessageHandle = BitConverter.ToString(byteArray, 24, 20).Replace("-", string.Empty);
-            }
-            catch (FormatException)
-            {
-                throw new Saml2Exception(Resources.ArtifactFailedConversion);
-            }
-        }
-        #endregion
+			artifact = samlArt;
 
-        #region Properties
-        /// <summary>
-        /// Gets the TypeCode.
-        /// </summary>
-        public string TypeCode { get; private set; }
+			try
+			{
+				byte[] byteArray = Convert.FromBase64String(artifact);
 
-        /// <summary>
-        /// Gets the EndpointIndex.
-        /// </summary>
-        public string EndpointIndex { get; private set; }
+				if (byteArray.Length != RequiredByteLength)
+				{
+					throw new Saml2Exception(Resources.ArtifactInvalidLength);
+				}
 
-        /// <summary>
-        /// Gets the Source ID.
-        /// </summary>
-        public string SourceId { get; private set; }
+				TypeCode = BitConverter.ToString(byteArray, 0, 2).Replace("-", string.Empty);
+				EndpointIndex = BitConverter.ToString(byteArray, 2, 2).Replace("-", string.Empty);
+				SourceId = BitConverter.ToString(byteArray, 4, 20).Replace("-", string.Empty);
+				MessageHandle = BitConverter.ToString(byteArray, 24, 20).Replace("-", string.Empty);
+			}
+			catch (FormatException)
+			{
+				throw new Saml2Exception(Resources.ArtifactFailedConversion);
+			}
+		}
 
-        /// <summary>
-        /// Gets the Message Handle.
-        /// </summary>
-        public string MessageHandle { get; private set; }
-        #endregion
+		#endregion
 
-        #region Methods
-        /// <summary>
-        /// Returns the 44 byte representation as a string.
-        /// </summary>
-        /// <returns>Returns a string representing the 44-byte SAML artifact.</returns>
-        public override string ToString()
-        {
-            return this.artifact;
-        }
-        #endregion
-    }
+		#region Properties
+
+		/// <summary>
+		/// Gets the TypeCode.
+		/// </summary>
+		public string TypeCode { get; private set; }
+
+		/// <summary>
+		/// Gets the EndpointIndex.
+		/// </summary>
+		public string EndpointIndex { get; private set; }
+
+		/// <summary>
+		/// Gets the Source ID.
+		/// </summary>
+		public string SourceId { get; private set; }
+
+		/// <summary>
+		/// Gets the Message Handle.
+		/// </summary>
+		public string MessageHandle { get; private set; }
+
+		#endregion
+
+		#region Methods
+
+		/// <summary>
+		/// Returns the 44 byte representation as a string.
+		/// </summary>
+		/// <returns>Returns a string representing the 44-byte SAML artifact.</returns>
+		public override string ToString()
+		{
+			return artifact;
+		}
+
+		#endregion
+	}
 }

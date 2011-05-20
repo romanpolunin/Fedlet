@@ -27,13 +27,10 @@
  */
 --%>
 <%@ Page Language="C#" Debug="true" %>
-<%@ Import Namespace="System.IO" %>
-<%@ Import Namespace="System.Net" %>
-<%@ Import Namespace="System.Xml" %>
 <%@ Import Namespace="Sun.Identity.Saml2" %>
 <%@ Import Namespace="Sun.Identity.Saml2.Exceptions" %>
 <%
-    /*
+	/*
      * Following are the list of supported query parameters:
      * 
      * Query Parameter    Description
@@ -104,80 +101,80 @@
      *                    
      */
 
-    ServiceProviderUtility serviceProviderUtility = (ServiceProviderUtility)Cache["spu"];
-    if (serviceProviderUtility == null)
-    {
-        serviceProviderUtility = new ServiceProviderUtility(Context);
-        Cache["spu"] = serviceProviderUtility;
-    }
+	var serviceProviderUtility = (ServiceProviderUtility) Cache["spu"];
+	if (serviceProviderUtility == null)
+ {
+ 	serviceProviderUtility = new ServiceProviderUtility(Context);
+ 	Cache["spu"] = serviceProviderUtility;
+ }
 
-    // Store parameters for initializing SSO
-    NameValueCollection parameters = Saml2Utils.GetRequestParameters(Request);
-    string idpEntityId = parameters["idpEntityId"];
+	// Store parameters for initializing SSO
+	NameValueCollection parameters = Saml2Utils.GetRequestParameters(Request);
+	string idpEntityId = parameters["idpEntityId"];
 
-    // If the IDP entity ID not specified, discover it.
-    if (String.IsNullOrEmpty(idpEntityId))
-    {
-        // Determine if the IDP has already been discovered...
-        idpEntityId = IdentityProviderDiscoveryUtils.GetPreferredIdentityProvider(Request);
+	// If the IDP entity ID not specified, discover it.
+	if (String.IsNullOrEmpty(idpEntityId))
+ {
+ 	// Determine if the IDP has already been discovered...
+ 	idpEntityId = IdentityProviderDiscoveryUtils.GetPreferredIdentityProvider(Request);
 
-        if (idpEntityId == null)
-        {
-            // Discover the IDP by redirecting to the reader service.
-            IdentityProviderDiscoveryUtils.StoreRequestParameters(Context);
+ 	if (idpEntityId == null)
+ 	{
+ 		// Discover the IDP by redirecting to the reader service.
+ 		IdentityProviderDiscoveryUtils.StoreRequestParameters(Context);
 
-            Uri readerServiceUrl = IdentityProviderDiscoveryUtils.GetReaderServiceUrl(serviceProviderUtility, Context);
+ 		Uri readerServiceUrl = IdentityProviderDiscoveryUtils.GetReaderServiceUrl(serviceProviderUtility, Context);
 
-            if (readerServiceUrl != null)
-            {
-                IdentityProviderDiscoveryUtils.RedirectToReaderService(readerServiceUrl, Context);
-                return;
-            }
-        }
+ 		if (readerServiceUrl != null)
+ 		{
+ 			IdentityProviderDiscoveryUtils.RedirectToReaderService(readerServiceUrl, Context);
+ 			return;
+ 		}
+ 	}
 
-        // Retrieve all previously stored parameters and reset the discovery
-        // process if we've exhausted all reader services...
-        parameters = IdentityProviderDiscoveryUtils.RetrieveRequestParameters(Context);
-        IdentityProviderDiscoveryUtils.ResetDiscovery(Context);
-    }
-    
-    // If the IDP entity ID is still null, use the first one configured
-    if (idpEntityId == null)
-    {
-        IEnumerator idps = serviceProviderUtility.IdentityProviders.Keys.GetEnumerator();
-        if (idps.MoveNext())
-        {
-            idpEntityId = (string) idps.Current;
-        }
-    }
+ 	// Retrieve all previously stored parameters and reset the discovery
+ 	// process if we've exhausted all reader services...
+ 	parameters = IdentityProviderDiscoveryUtils.RetrieveRequestParameters(Context);
+ 	IdentityProviderDiscoveryUtils.ResetDiscovery(Context);
+ }
 
-    // If the binding is null, use POST.
-    if (String.IsNullOrEmpty(parameters[Saml2Constants.Binding]))
-    {
-        parameters[Saml2Constants.Binding] = Saml2Constants.HttpPostProtocolBinding;
-    }
+	// If the IDP entity ID is still null, use the first one configured
+	if (idpEntityId == null)
+ {
+ 	IEnumerator idps = serviceProviderUtility.IdentityProviders.Keys.GetEnumerator();
+ 	if (idps.MoveNext())
+ 	{
+ 		idpEntityId = (string) idps.Current;
+ 	}
+ }
 
-    try
-    {
-        // Check for required parameters...
-        if (idpEntityId == null)
-        {
-            throw new ServiceProviderUtilityException("IDP Entity ID not specified nor discovered.");
-        }
-        
-        // Perform SP initiated SSO
-        serviceProviderUtility.SendAuthnRequest(Context, idpEntityId, parameters);
-    }
-    catch (Saml2Exception se)
-    {
-        Response.StatusCode = 400;
-        Response.StatusDescription = se.Message;
-        Response.End();
-    }
-    catch (ServiceProviderUtilityException spue)
-    {
-        Response.StatusCode = 400;
-        Response.StatusDescription = spue.Message;
-        Response.End();
-    }
+	// If the binding is null, use POST.
+	if (String.IsNullOrEmpty(parameters[Saml2Constants.Binding]))
+ {
+ 	parameters[Saml2Constants.Binding] = Saml2Constants.HttpPostProtocolBinding;
+ }
+
+	try
+ {
+ 	// Check for required parameters...
+ 	if (idpEntityId == null)
+ 	{
+ 		throw new ServiceProviderUtilityException("IDP Entity ID not specified nor discovered.");
+ 	}
+
+ 	// Perform SP initiated SSO
+ 	serviceProviderUtility.SendAuthnRequest(Context, idpEntityId, parameters);
+ }
+ catch (Saml2Exception se)
+ {
+ 	Response.StatusCode = 400;
+ 	Response.StatusDescription = se.Message;
+ 	Response.End();
+ }
+ catch (ServiceProviderUtilityException spue)
+ {
+ 	Response.StatusCode = 400;
+ 	Response.StatusDescription = spue.Message;
+ 	Response.End();
+ }
 %>

@@ -26,8 +26,6 @@
  */
 
 using System;
-using System.Collections;
-using System.Globalization;
 using System.Xml;
 using System.Xml.XPath;
 using Sun.Identity.Properties;
@@ -35,179 +33,178 @@ using Sun.Identity.Saml2.Exceptions;
 
 namespace Sun.Identity.Saml2
 {
-    /// <summary>
-    /// SAMLv2 ArtifactResponse object constructed from a response obtained 
-    /// from an Identity Provider for the hosted Service Provider.
-    /// </summary>
-    public class ArtifactResponse
-    {
-        #region Members
-        /// <summary>
-        /// AuthnResponse wrapped by this ArtifactResponse.
-        /// </summary>
-        private AuthnResponse authnResponse;
+	/// <summary>
+	/// SAMLv2 ArtifactResponse object constructed from a response obtained 
+	/// from an Identity Provider for the hosted Service Provider.
+	/// </summary>
+	public class ArtifactResponse
+	{
+		#region Members
 
-        /// <summary>
-        /// Namespace Manager for this authn response.
-        /// </summary>
-        private XmlNamespaceManager nsMgr;
+		/// <summary>
+		/// AuthnResponse wrapped by this ArtifactResponse.
+		/// </summary>
+		private readonly AuthnResponse authnResponse;
 
-        /// <summary>
-        /// XML representation of the authn response.
-        /// </summary>
-        private XmlDocument xml;
-        #endregion
+		/// <summary>
+		/// Namespace Manager for this authn response.
+		/// </summary>
+		private readonly XmlNamespaceManager nsMgr;
 
-        #region Constructors
-        /// <summary>
-        /// Initializes a new instance of the ArtifactResponse class.
-        /// </summary>
-        /// <param name="artifactResponse">
-        /// String representation of the ArtifactResponse xml.
-        /// </param>
-        public ArtifactResponse(string artifactResponse)
-        {
-            try
-            {
-                this.xml = new XmlDocument();
-                this.xml.PreserveWhitespace = true;
-                this.xml.LoadXml(artifactResponse);
-                this.nsMgr = new XmlNamespaceManager(this.xml.NameTable);
-                this.nsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
-                this.nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
-                this.nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
+		/// <summary>
+		/// XML representation of the authn response.
+		/// </summary>
+		private readonly XmlDocument xml;
 
-                string xpath = "/samlp:ArtifactResponse/samlp:Response";
-                XmlNode response = this.xml.DocumentElement.SelectSingleNode(xpath, this.nsMgr);
-                if (response == null)
-                {
-                    throw new Saml2Exception(Resources.ArtifactResponseMissingResponse);
-                }
+		#endregion
 
-                this.authnResponse = new AuthnResponse(response.OuterXml);
-            }
-            catch (ArgumentNullException ane)
-            {
-                throw new Saml2Exception(Resources.ArtifactResponseNullArgument, ane);
-            }
-            catch (XmlException xe)
-            {
-                throw new Saml2Exception(Resources.ArtifactResponseXmlException, xe);
-            }
-        }
-        #endregion
+		#region Constructors
 
-        #region Properties
+		/// <summary>
+		/// Initializes a new instance of the ArtifactResponse class.
+		/// </summary>
+		/// <param name="artifactResponse">
+		/// String representation of the ArtifactResponse xml.
+		/// </param>
+		public ArtifactResponse(string artifactResponse)
+		{
+			try
+			{
+				xml = new XmlDocument();
+				xml.PreserveWhitespace = true;
+				xml.LoadXml(artifactResponse);
+				nsMgr = new XmlNamespaceManager(xml.NameTable);
+				nsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
+				nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
+				nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
 
-        /// <summary>
-        /// Gets the AuthnResponse object enclosed in the artifact response.
-        /// </summary>
-        public AuthnResponse AuthnResponse
-        {
-            get
-            {
-                return this.authnResponse;
-            }
-        }
+				string xpath = "/samlp:ArtifactResponse/samlp:Response";
+				XmlNode response = xml.DocumentElement.SelectSingleNode(xpath, nsMgr);
+				if (response == null)
+				{
+					throw new Saml2Exception(Resources.ArtifactResponseMissingResponse);
+				}
 
-        /// <summary>
-        /// Gets the ID attribute value of the artifact response.
-        /// </summary>
-        public string Id
-        {
-            get
-            {
-                string xpath = "/samlp:ArtifactResponse";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode node = root.SelectSingleNode(xpath, this.nsMgr);
-                return node.Attributes["ID"].Value.Trim();
-            }
-        }
+				authnResponse = new AuthnResponse(response.OuterXml);
+			}
+			catch (ArgumentNullException ane)
+			{
+				throw new Saml2Exception(Resources.ArtifactResponseNullArgument, ane);
+			}
+			catch (XmlException xe)
+			{
+				throw new Saml2Exception(Resources.ArtifactResponseXmlException, xe);
+			}
+		}
 
-        /// <summary>
-        /// Gets the InResponseTo attribute value of the artifact response, 
-        /// null if not present.
-        /// </summary>
-        public string InResponseTo
-        {
-            get
-            {
-                string xpath = "/samlp:ArtifactResponse";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode node = root.SelectSingleNode(xpath, this.nsMgr);
+		#endregion
 
-                if (node.Attributes["InResponseTo"] == null)
-                {
-                    return null;
-                }
+		#region Properties
 
-                return node.Attributes["InResponseTo"].Value.Trim();
-            }
-        }
+		/// <summary>
+		/// Gets the AuthnResponse object enclosed in the artifact response.
+		/// </summary>
+		public AuthnResponse AuthnResponse
+		{
+			get { return authnResponse; }
+		}
 
-        /// <summary>
-        /// Gets the name of the issuer of the artifact response.
-        /// </summary>
-        public string Issuer
-        {
-            get
-            {
-                string xpath = "/samlp:ArtifactResponse/saml:Issuer";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode node = root.SelectSingleNode(xpath, this.nsMgr);
-                return node.InnerText.Trim();
-            }
-        }
+		/// <summary>
+		/// Gets the ID attribute value of the artifact response.
+		/// </summary>
+		public string Id
+		{
+			get
+			{
+				string xpath = "/samlp:ArtifactResponse";
+				XmlNode root = xml.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
+				return node.Attributes["ID"].Value.Trim();
+			}
+		}
 
-        /// <summary>
-        /// Gets the X509 signature certificate of the artifact response,
-        /// null if none provided.
-        /// </summary>
-        public string SignatureCertificate
-        {
-            get
-            {
-                string xpath = "/samlp:ArtifactResponse/ds:Signature/ds:KeyInfo/ds:X509Data/ds:X509Certificate";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode node = root.SelectSingleNode(xpath, this.nsMgr);
-                if (node == null)
-                {
-                    return null;
-                }
+		/// <summary>
+		/// Gets the InResponseTo attribute value of the artifact response, 
+		/// null if not present.
+		/// </summary>
+		public string InResponseTo
+		{
+			get
+			{
+				string xpath = "/samlp:ArtifactResponse";
+				XmlNode root = xml.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
 
-                string value = node.InnerText.Trim();
-                return value;
-            }
-        }
+				if (node.Attributes["InResponseTo"] == null)
+				{
+					return null;
+				}
 
-        /// <summary>
-        /// Gets the signature of the artifact response as an XML element.
-        /// </summary>
-        public IXPathNavigable XmlSignature
-        {
-            get
-            {
-                string xpath = "/samlp:ArtifactResponse/ds:Signature";
-                XmlNode root = this.xml.DocumentElement;
-                XmlNode signatureElement = root.SelectSingleNode(xpath, this.nsMgr);
-                return signatureElement;
-            }
-        }
+				return node.Attributes["InResponseTo"].Value.Trim();
+			}
+		}
 
-        /// <summary>
-        /// Gets the XML representation of the received artifact response.
-        /// </summary>
-        public IXPathNavigable XmlDom
-        {
-            get
-            {
-                return this.xml;
-            }
-        }
+		/// <summary>
+		/// Gets the name of the issuer of the artifact response.
+		/// </summary>
+		public string Issuer
+		{
+			get
+			{
+				string xpath = "/samlp:ArtifactResponse/saml:Issuer";
+				XmlNode root = xml.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
+				return node.InnerText.Trim();
+			}
+		}
 
-        #endregion
+		/// <summary>
+		/// Gets the X509 signature certificate of the artifact response,
+		/// null if none provided.
+		/// </summary>
+		public string SignatureCertificate
+		{
+			get
+			{
+				string xpath = "/samlp:ArtifactResponse/ds:Signature/ds:KeyInfo/ds:X509Data/ds:X509Certificate";
+				XmlNode root = xml.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
+				if (node == null)
+				{
+					return null;
+				}
 
-        #region Methods
-        #endregion
-    }
+				string value = node.InnerText.Trim();
+				return value;
+			}
+		}
+
+		/// <summary>
+		/// Gets the signature of the artifact response as an XML element.
+		/// </summary>
+		public IXPathNavigable XmlSignature
+		{
+			get
+			{
+				string xpath = "/samlp:ArtifactResponse/ds:Signature";
+				XmlNode root = xml.DocumentElement;
+				XmlNode signatureElement = root.SelectSingleNode(xpath, nsMgr);
+				return signatureElement;
+			}
+		}
+
+		/// <summary>
+		/// Gets the XML representation of the received artifact response.
+		/// </summary>
+		public IXPathNavigable XmlDom
+		{
+			get { return xml; }
+		}
+
+		#endregion
+
+		#region Methods
+
+		#endregion
+	}
 }

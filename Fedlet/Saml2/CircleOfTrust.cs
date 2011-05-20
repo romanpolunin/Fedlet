@@ -33,151 +33,156 @@ using Sun.Identity.Saml2.Exceptions;
 
 namespace Sun.Identity.Saml2
 {
-    /// <summary>
-    /// Circle Of Trust (COT) for the Fedlet in the ASP.NET environment. 
-    /// </summary>
-    public class CircleOfTrust
-    {
-        #region Members
+	/// <summary>
+	/// Circle Of Trust (COT) for the Fedlet in the ASP.NET environment. 
+	/// </summary>
+	public class CircleOfTrust
+	{
+		#region Members
 
-        /// <summary>
-        /// Name of key of property used for the saml2 reader service url.
-        /// </summary>
-        private const string Saml2ReaderServiceKey = "sun-fm-saml2-readerservice-url";
+		/// <summary>
+		/// Name of key of property used for the saml2 reader service url.
+		/// </summary>
+		private const string Saml2ReaderServiceKey = "sun-fm-saml2-readerservice-url";
 
-        /// <summary>
-        /// Name of key of property used for the saml2 writer service url.
-        /// </summary>
-        private const string Saml2WriterServiceKey = "sun-fm-saml2-writerservice-url";
+		/// <summary>
+		/// Name of key of property used for the saml2 writer service url.
+		/// </summary>
+		private const string Saml2WriterServiceKey = "sun-fm-saml2-writerservice-url";
 
-        /// <summary>
-        /// Name of key of property used for list of trusted providers.
-        /// </summary>
-        private const string TrustedProvidersKey = "sun-fm-trusted-providers";
-        #endregion
+		/// <summary>
+		/// Name of key of property used for list of trusted providers.
+		/// </summary>
+		private const string TrustedProvidersKey = "sun-fm-trusted-providers";
 
-        #region Constructors
-        /// <summary>
-        /// Initializes a new instance of the CircleOfTrust class.
-        /// </summary>
-        /// <param name="fileName">The file used to initiliaze this class.</param>
-        public CircleOfTrust(string fileName)
-        {
-            try
-            {
-                this.Attributes = new NameValueCollection();
+		#endregion
 
-                StreamReader streamReader = new StreamReader(File.OpenRead(fileName));
-                char[] separators = { '=' };
-                while (streamReader.Peek() >= 0)
-                {
-                    string line = streamReader.ReadLine();
-                    string[] tokens = line.Split(separators);
-                    string key = tokens[0];
-                    string value = tokens[1];
-                    this.Attributes[key] = value;
-                }
+		#region Constructors
 
-                streamReader.Close();
-            }
-            catch (DirectoryNotFoundException dnfe)
-            {
-                throw new CircleOfTrustException(Resources.CircleOfTrustDirNotFound, dnfe);
-            }
-            catch (FileNotFoundException fnfe)
-            {
-                throw new CircleOfTrustException(Resources.CircleOfTrustFileNotFound, fnfe);
-            }
-            catch (Exception e)
-            {
-                throw new CircleOfTrustException(Resources.CircleOfTrustUnhandledException, e);
-            }
-        }
-        #endregion
+		/// <summary>
+		/// Initializes a new instance of the CircleOfTrust class.
+		/// </summary>
+		/// <param name="fileName">The file used to initiliaze this class.</param>
+		public CircleOfTrust(string fileName)
+		{
+			try
+			{
+				Attributes = new NameValueCollection();
 
-        #region Properties
-        /// <summary>
-        /// Gets a name-value pair collection of attributes loaded from 
-        /// the fedlet.cot configuration file.
-        /// </summary>
-        public NameValueCollection Attributes { get; private set; }
+				var streamReader = new StreamReader(File.OpenRead(fileName));
+				char[] separators = {'='};
+				while (streamReader.Peek() >= 0)
+				{
+					string line = streamReader.ReadLine();
+					string[] tokens = line.Split(separators);
+					string key = tokens[0];
+					string value = tokens[1];
+					Attributes[key] = value;
+				}
 
-        /// <summary>
-        /// Gets the saml2 reader service url, empty string if not specified,
-        /// null attribute is not found.
-        /// </summary>
-        public Uri ReaderServiceUrl
-        {
-            get
-            {
-                string value = this.Attributes[CircleOfTrust.Saml2ReaderServiceKey];
+				streamReader.Close();
+			}
+			catch (DirectoryNotFoundException dnfe)
+			{
+				throw new CircleOfTrustException(Resources.CircleOfTrustDirNotFound, dnfe);
+			}
+			catch (FileNotFoundException fnfe)
+			{
+				throw new CircleOfTrustException(Resources.CircleOfTrustFileNotFound, fnfe);
+			}
+			catch (Exception e)
+			{
+				throw new CircleOfTrustException(Resources.CircleOfTrustUnhandledException, e);
+			}
+		}
 
-                if (!String.IsNullOrEmpty(value))
-                {
-                    return new Uri(value);
-                }
-                else
-                {
-                    return null;
-                }
-            }
-        }
+		#endregion
 
-        /// <summary>
-        /// Gets the saml2 writer service url, empty string if not specified,
-        /// null attribute is not found.
-        /// </summary>
-        public Uri WriterServiceUrl
-        {
-            get
-            {
-                string value = this.Attributes[CircleOfTrust.Saml2WriterServiceKey];
+		#region Properties
 
-                if (!String.IsNullOrEmpty(value))
-                {
-                    return new Uri(value);
-                }
-                else
-                {
-                    return null;
-                }
-            }
-        }
-        #endregion
+		/// <summary>
+		/// Gets a name-value pair collection of attributes loaded from 
+		/// the fedlet.cot configuration file.
+		/// </summary>
+		public NameValueCollection Attributes { get; private set; }
 
-        #region Methods
+		/// <summary>
+		/// Gets the saml2 reader service url, empty string if not specified,
+		/// null attribute is not found.
+		/// </summary>
+		public Uri ReaderServiceUrl
+		{
+			get
+			{
+				string value = Attributes[Saml2ReaderServiceKey];
 
-        /// <summary>
-        /// Checks service provider and identity provider Entity ID's to
-        /// ensure they are found in the Trusted Providers property.
-        /// </summary>
-        /// <param name="serviceProviderEntityId">Service Provider EntityID</param>
-        /// <param name="identityProviderEntityId">Identity Provider EntityID</param>
-        /// <returns>True if providers are trusted, false otherwise.</returns>
-        public bool AreProvidersTrusted(string serviceProviderEntityId, string identityProviderEntityId) 
-        {
-            bool results = false;
-            string trusted = this.Attributes[CircleOfTrust.TrustedProvidersKey];
+				if (!String.IsNullOrEmpty(value))
+				{
+					return new Uri(value);
+				}
+				else
+				{
+					return null;
+				}
+			}
+		}
 
-            if (trusted != null) 
-            {
-                string[] separator = { "," };
-                string[] values = trusted.Split(separator, StringSplitOptions.RemoveEmptyEntries);
-                StringCollection entities = new StringCollection();
-                for (int i = 0; i < values.Length; i++)
-                {
-                    entities.Add(values[i].Trim());
-                }
+		/// <summary>
+		/// Gets the saml2 writer service url, empty string if not specified,
+		/// null attribute is not found.
+		/// </summary>
+		public Uri WriterServiceUrl
+		{
+			get
+			{
+				string value = Attributes[Saml2WriterServiceKey];
 
-                if (entities.Contains(serviceProviderEntityId) && entities.Contains(identityProviderEntityId))
-                {
-                    results = true;
-                }
-            }
+				if (!String.IsNullOrEmpty(value))
+				{
+					return new Uri(value);
+				}
+				else
+				{
+					return null;
+				}
+			}
+		}
 
-            return results;
-        }
+		#endregion
 
-        #endregion
-    }
+		#region Methods
+
+		/// <summary>
+		/// Checks service provider and identity provider Entity ID's to
+		/// ensure they are found in the Trusted Providers property.
+		/// </summary>
+		/// <param name="serviceProviderEntityId">Service Provider EntityID</param>
+		/// <param name="identityProviderEntityId">Identity Provider EntityID</param>
+		/// <returns>True if providers are trusted, false otherwise.</returns>
+		public bool AreProvidersTrusted(string serviceProviderEntityId, string identityProviderEntityId)
+		{
+			bool results = false;
+			string trusted = Attributes[TrustedProvidersKey];
+
+			if (trusted != null)
+			{
+				string[] separator = {","};
+				string[] values = trusted.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+				var entities = new StringCollection();
+				for (int i = 0; i < values.Length; i++)
+				{
+					entities.Add(values[i].Trim());
+				}
+
+				if (entities.Contains(serviceProviderEntityId) && entities.Contains(identityProviderEntityId))
+				{
+					results = true;
+				}
+			}
+
+			return results;
+		}
+
+		#endregion
+	}
 }

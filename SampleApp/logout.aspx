@@ -27,13 +27,10 @@
  */
 --%>
 <%@ Page Language="C#" Debug="true" %>
-<%@ Import Namespace="System.IO" %>
-<%@ Import Namespace="System.Net" %>
-<%@ Import Namespace="System.Xml" %>
 <%@ Import Namespace="Sun.Identity.Saml2" %>
 <%@ Import Namespace="Sun.Identity.Saml2.Exceptions" %>
 <%
-    /*
+	/*
      * Receives the SAMLResponse for Logout from the Identity Provider or
      * receives the SAMLRequest and sends the SAMLResponse from the 
      * Fedlet to the Identity Provider. If no query parameter is specified,
@@ -53,73 +50,72 @@
      *                     
      */
 
-    ServiceProviderUtility serviceProviderUtility = (ServiceProviderUtility)Cache["spu"];
-    if (serviceProviderUtility == null)
-    {
-        serviceProviderUtility = new ServiceProviderUtility(Context);
-        Cache["spu"] = serviceProviderUtility;
-    }
+	var serviceProviderUtility = (ServiceProviderUtility) Cache["spu"];
+	if (serviceProviderUtility == null)
+ {
+ 	serviceProviderUtility = new ServiceProviderUtility(Context);
+ 	Cache["spu"] = serviceProviderUtility;
+ }
 
-    NameValueCollection parameters = Saml2Utils.GetRequestParameters(Request);
-    string samlRequest = parameters[Saml2Constants.RequestParameter];
-    string samlResponse = parameters[Saml2Constants.ResponseParameter];
-    
-    try
-    {
-        // Perform action based on what was received...
-        if (!String.IsNullOrEmpty(samlResponse))
-        {
-            // process the logout response from SP initiated SLO
-            LogoutResponse logoutResponse = serviceProviderUtility.GetLogoutResponse(Context);
+	NameValueCollection parameters = Saml2Utils.GetRequestParameters(Request);
+	string samlRequest = parameters[Saml2Constants.RequestParameter];
+	string samlResponse = parameters[Saml2Constants.ResponseParameter];
 
-            // do local app specific post-logout behavior
+	try
+ {
+ 	// Perform action based on what was received...
+ 	if (!String.IsNullOrEmpty(samlResponse))
+ 	{
+ 		// process the logout response from SP initiated SLO
+ 		LogoutResponse logoutResponse = serviceProviderUtility.GetLogoutResponse(Context);
 
-            // redirect to either the relay state or the fedlet's default url
-            if (!string.IsNullOrEmpty(parameters[Saml2Constants.RelayState]))
-            {
-                string redirectUrl = parameters[Saml2Constants.RelayState];
-                Saml2Utils.ValidateRelayState(redirectUrl, serviceProviderUtility.ServiceProvider.RelayStateUrlList);
-                Response.Redirect(redirectUrl);
-            }
-            else
-            {
-                string fedletUrl = Request.Url.AbsoluteUri.Substring(0, Request.Url.AbsoluteUri.LastIndexOf("/") + 1);
-                Response.Redirect(fedletUrl);
-            }
-        }
-        else if (!String.IsNullOrEmpty(samlRequest))
-        {
-            // obtain the logout request from IDP initiated SLO
-            LogoutRequest logoutRequest = serviceProviderUtility.GetLogoutRequest(Context);
+ 		// do local app specific post-logout behavior
 
-            // do local app specific logout
+ 		// redirect to either the relay state or the fedlet's default url
+ 		if (!string.IsNullOrEmpty(parameters[Saml2Constants.RelayState]))
+ 		{
+ 			string redirectUrl = parameters[Saml2Constants.RelayState];
+ 			Saml2Utils.ValidateRelayState(redirectUrl, serviceProviderUtility.ServiceProvider.RelayStateUrlList);
+ 			Response.Redirect(redirectUrl);
+ 		}
+ 		else
+ 		{
+ 			string fedletUrl = Request.Url.AbsoluteUri.Substring(0, Request.Url.AbsoluteUri.LastIndexOf("/") + 1);
+ 			Response.Redirect(fedletUrl);
+ 		}
+ 	}
+ 	else if (!String.IsNullOrEmpty(samlRequest))
+ 	{
+ 		// obtain the logout request from IDP initiated SLO
+ 		LogoutRequest logoutRequest = serviceProviderUtility.GetLogoutRequest(Context);
 
-            // send the logout response
-            serviceProviderUtility.SendLogoutResponse(Context, logoutRequest);
-        }
-        else
-        {
-            // obtain logout soap request
-            LogoutRequest logoutRequest = serviceProviderUtility.GetLogoutRequest(Context);
-            
-            // do local app specific logout
-            
-            // respond with the soap logout response
-            serviceProviderUtility.SendSoapLogoutResponse(Context, logoutRequest);
-        }
+ 		// do local app specific logout
 
-    }
-    catch (Saml2Exception se)
-    {
-        Response.StatusCode = 400;
-        Response.StatusDescription = se.Message;
-        Response.End();
-    }
-    catch (ServiceProviderUtilityException spue)
-    {
-        Response.StatusCode = 400;
-        Response.StatusDescription = spue.Message;
-        Response.End();
-    }
-    
+ 		// send the logout response
+ 		serviceProviderUtility.SendLogoutResponse(Context, logoutRequest);
+ 	}
+ 	else
+ 	{
+ 		// obtain logout soap request
+ 		LogoutRequest logoutRequest = serviceProviderUtility.GetLogoutRequest(Context);
+
+ 		// do local app specific logout
+
+ 		// respond with the soap logout response
+ 		serviceProviderUtility.SendSoapLogoutResponse(Context, logoutRequest);
+ 	}
+ }
+ catch (Saml2Exception se)
+ {
+ 	Response.StatusCode = 400;
+ 	Response.StatusDescription = se.Message;
+ 	Response.End();
+ }
+ catch (ServiceProviderUtilityException spue)
+ {
+ 	Response.StatusCode = 400;
+ 	Response.StatusDescription = spue.Message;
+ 	Response.End();
+ }
+
 %>

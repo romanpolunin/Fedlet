@@ -30,44 +30,44 @@ using System.Runtime.Serialization;
 
 namespace Sun.Identity.Saml2.Exceptions
 {
-    /// <summary>
-    /// Exception class specific for CircleOfTrust business logic.
-    /// </summary>
-    [SerializableAttribute]
-    public class CircleOfTrustException : Exception, ISerializable
-    {
-        /// <summary>
-        /// Initializes a new instance of the CircleOfTrustException class.
-        /// </summary>
-        public CircleOfTrustException() : base()
-        {
-        }
+	/// <summary>
+	/// Exception class specific for CircleOfTrust business logic.
+	/// </summary>
+	[SerializableAttribute]
+	public class CircleOfTrustException : Exception, ISerializable
+	{
+		/// <summary>
+		/// Initializes a new instance of the CircleOfTrustException class.
+		/// </summary>
+		public CircleOfTrustException()
+		{
+		}
 
-        /// <summary>
-        /// Initializes a new instance of the CircleOfTrustException class.
-        /// </summary>
-        /// <param name="message">Message associated with this exception.</param>
-        public CircleOfTrustException(string message) : base(message)
-        {
-        }
+		/// <summary>
+		/// Initializes a new instance of the CircleOfTrustException class.
+		/// </summary>
+		/// <param name="message">Message associated with this exception.</param>
+		public CircleOfTrustException(string message) : base(message)
+		{
+		}
 
-        /// <summary>
-        /// Initializes a new instance of the CircleOfTrustException class.
-        /// </summary>
-        /// <param name="message">Message associated with this exception.</param>
-        /// <param name="inner">Inner exception associated with this exception.</param>
-        public CircleOfTrustException(string message, Exception inner) : base(message, inner)
-        {
-        }
+		/// <summary>
+		/// Initializes a new instance of the CircleOfTrustException class.
+		/// </summary>
+		/// <param name="message">Message associated with this exception.</param>
+		/// <param name="inner">Inner exception associated with this exception.</param>
+		public CircleOfTrustException(string message, Exception inner) : base(message, inner)
+		{
+		}
 
-        /// <summary>
-        /// Initializes a new instance of the CircleOfTrustException class.
-        /// </summary>
-        /// <param name="info">SerializationInfo used for base class support.</param>
-        /// <param name="context">StreamingContext used for base class support.</param>
-        protected CircleOfTrustException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
-        {
-        }
-    }
+		/// <summary>
+		/// Initializes a new instance of the CircleOfTrustException class.
+		/// </summary>
+		/// <param name="info">SerializationInfo used for base class support.</param>
+		/// <param name="context">StreamingContext used for base class support.</param>
+		protected CircleOfTrustException(SerializationInfo info, StreamingContext context)
+			: base(info, context)
+		{
+		}
+	}
 }

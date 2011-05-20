@@ -30,47 +30,46 @@ using System.Runtime.Serialization;
 
 namespace Sun.Identity.Saml2.Exceptions
 {
-    /// <summary>
-    /// Exception class specific for IdentityProvider business logic.
-    /// </summary>
-    [SerializableAttribute]
-    public class IdentityProviderException : Exception, ISerializable
-    {
-        /// <summary>
-        /// Initializes a new instance of the IdentityProviderException class.
-        /// </summary>
-        public IdentityProviderException() 
-            : base()
-        {
-        }
+	/// <summary>
+	/// Exception class specific for IdentityProvider business logic.
+	/// </summary>
+	[SerializableAttribute]
+	public class IdentityProviderException : Exception, ISerializable
+	{
+		/// <summary>
+		/// Initializes a new instance of the IdentityProviderException class.
+		/// </summary>
+		public IdentityProviderException()
+		{
+		}
 
-        /// <summary>
-        /// Initializes a new instance of the IdentityProviderException class.
-        /// </summary>
-        /// <param name="message">Message associated with this exception.</param>
-        public IdentityProviderException(string message)
-            : base(message)
-        {
-        }
+		/// <summary>
+		/// Initializes a new instance of the IdentityProviderException class.
+		/// </summary>
+		/// <param name="message">Message associated with this exception.</param>
+		public IdentityProviderException(string message)
+			: base(message)
+		{
+		}
 
-        /// <summary>
-        /// Initializes a new instance of the IdentityProviderException class.
-        /// </summary>
-        /// <param name="message">Message associated with this exception.</param>
-        /// <param name="inner">Inner exception associated with this exception.</param>
-        public IdentityProviderException(string message, Exception inner)
-            : base(message, inner)
-        {
-        }
+		/// <summary>
+		/// Initializes a new instance of the IdentityProviderException class.
+		/// </summary>
+		/// <param name="message">Message associated with this exception.</param>
+		/// <param name="inner">Inner exception associated with this exception.</param>
+		public IdentityProviderException(string message, Exception inner)
+			: base(message, inner)
+		{
+		}
 
-        /// <summary>
-        /// Initializes a new instance of the IdentityProviderException class.
-        /// </summary>
-        /// <param name="info">SerializationInfo used for base class support.</param>
-        /// <param name="context">StreamingContext used for base class support.</param>
-        protected IdentityProviderException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
-        {
-        }
-    }
+		/// <summary>
+		/// Initializes a new instance of the IdentityProviderException class.
+		/// </summary>
+		/// <param name="info">SerializationInfo used for base class support.</param>
+		/// <param name="context">StreamingContext used for base class support.</param>
+		protected IdentityProviderException(SerializationInfo info, StreamingContext context)
+			: base(info, context)
+		{
+		}
+	}
 }

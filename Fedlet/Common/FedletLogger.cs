@@ -30,109 +30,113 @@ using System.Diagnostics;
 
 namespace Sun.Identity.Common
 {
-    /// <summary>
-    /// Simple class for logging events to the Windows Application Log. The
-    /// &lt;appSettings/&gt; section of the Web.config would be the place to
-    /// specify the logging level (either ERROR, WARNING, or INFO).  An
-    /// example Web.config file would have the following:
-    /// <para>
-    ///     &lt;appSettings&gt;
-    ///         &lt;add key="fedletLogLevel" value="info" /&gt;
-    ///     &lt;/appSettings&gt;
-    /// </para>
-    /// </summary>
-    public static class FedletLogger
-    {
-        #region Members
-        /// <summary>
-        /// Parameter key in the &lt;appSettings/&gt; section of the 
-        /// Web.config file of the desired .NET application for specifying 
-        /// the log level. 
-        /// </summary>
-        public const string AppSettingParameter = "fedletLogLevel";
+	/// <summary>
+	/// Simple class for logging events to the Windows Application Log. The
+	/// &lt;appSettings/&gt; section of the Web.config would be the place to
+	/// specify the logging level (either ERROR, WARNING, or INFO).  An
+	/// example Web.config file would have the following:
+	/// <para>
+	///     &lt;appSettings&gt;
+	///         &lt;add key="fedletLogLevel" value="info" /&gt;
+	///     &lt;/appSettings&gt;
+	/// </para>
+	/// </summary>
+	public static class FedletLogger
+	{
+		#region Members
 
-        /// <summary>
-        /// Constant for the ERROR log level.
-        /// </summary>
-        public const string LogLevelError = "ERROR";
+		/// <summary>
+		/// Parameter key in the &lt;appSettings/&gt; section of the 
+		/// Web.config file of the desired .NET application for specifying 
+		/// the log level. 
+		/// </summary>
+		public const string AppSettingParameter = "fedletLogLevel";
 
-        /// <summary>
-        /// Constant for the INFO log level.
-        /// </summary>
-        public const string LogLevelInfo = "INFO";
+		/// <summary>
+		/// Constant for the ERROR log level.
+		/// </summary>
+		public const string LogLevelError = "ERROR";
 
-        /// <summary>
-        /// Constant for the WARNING log level.
-        /// </summary>
-        public const string LogLevelWarning = "WARNING";
+		/// <summary>
+		/// Constant for the INFO log level.
+		/// </summary>
+		public const string LogLevelInfo = "INFO";
 
-        /// <summary>
-        /// Constant that specifies the Windows event log to use, in this
-        /// case, the Application log.
-        /// </summary>
-        public const string Log = "Application";
+		/// <summary>
+		/// Constant for the WARNING log level.
+		/// </summary>
+		public const string LogLevelWarning = "WARNING";
 
-        /// <summary>
-        /// Constant that specifies the source of the log entry, in this
-        /// case, the Fedlet.
-        /// </summary>
-        public const string LogSource = "Fedlet";
-        #endregion
+		/// <summary>
+		/// Constant that specifies the Windows event log to use, in this
+		/// case, the Application log.
+		/// </summary>
+		public const string Log = "Application";
 
-        #region Methods
-        /// <summary>
-        /// Method to write an error message to the event log.
-        /// </summary>
-        /// <param name="message">Message to be written.</param>
-        public static void Error(string message)
-        {
-            FedletLogger.LogMessage(message, EventLogEntryType.Error);
-        }
+		/// <summary>
+		/// Constant that specifies the source of the log entry, in this
+		/// case, the Fedlet.
+		/// </summary>
+		public const string LogSource = "Fedlet";
 
-        /// <summary>
-        /// Method to write an information message to the event log.
-        /// </summary>
-        /// <param name="message">Message to be written.</param>
-        public static void Info(string message)
-        {
-            FedletLogger.LogMessage(message, EventLogEntryType.Information);
-        }
+		#endregion
 
-        /// <summary>
-        /// Method to write a warning message to the event log.
-        /// </summary>
-        /// <param name="message">Message to be written.</param>
-        public static void Warning(string message)
-        {
-            FedletLogger.LogMessage(message, EventLogEntryType.Warning);
-        }
+		#region Methods
 
-        /// <summary>
-        /// Method to write a message with the given entry type.  Currently
-        /// only Info, Warning, and Error are supported from the default
-        /// messages available from the framework.
-        /// </summary>
-        /// <see cref="System.Diagnostics.EventLogEntryType"/>
-        /// <param name="message">Message to be written.</param>
-        /// <param name="entryType">
-        /// EventLogEntryType to associate with message.
-        /// </param>
-        private static void LogMessage(string message, EventLogEntryType entryType)
-        {
-            string logLevel = ConfigurationSettings.AppSettings[FedletLogger.AppSettingParameter];
+		/// <summary>
+		/// Method to write an error message to the event log.
+		/// </summary>
+		/// <param name="message">Message to be written.</param>
+		public static void Error(string message)
+		{
+			LogMessage(message, EventLogEntryType.Error);
+		}
 
-            if (!string.IsNullOrEmpty(logLevel))
-            {
-                logLevel = logLevel.ToUpperInvariant();
+		/// <summary>
+		/// Method to write an information message to the event log.
+		/// </summary>
+		/// <param name="message">Message to be written.</param>
+		public static void Info(string message)
+		{
+			LogMessage(message, EventLogEntryType.Information);
+		}
 
-                if ((logLevel == FedletLogger.LogLevelError && entryType == EventLogEntryType.Error)
-                    || (logLevel == FedletLogger.LogLevelWarning && entryType <= EventLogEntryType.Warning)
-                    || (logLevel == FedletLogger.LogLevelInfo && entryType <= EventLogEntryType.Information))
-                {
-                    EventLog.WriteEntry(FedletLogger.LogSource, message, entryType);
-                }
-            }
-        }
-        #endregion
-    }
+		/// <summary>
+		/// Method to write a warning message to the event log.
+		/// </summary>
+		/// <param name="message">Message to be written.</param>
+		public static void Warning(string message)
+		{
+			LogMessage(message, EventLogEntryType.Warning);
+		}
+
+		/// <summary>
+		/// Method to write a message with the given entry type.  Currently
+		/// only Info, Warning, and Error are supported from the default
+		/// messages available from the framework.
+		/// </summary>
+		/// <see cref="System.Diagnostics.EventLogEntryType"/>
+		/// <param name="message">Message to be written.</param>
+		/// <param name="entryType">
+		/// EventLogEntryType to associate with message.
+		/// </param>
+		private static void LogMessage(string message, EventLogEntryType entryType)
+		{
+			string logLevel = ConfigurationSettings.AppSettings[AppSettingParameter];
+
+			if (!string.IsNullOrEmpty(logLevel))
+			{
+				logLevel = logLevel.ToUpperInvariant();
+
+				if ((logLevel == LogLevelError && entryType == EventLogEntryType.Error)
+				    || (logLevel == LogLevelWarning && entryType <= EventLogEntryType.Warning)
+				    || (logLevel == LogLevelInfo && entryType <= EventLogEntryType.Information))
+				{
+					EventLog.WriteEntry(LogSource, message, entryType);
+				}
+			}
+		}
+
+		#endregion
+	}
 }

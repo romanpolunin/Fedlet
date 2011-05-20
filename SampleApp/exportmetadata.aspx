@@ -27,14 +27,11 @@
  */
 --%>
 <%@ Page Language="C#" %>
-<%@ Import Namespace="System.Security.Cryptography" %>
-<%@ Import Namespace="System.Security.Cryptography.X509Certificates" %>
-<%@ Import Namespace="System.Net" %>
-<%@ Import Namespace="System.Xml" %>
 <%@ Import Namespace="Sun.Identity.Saml2" %>
 <%@ Import Namespace="Sun.Identity.Saml2.Exceptions" %>
+<%@ Import Namespace="System.Net" %>
 <%
-    /*
+	/*
      * Exports the metadata for the hosted service provider (aka .NET Fedlet)
      * 
      * Following are the list of supported query parameters:
@@ -46,24 +43,24 @@
      *                    certificates are not, by default, configured.
      */
 
-    try
-    {
-        ServiceProviderUtility serviceProviderUtility = (ServiceProviderUtility)Cache["spu"];
-        if (serviceProviderUtility == null)
-        {
-            serviceProviderUtility = new ServiceProviderUtility(Context);
-            Cache["spu"] = serviceProviderUtility;
-        }
+	try
+ {
+ 	var serviceProviderUtility = (ServiceProviderUtility) Cache["spu"];
+ 	if (serviceProviderUtility == null)
+ 	{
+ 		serviceProviderUtility = new ServiceProviderUtility(Context);
+ 		Cache["spu"] = serviceProviderUtility;
+ 	}
 
-        bool signMetadata = Saml2Utils.GetBoolean(Request.Params["sign"]);
-        
-        Response.ContentType = "text/xml";
-        Response.Write(serviceProviderUtility.ServiceProvider.GetExportableMetadata(signMetadata));
-    }
-    catch (ServiceProviderException spue)
-    {
-        Response.StatusCode = (int) HttpStatusCode.InternalServerError;
-        Response.StatusDescription = spue.Message;
-        Response.End();
-    }
+ 	bool signMetadata = Saml2Utils.GetBoolean(Request.Params["sign"]);
+
+ 	Response.ContentType = "text/xml";
+ 	Response.Write(serviceProviderUtility.ServiceProvider.GetExportableMetadata(signMetadata));
+ }
+ catch (ServiceProviderException spue)
+ {
+ 	Response.StatusCode = (int) HttpStatusCode.InternalServerError;
+ 	Response.StatusDescription = spue.Message;
+ 	Response.End();
+ }
 %>

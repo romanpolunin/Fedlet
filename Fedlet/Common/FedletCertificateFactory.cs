@@ -28,69 +28,70 @@
 using System.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Sun.Identity.Common;
 using Sun.Identity.Properties;
 
 namespace Sun.Identity.Common
 {
-    /// <summary>
-    /// Class for performing X509 certificate related tasks.
-    /// </summary>
-    public static class FedletCertificateFactory
-    {
-        #region Methods
-        /// <summary>
-        /// Finds the X509 certificate in this machine's key store.
-        /// </summary>
-        /// <param name="friendlyName">
-        /// Friendly name of the certificate
-        /// </param>
-        /// <returns>
-        /// X509Certificate2 object that matches the given friendly name.
-        /// </returns>
-        public static X509Certificate2 GetCertificateByFriendlyName(string friendlyName)
-        {
-            X509Certificate2 cert = null;
-            X509Store store = new X509Store(StoreLocation.LocalMachine);
-            string errorMessage = null;
+	/// <summary>
+	/// Class for performing X509 certificate related tasks.
+	/// </summary>
+	public static class FedletCertificateFactory
+	{
+		#region Methods
 
-            try
-            {
-                store.Open(OpenFlags.ReadOnly);
+		/// <summary>
+		/// Finds the X509 certificate in this machine's key store.
+		/// </summary>
+		/// <param name="friendlyName">
+		/// Friendly name of the certificate
+		/// </param>
+		/// <returns>
+		/// X509Certificate2 object that matches the given friendly name.
+		/// </returns>
+		public static X509Certificate2 GetCertificateByFriendlyName(string friendlyName)
+		{
+			X509Certificate2 cert = null;
+			var store = new X509Store(StoreLocation.LocalMachine);
+			string errorMessage = null;
 
-                X509Certificate2Enumerator certEnum = store.Certificates.GetEnumerator();
-                while (certEnum.MoveNext())
-                {
-                    if (certEnum.Current.FriendlyName == friendlyName)
-                    {
-                        cert = certEnum.Current;
-                        break;
-                    }
-                }
-            }
-            catch (CryptographicException ce)
-            {
-                errorMessage = ce.Message;
-            }
-            catch (SecurityException se)
-            {
-                errorMessage = se.Message;
-            }
-            finally
-            {
-                if (store != null)
-                {
-                    store.Close();
-                }
-            }
+			try
+			{
+				store.Open(OpenFlags.ReadOnly);
 
-            if (errorMessage != null)
-            {
-                FedletLogger.Warning(Resources.FedletCertificateFactoryGetByFriendlyNameFailed + " " + errorMessage);
-            }
+				X509Certificate2Enumerator certEnum = store.Certificates.GetEnumerator();
+				while (certEnum.MoveNext())
+				{
+					if (certEnum.Current.FriendlyName == friendlyName)
+					{
+						cert = certEnum.Current;
+						break;
+					}
+				}
+			}
+			catch (CryptographicException ce)
+			{
+				errorMessage = ce.Message;
+			}
+			catch (SecurityException se)
+			{
+				errorMessage = se.Message;
+			}
+			finally
+			{
+				if (store != null)
+				{
+					store.Close();
+				}
+			}
 
-            return cert;
-        }
-        #endregion
-    }
+			if (errorMessage != null)
+			{
+				FedletLogger.Warning(Resources.FedletCertificateFactoryGetByFriendlyNameFailed + " " + errorMessage);
+			}
+
+			return cert;
+		}
+
+		#endregion
+	}
 }

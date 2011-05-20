@@ -31,94 +31,98 @@ using System.Xml.XPath;
 
 namespace Sun.Identity.Saml2
 {
-    /// <summary>
-    /// Class representing the SAMLv2 ArtifactResolve message for use in the
-    /// artifact resolution profile.
-    /// </summary>
-    public class ArtifactResolve
-    {
-        #region Members
-        /// <summary>
-        /// Namespace Manager for this class.
-        /// </summary>
-        private XmlNamespaceManager nsMgr;
+	/// <summary>
+	/// Class representing the SAMLv2 ArtifactResolve message for use in the
+	/// artifact resolution profile.
+	/// </summary>
+	public class ArtifactResolve
+	{
+		#region Members
 
-        /// <summary>
-        /// XML representation of class.
-        /// </summary>
-        private XmlDocument xml;
-        #endregion
+		/// <summary>
+		/// Namespace Manager for this class.
+		/// </summary>
+		private readonly XmlNamespaceManager nsMgr;
 
-        #region Constructor
-        /// <summary>
-        /// Initializes a new instance of the ArtifactResolve class.
-        /// </summary>
-        /// <param name="serviceProvider">Service Provider to issue this request</param>
-        /// <param name="artifact">SAMLv2 Artifact</param>
-        public ArtifactResolve(ServiceProvider serviceProvider, Artifact artifact)
-        {
-            this.xml = new XmlDocument();
-            this.xml.PreserveWhitespace = true;
+		/// <summary>
+		/// XML representation of class.
+		/// </summary>
+		private readonly XmlDocument xml;
 
-            this.nsMgr = new XmlNamespaceManager(this.xml.NameTable);
-            this.nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
-            this.nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
+		#endregion
 
-            this.Id = Saml2Utils.GenerateId();
-            this.IssueInstant = Saml2Utils.GenerateIssueInstant();
-            this.Issuer = serviceProvider.EntityId;
-            this.Artifact = artifact;
+		#region Constructor
 
-            StringBuilder rawXml = new StringBuilder();
-            rawXml.Append("<samlp:ArtifactResolve");
-            rawXml.Append(" xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\"");
-            rawXml.Append(" xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\"");
-            rawXml.Append(" ID=\"" + this.Id + "\"");
-            rawXml.Append(" Version=\"2.0\"");
-            rawXml.Append(" IssueInstant=\"" + this.IssueInstant + "\"");
-            rawXml.Append(">");
-            rawXml.Append(" <saml:Issuer>" + this.Issuer + "</saml:Issuer>");
-            rawXml.Append(" <samlp:Artifact>" + this.Artifact.ToString() + "</samlp:Artifact>");
-            rawXml.Append("</samlp:ArtifactResolve>");
+		/// <summary>
+		/// Initializes a new instance of the ArtifactResolve class.
+		/// </summary>
+		/// <param name="serviceProvider">Service Provider to issue this request</param>
+		/// <param name="artifact">SAMLv2 Artifact</param>
+		public ArtifactResolve(ServiceProvider serviceProvider, Artifact artifact)
+		{
+			xml = new XmlDocument();
+			xml.PreserveWhitespace = true;
 
-            this.xml.LoadXml(rawXml.ToString());
-        }
-        #endregion
+			nsMgr = new XmlNamespaceManager(xml.NameTable);
+			nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
+			nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
 
-        #region Properties
-        /// <summary>
-        /// Gets the Artifact.
-        /// </summary>
-        public Artifact Artifact { get; private set; }
+			Id = Saml2Utils.GenerateId();
+			IssueInstant = Saml2Utils.GenerateIssueInstant();
+			Issuer = serviceProvider.EntityId;
+			Artifact = artifact;
 
-        /// <summary>
-        /// Gets the ID.
-        /// </summary>
-        public string Id { get; private set; }
+			var rawXml = new StringBuilder();
+			rawXml.Append("<samlp:ArtifactResolve");
+			rawXml.Append(" xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\"");
+			rawXml.Append(" xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\"");
+			rawXml.Append(" ID=\"" + Id + "\"");
+			rawXml.Append(" Version=\"2.0\"");
+			rawXml.Append(" IssueInstant=\"" + IssueInstant + "\"");
+			rawXml.Append(">");
+			rawXml.Append(" <saml:Issuer>" + Issuer + "</saml:Issuer>");
+			rawXml.Append(" <samlp:Artifact>" + Artifact + "</samlp:Artifact>");
+			rawXml.Append("</samlp:ArtifactResolve>");
 
-        /// <summary>
-        /// Gets the Issuer.
-        /// </summary>
-        public string Issuer { get; private set; }
+			xml.LoadXml(rawXml.ToString());
+		}
 
-        /// <summary>
-        /// Gets the IssueInstant.
-        /// </summary>
-        public string IssueInstant { get; private set; }
+		#endregion
 
-        /// <summary>
-        /// Gets the XML representation.
-        /// </summary>
-        public IXPathNavigable XmlDom
-        {
-            get
-            {
-                return this.xml;
-            }
-        }
-        #endregion
+		#region Properties
 
-        #region Methods
-        #endregion
-    }
+		/// <summary>
+		/// Gets the Artifact.
+		/// </summary>
+		public Artifact Artifact { get; private set; }
+
+		/// <summary>
+		/// Gets the ID.
+		/// </summary>
+		public string Id { get; private set; }
+
+		/// <summary>
+		/// Gets the Issuer.
+		/// </summary>
+		public string Issuer { get; private set; }
+
+		/// <summary>
+		/// Gets the IssueInstant.
+		/// </summary>
+		public string IssueInstant { get; private set; }
+
+		/// <summary>
+		/// Gets the XML representation.
+		/// </summary>
+		public IXPathNavigable XmlDom
+		{
+			get { return xml; }
+		}
+
+		#endregion
+
+		#region Methods
+
+		#endregion
+	}
 }

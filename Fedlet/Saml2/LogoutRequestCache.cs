@@ -32,128 +32,134 @@ using Sun.Identity.Common;
 
 namespace Sun.Identity.Saml2
 {
-    /// <summary>
-    /// <para>
-    /// Class managing the last X LogoutRequests associated with the
-    /// user's session.  The collection of LogoutRequests are managed within
-    /// a Queue added to the user's session to facilitate FIFO and allow
-    /// for the ServiceProviderUtility to correctly perform validation
-    /// on the LogoutRequests containing a InResponseTo attribute.
-    /// </para>
-    /// <para>
-    /// See the MaximumRequestsStored variable for the value of X.
-    /// </para>
-    /// </summary>
-    public static class LogoutRequestCache
-    {
-        #region Members
-        /// <summary>
-        /// Name of session attribute for tracking user's LogoutRequests.
-        /// </summary>
-        private const string LogoutRequestSessionAttribute = "_logoutRequests";
+	/// <summary>
+	/// <para>
+	/// Class managing the last X LogoutRequests associated with the
+	/// user's session.  The collection of LogoutRequests are managed within
+	/// a Queue added to the user's session to facilitate FIFO and allow
+	/// for the ServiceProviderUtility to correctly perform validation
+	/// on the LogoutRequests containing a InResponseTo attribute.
+	/// </para>
+	/// <para>
+	/// See the MaximumRequestsStored variable for the value of X.
+	/// </para>
+	/// </summary>
+	public static class LogoutRequestCache
+	{
+		#region Members
 
-        /// <summary>
-        /// Constant to define the maximum number of LogoutRequests to be
-        /// stored in the user's session.
-        /// </summary>
-        private const int MaximumRequestsStored = 5;
-        #endregion
+		/// <summary>
+		/// Name of session attribute for tracking user's LogoutRequests.
+		/// </summary>
+		private const string LogoutRequestSessionAttribute = "_logoutRequests";
 
-        #region Constructor
-        #endregion
+		/// <summary>
+		/// Constant to define the maximum number of LogoutRequests to be
+		/// stored in the user's session.
+		/// </summary>
+		private const int MaximumRequestsStored = 5;
 
-        #region Properties
-        #endregion
+		#endregion
 
-        #region Methods
-        /// <summary>
-        /// Retrieves the queue containing the collection of stored previously
-        /// sent LogoutRequests. This collection is represented as a queue and 
-        /// is attached to the user's session.
-        /// </summary>
-        /// <param name="context">
-        /// HttpContext containing session, request, and response objects.
-        /// </param>
-        /// <returns>
-        /// Queue of previously sent LogoutRequests, null otherwise.
-        /// </returns>
-        internal static Queue GetSentLogoutRequests(HttpContext context)
-        {
-            return (Queue)context.Session[LogoutRequestCache.LogoutRequestSessionAttribute];
-        }
+		#region Constructor
 
-        /// <summary>
-        /// Adds the specified LogoutRequest to the collection of previously 
-        /// sent requests, maintaining the imposed limit as defined by 
-        /// MaximumRequestsStored.  This collection is represented as a
-        /// queue and is attached to the user's session.
-        /// </summary>
-        /// <param name="context">
-        /// HttpContext containing session, request, and response objects.
-        /// </param>
-        /// <param name="logoutRequest">
-        /// LogoutRequest to add to the collection.
-        /// </param>
-        internal static void AddSentLogoutRequest(HttpContext context, LogoutRequest logoutRequest)
-        {
-            Queue logoutRequests = LogoutRequestCache.GetSentLogoutRequests(context);
+		#endregion
 
-            if (logoutRequests == null)
-            {
-                logoutRequests = new Queue(LogoutRequestCache.MaximumRequestsStored);
-            }
+		#region Properties
 
-            if (logoutRequests.Count == LogoutRequestCache.MaximumRequestsStored)
-            {
-                logoutRequests.Dequeue();
-            }
+		#endregion
 
-            logoutRequests.Enqueue(logoutRequest);
-            context.Session[LogoutRequestCache.LogoutRequestSessionAttribute] = logoutRequests;
+		#region Methods
 
-            StringBuilder message = new StringBuilder();
-            message.Append("LogoutRequestCache:\r\n");
-            IEnumerator i = logoutRequests.GetEnumerator();
-            while (i.MoveNext())
-            {
-                LogoutRequest l = (LogoutRequest)i.Current;
-                message.Append(l.Id + "\r\n");
-            }
+		/// <summary>
+		/// Retrieves the queue containing the collection of stored previously
+		/// sent LogoutRequests. This collection is represented as a queue and 
+		/// is attached to the user's session.
+		/// </summary>
+		/// <param name="context">
+		/// HttpContext containing session, request, and response objects.
+		/// </param>
+		/// <returns>
+		/// Queue of previously sent LogoutRequests, null otherwise.
+		/// </returns>
+		internal static Queue GetSentLogoutRequests(HttpContext context)
+		{
+			return (Queue) context.Session[LogoutRequestSessionAttribute];
+		}
 
-            FedletLogger.Info(message.ToString());
-        }
+		/// <summary>
+		/// Adds the specified LogoutRequest to the collection of previously 
+		/// sent requests, maintaining the imposed limit as defined by 
+		/// MaximumRequestsStored.  This collection is represented as a
+		/// queue and is attached to the user's session.
+		/// </summary>
+		/// <param name="context">
+		/// HttpContext containing session, request, and response objects.
+		/// </param>
+		/// <param name="logoutRequest">
+		/// LogoutRequest to add to the collection.
+		/// </param>
+		internal static void AddSentLogoutRequest(HttpContext context, LogoutRequest logoutRequest)
+		{
+			Queue logoutRequests = GetSentLogoutRequests(context);
 
-        /// <summary>
-        /// Removes the LogoutRequest from the collection of previously 
-        /// sent requests based on the provided LogoutRequest.Id value.
-        /// This collection is represented as a queue and is attached to 
-        /// the user's session.
-        /// </summary>
-        /// <param name="context">
-        /// HttpContext containing session, request, and response objects.
-        /// </param>
-        /// <param name="logoutRequestId">
-        /// ID of the LogoutRequest to be removed from the cache.
-        /// </param>
-        internal static void RemoveSentLogoutRequest(HttpContext context, string logoutRequestId)
-        {
-            Queue originalCache = LogoutRequestCache.GetSentLogoutRequests(context);
+			if (logoutRequests == null)
+			{
+				logoutRequests = new Queue(MaximumRequestsStored);
+			}
 
-            if (originalCache != null)
-            {
-                Queue revisedCache = new Queue();
-                while (originalCache.Count > 0)
-                {
-                    LogoutRequest temp = (LogoutRequest)originalCache.Dequeue();
-                    if (temp.Id != logoutRequestId)
-                    {
-                        revisedCache.Enqueue(temp);
-                    }
-                }
+			if (logoutRequests.Count == MaximumRequestsStored)
+			{
+				logoutRequests.Dequeue();
+			}
 
-                context.Session[LogoutRequestCache.LogoutRequestSessionAttribute] = revisedCache;
-            }
-        }
-        #endregion
-    }
+			logoutRequests.Enqueue(logoutRequest);
+			context.Session[LogoutRequestSessionAttribute] = logoutRequests;
+
+			var message = new StringBuilder();
+			message.Append("LogoutRequestCache:\r\n");
+			IEnumerator i = logoutRequests.GetEnumerator();
+			while (i.MoveNext())
+			{
+				var l = (LogoutRequest) i.Current;
+				message.Append(l.Id + "\r\n");
+			}
+
+			FedletLogger.Info(message.ToString());
+		}
+
+		/// <summary>
+		/// Removes the LogoutRequest from the collection of previously 
+		/// sent requests based on the provided LogoutRequest.Id value.
+		/// This collection is represented as a queue and is attached to 
+		/// the user's session.
+		/// </summary>
+		/// <param name="context">
+		/// HttpContext containing session, request, and response objects.
+		/// </param>
+		/// <param name="logoutRequestId">
+		/// ID of the LogoutRequest to be removed from the cache.
+		/// </param>
+		internal static void RemoveSentLogoutRequest(HttpContext context, string logoutRequestId)
+		{
+			Queue originalCache = GetSentLogoutRequests(context);
+
+			if (originalCache != null)
+			{
+				var revisedCache = new Queue();
+				while (originalCache.Count > 0)
+				{
+					var temp = (LogoutRequest) originalCache.Dequeue();
+					if (temp.Id != logoutRequestId)
+					{
+						revisedCache.Enqueue(temp);
+					}
+				}
+
+				context.Session[LogoutRequestSessionAttribute] = revisedCache;
+			}
+		}
+
+		#endregion
+	}
 }

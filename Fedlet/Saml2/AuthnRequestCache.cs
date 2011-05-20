@@ -32,124 +32,130 @@ using Sun.Identity.Common;
 
 namespace Sun.Identity.Saml2
 {
-    /// <summary>
-    /// <para>
-    /// Class managing the last X AuthnRequests associated with the
-    /// user's session.  The collection of AuthnRequests are managed within
-    /// a Queue added to the user's session to facilitate FIFO and allow
-    /// for the ServiceProviderUtility to correctly perform validation
-    /// on the AuthnResponse containing a InResponseTo attribute.
-    /// </para>
-    /// <para>
-    /// See the MaximumRequestsStored variable for the value of X.
-    /// </para>
-    /// </summary>
-    public static class AuthnRequestCache
-    {
-        #region Members
-        /// <summary>
-        /// Name of session attribute for tracking user's AuthnRequests.
-        /// </summary>
-        private const string AuthnRequestSessionAttribute = "_authnRequests";
+	/// <summary>
+	/// <para>
+	/// Class managing the last X AuthnRequests associated with the
+	/// user's session.  The collection of AuthnRequests are managed within
+	/// a Queue added to the user's session to facilitate FIFO and allow
+	/// for the ServiceProviderUtility to correctly perform validation
+	/// on the AuthnResponse containing a InResponseTo attribute.
+	/// </para>
+	/// <para>
+	/// See the MaximumRequestsStored variable for the value of X.
+	/// </para>
+	/// </summary>
+	public static class AuthnRequestCache
+	{
+		#region Members
 
-        /// <summary>
-        /// Constant to define the maximum number of AuthnRequests to be
-        /// stored in the user's session.
-        /// </summary>
-        private const int MaximumRequestsStored = 5;
-        #endregion
+		/// <summary>
+		/// Name of session attribute for tracking user's AuthnRequests.
+		/// </summary>
+		private const string AuthnRequestSessionAttribute = "_authnRequests";
 
-        #region Constructor
-        #endregion
+		/// <summary>
+		/// Constant to define the maximum number of AuthnRequests to be
+		/// stored in the user's session.
+		/// </summary>
+		private const int MaximumRequestsStored = 5;
 
-        #region Properties
-        #endregion
+		#endregion
 
-        #region Methods
-        /// <summary>
-        /// Retrieves the queue containing the collection of stored previously
-        /// sent AuthnRequests. This collection is represented as a queue and 
-        /// is attached to the user's session.
-        /// </summary>
-        /// <param name="context">
-        /// HttpContext containing session, request, and response objects.
-        /// </param>
-        /// <returns>Queue of previously sent AuthnRequests, null otherwise.</returns>
-        internal static Queue GetSentAuthnRequests(HttpContext context)
-        {
-            return (Queue)context.Session[AuthnRequestCache.AuthnRequestSessionAttribute];
-        }
+		#region Constructor
 
-        /// <summary>
-        /// Adds the specified AuthnRequest to the collection of previously 
-        /// sent requests, maintaining the imposed limit as defined by 
-        /// MaximumRequestsStored.  This collection is represented as a
-        /// queue and is attached to the user's session.
-        /// </summary>
-        /// <param name="context">
-        /// HttpContext containing session, request, and response objects.
-        /// </param>
-        /// <param name="authnRequest">AuthnRequest to add to the collection.</param>
-        internal static void AddSentAuthnRequest(HttpContext context, AuthnRequest authnRequest)
-        {
-            Queue authnRequests = AuthnRequestCache.GetSentAuthnRequests(context);
+		#endregion
 
-            if (authnRequests == null)
-            {
-                authnRequests = new Queue(AuthnRequestCache.MaximumRequestsStored);
-            }
+		#region Properties
 
-            if (authnRequests.Count == AuthnRequestCache.MaximumRequestsStored)
-            {
-                authnRequests.Dequeue();
-            }
+		#endregion
 
-            authnRequests.Enqueue(authnRequest);
-            context.Session[AuthnRequestCache.AuthnRequestSessionAttribute] = authnRequests;
+		#region Methods
 
-            StringBuilder message = new StringBuilder();
-            message.Append("AuthnRequestsCache:\r\n");
-            IEnumerator i = authnRequests.GetEnumerator();
-            while (i.MoveNext())
-            {
-                AuthnRequest a = (AuthnRequest)i.Current;
-                message.Append(a.Id + "\r\n");
-            }
+		/// <summary>
+		/// Retrieves the queue containing the collection of stored previously
+		/// sent AuthnRequests. This collection is represented as a queue and 
+		/// is attached to the user's session.
+		/// </summary>
+		/// <param name="context">
+		/// HttpContext containing session, request, and response objects.
+		/// </param>
+		/// <returns>Queue of previously sent AuthnRequests, null otherwise.</returns>
+		internal static Queue GetSentAuthnRequests(HttpContext context)
+		{
+			return (Queue) context.Session[AuthnRequestSessionAttribute];
+		}
 
-            FedletLogger.Info(message.ToString());
-        }
+		/// <summary>
+		/// Adds the specified AuthnRequest to the collection of previously 
+		/// sent requests, maintaining the imposed limit as defined by 
+		/// MaximumRequestsStored.  This collection is represented as a
+		/// queue and is attached to the user's session.
+		/// </summary>
+		/// <param name="context">
+		/// HttpContext containing session, request, and response objects.
+		/// </param>
+		/// <param name="authnRequest">AuthnRequest to add to the collection.</param>
+		internal static void AddSentAuthnRequest(HttpContext context, AuthnRequest authnRequest)
+		{
+			Queue authnRequests = GetSentAuthnRequests(context);
 
-        /// <summary>
-        /// Removes the AuthnRequest from the collection of previously 
-        /// sent requests based on the provided AuthnRequest.Id value.
-        /// This collection is represented as a queue and is attached to 
-        /// the user's session.
-        /// </summary>
-        /// <param name="context">
-        /// HttpContext containing session, request, and response objects.
-        /// </param>
-        /// <param name="authnRequestId">
-        /// ID of the AuthnRequest to be removed from the cache.
-        /// </param>
-        internal static void RemoveSentAuthnRequest(HttpContext context, string authnRequestId)
-        {
-            Queue originalCache = AuthnRequestCache.GetSentAuthnRequests(context);
+			if (authnRequests == null)
+			{
+				authnRequests = new Queue(MaximumRequestsStored);
+			}
 
-            if (originalCache != null)
-            {
-                Queue revisedCache = new Queue();
-                while (originalCache.Count > 0)
-                {
-                    AuthnRequest temp = (AuthnRequest)originalCache.Dequeue();
-                    if (temp.Id != authnRequestId)
-                    {
-                        revisedCache.Enqueue(temp);
-                    }
-                }
+			if (authnRequests.Count == MaximumRequestsStored)
+			{
+				authnRequests.Dequeue();
+			}
 
-                context.Session[AuthnRequestCache.AuthnRequestSessionAttribute] = revisedCache;
-            }
-        }
-        #endregion
-    }
+			authnRequests.Enqueue(authnRequest);
+			context.Session[AuthnRequestSessionAttribute] = authnRequests;
+
+			var message = new StringBuilder();
+			message.Append("AuthnRequestsCache:\r\n");
+			IEnumerator i = authnRequests.GetEnumerator();
+			while (i.MoveNext())
+			{
+				var a = (AuthnRequest) i.Current;
+				message.Append(a.Id + "\r\n");
+			}
+
+			FedletLogger.Info(message.ToString());
+		}
+
+		/// <summary>
+		/// Removes the AuthnRequest from the collection of previously 
+		/// sent requests based on the provided AuthnRequest.Id value.
+		/// This collection is represented as a queue and is attached to 
+		/// the user's session.
+		/// </summary>
+		/// <param name="context">
+		/// HttpContext containing session, request, and response objects.
+		/// </param>
+		/// <param name="authnRequestId">
+		/// ID of the AuthnRequest to be removed from the cache.
+		/// </param>
+		internal static void RemoveSentAuthnRequest(HttpContext context, string authnRequestId)
+		{
+			Queue originalCache = GetSentAuthnRequests(context);
+
+			if (originalCache != null)
+			{
+				var revisedCache = new Queue();
+				while (originalCache.Count > 0)
+				{
+					var temp = (AuthnRequest) originalCache.Dequeue();
+					if (temp.Id != authnRequestId)
+					{
+						revisedCache.Enqueue(temp);
+					}
+				}
+
+				context.Session[AuthnRequestSessionAttribute] = revisedCache;
+			}
+		}
+
+		#endregion
+	}
 }
