@@ -4,7 +4,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fedlet", "Fedlet\Fedlet.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleApp", "SampleApp\SampleApp.csproj", "{3009B410-67A7-42A5-A574-C806C3EF90AC}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{BF84EE09-3AB5-472C-96CC-1247A0C74C8C}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BF84EE09-3AB5-472C-96CC-1247A0C74C8C}"
 	ProjectSection(SolutionItems) = preProject
 		README = README
 	EndProjectSection
