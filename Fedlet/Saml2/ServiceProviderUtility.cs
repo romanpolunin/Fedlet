@@ -42,12 +42,12 @@ using Sun.Identity.Saml2.Exceptions;
 
 namespace Sun.Identity.Saml2
 {
-	/// <summary>
+    /// <summary>
 	/// Utility class to encapsulate configuration and metadata management
 	/// along with convenience methods for retrieveing SAML2 objects.
 	/// </summary>
-	public class ServiceProviderUtility
-	{
+	public class ServiceProviderUtility : IServiceProviderUtility
+    {
 		#region Members
 
 		/// <summary>
@@ -227,15 +227,8 @@ namespace Sun.Identity.Saml2
 			ICollection authnRequests = AuthnRequestCache.GetSentAuthnRequests(context);
 			HttpRequestBase request = context.Request;
 
-			// Check if a saml response was received...
-			if (string.IsNullOrEmpty(request[Saml2Constants.ResponseParameter])
-			    && string.IsNullOrEmpty(request[Saml2Constants.ArtifactParameter]))
-			{
-				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityNoSamlResponseReceived);
-			}
-
 			// Obtain AuthnResponse object from either HTTP-POST or HTTP-Artifact
-			if (request[Saml2Constants.ResponseParameter] != null)
+			if (!string.IsNullOrWhiteSpace(request[Saml2Constants.ResponseParameter]))
 			{
 				string samlResponse = Saml2Utils.ConvertFromBase64(request[Saml2Constants.ResponseParameter]);
 				authnResponse = new AuthnResponse(samlResponse);
@@ -243,7 +236,7 @@ namespace Sun.Identity.Saml2
 				var xmlDoc = (XmlDocument) authnResponse.XmlDom;
                 logger.Info("AuthnResponse:\r\n{0}", xmlDoc.OuterXml);
 			}
-			else if (request[Saml2Constants.ArtifactParameter] != null)
+			else if (!string.IsNullOrWhiteSpace(request[Saml2Constants.ArtifactParameter]))
 			{
 				var artifact = new Artifact(request[Saml2Constants.ArtifactParameter]);
 				artifactResponse = GetArtifactResponse(artifact);
@@ -251,6 +244,10 @@ namespace Sun.Identity.Saml2
 
 				var xmlDoc = (XmlDocument) artifactResponse.XmlDom;
                 logger.Info("ArtifactResponse:\r\n{0}", xmlDoc.OuterXml);
+			}
+			else
+            {
+                throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityNoSamlResponseReceived);
 			}
 
 			string prevAuthnRequestId = authnResponse.InResponseTo;
