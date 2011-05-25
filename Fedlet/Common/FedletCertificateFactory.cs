@@ -86,7 +86,7 @@ namespace Sun.Identity.Common
 
 			if (errorMessage != null)
 			{
-				FedletLogger.Warning(Resources.FedletCertificateFactoryGetByFriendlyNameFailed + " " + errorMessage);
+                LoggerFactory.GetLogger(typeof(FedletCertificateFactory)).Warning("{0} {1}", Resources.FedletCertificateFactoryGetByFriendlyNameFailed, errorMessage);
 			}
 
 			return cert;

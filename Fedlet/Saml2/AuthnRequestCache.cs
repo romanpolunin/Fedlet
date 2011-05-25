@@ -80,7 +80,7 @@ namespace Sun.Identity.Saml2
 		/// HttpContext containing session, request, and response objects.
 		/// </param>
 		/// <returns>Queue of previously sent AuthnRequests, null otherwise.</returns>
-		internal static Queue GetSentAuthnRequests(HttpContext context)
+		internal static Queue GetSentAuthnRequests(HttpContextBase context)
 		{
 			return (Queue) context.Session[AuthnRequestSessionAttribute];
 		}
@@ -95,7 +95,7 @@ namespace Sun.Identity.Saml2
 		/// HttpContext containing session, request, and response objects.
 		/// </param>
 		/// <param name="authnRequest">AuthnRequest to add to the collection.</param>
-		internal static void AddSentAuthnRequest(HttpContext context, AuthnRequest authnRequest)
+		internal static void AddSentAuthnRequest(HttpContextBase context, AuthnRequest authnRequest)
 		{
 			Queue authnRequests = GetSentAuthnRequests(context);
 
@@ -112,16 +112,18 @@ namespace Sun.Identity.Saml2
 			authnRequests.Enqueue(authnRequest);
 			context.Session[AuthnRequestSessionAttribute] = authnRequests;
 
-			var message = new StringBuilder();
-			message.Append("AuthnRequestsCache:\r\n");
-			IEnumerator i = authnRequests.GetEnumerator();
-			while (i.MoveNext())
-			{
-				var a = (AuthnRequest) i.Current;
-				message.Append(a.Id + "\r\n");
-			}
+            ILogger logger = LoggerFactory.GetLogger(typeof(AuthnRequestCache));
 
-			FedletLogger.Info(message.ToString());
+            if (logger.IsInfoEnabled)
+            {
+                var message = new StringBuilder();
+                message.AppendLine("AuthnRequestsCache:");
+                foreach (AuthnRequest a in authnRequests)
+                {
+                    message.AppendLine(a.Id);
+                }
+                logger.Info(message.ToString());
+            }
 		}
 
 		/// <summary>
@@ -136,7 +138,7 @@ namespace Sun.Identity.Saml2
 		/// <param name="authnRequestId">
 		/// ID of the AuthnRequest to be removed from the cache.
 		/// </param>
-		internal static void RemoveSentAuthnRequest(HttpContext context, string authnRequestId)
+		internal static void RemoveSentAuthnRequest(HttpContextBase context, string authnRequestId)
 		{
 			Queue originalCache = GetSentAuthnRequests(context);
 

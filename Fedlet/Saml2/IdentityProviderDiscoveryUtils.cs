@@ -68,7 +68,7 @@ namespace Sun.Identity.Saml2
 		/// </summary>
 		/// <param name="request">HttpRequest containing Common Domain Cookie results.</param>
 		/// <returns>Preferred IDP Entity ID, null if not available.</returns>
-		public static string GetPreferredIdentityProvider(HttpRequest request)
+		public static string GetPreferredIdentityProvider(HttpRequestBase request)
 		{
 			string commonDomainCookieValue = request.QueryString[CommonDomainCookieName];
 			return GetPreferredIdentityProvider(commonDomainCookieValue);
@@ -108,9 +108,9 @@ namespace Sun.Identity.Saml2
 		/// <returns>
 		/// Returns the URL found in the currently checked circle-of-trust file if specified, null otherwise.
 		/// </returns>
-		public static Uri GetReaderServiceUrl(ServiceProviderUtility serviceProviderUtility, HttpContext context)
+		public static Uri GetReaderServiceUrl(ServiceProviderUtility serviceProviderUtility, HttpContextBase context)
 		{
-			HttpSessionState session = context.Session;
+			HttpSessionStateBase session = context.Session;
 			Uri readerSvcUrl = null;
 
 			var cotList = (ArrayList) session[CommonDomainDiscoverySessionAttribute];
@@ -148,10 +148,10 @@ namespace Sun.Identity.Saml2
 		/// </summary>
 		/// <param name="readerServiceUrl">Location of the reader service to send redirect.</param>
 		/// <param name="context">HttpContext containing session, request, and response objects.</param>
-		public static void RedirectToReaderService(Uri readerServiceUrl, HttpContext context)
+		public static void RedirectToReaderService(Uri readerServiceUrl, HttpContextBase context)
 		{
-			HttpRequest request = context.Request;
-			HttpResponse response = context.Response;
+			HttpRequestBase request = context.Request;
+			HttpResponseBase response = context.Response;
 
 			// Set the RelayState for the reader service to the requestede without
 			// the query information already saved to the session.
@@ -175,9 +175,9 @@ namespace Sun.Identity.Saml2
 		/// Resets all session variables used during IDP discovery.
 		/// </summary>
 		/// <param name="context">HttpContext containing session, request, and response objects.</param>
-		public static void ResetDiscovery(HttpContext context)
+		public static void ResetDiscovery(HttpContextBase context)
 		{
-			HttpSessionState session = context.Session;
+            HttpSessionStateBase session = context.Session;
 
 			session[CommonDomainDiscoverySessionAttribute] = null;
 			session[OriginalParametersSessionAttribute] = null;
@@ -193,9 +193,9 @@ namespace Sun.Identity.Saml2
 		/// into the session from the last invocation of the method 
 		/// StoreRequestParameters.
 		/// </returns>
-		public static NameValueCollection RetrieveRequestParameters(HttpContext context)
+        public static NameValueCollection RetrieveRequestParameters(HttpContextBase context)
 		{
-			HttpSessionState session = context.Session;
+            HttpSessionStateBase session = context.Session;
 			return (NameValueCollection) session[OriginalParametersSessionAttribute];
 		}
 
@@ -204,10 +204,10 @@ namespace Sun.Identity.Saml2
 		/// later use in the discovery process.
 		/// </summary>
 		/// <param name="context">HttpContext containing session, request, and response objects.</param>
-		public static void StoreRequestParameters(HttpContext context)
+        public static void StoreRequestParameters(HttpContextBase context)
 		{
-			HttpSessionState session = context.Session;
-			HttpRequest request = context.Request;
+            HttpSessionStateBase session = context.Session;
+            HttpRequestBase request = context.Request;
 			var parameters = (NameValueCollection) session[OriginalParametersSessionAttribute];
 
 			if (parameters == null)

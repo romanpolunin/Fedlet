@@ -26,6 +26,8 @@
  */
 
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Web;
 using Sun.Identity.Common;
@@ -82,7 +84,7 @@ namespace Sun.Identity.Saml2
 		/// <returns>
 		/// Queue of previously sent LogoutRequests, null otherwise.
 		/// </returns>
-		internal static Queue GetSentLogoutRequests(HttpContext context)
+        internal static Queue GetSentLogoutRequests(HttpContextBase context)
 		{
 			return (Queue) context.Session[LogoutRequestSessionAttribute];
 		}
@@ -99,7 +101,7 @@ namespace Sun.Identity.Saml2
 		/// <param name="logoutRequest">
 		/// LogoutRequest to add to the collection.
 		/// </param>
-		internal static void AddSentLogoutRequest(HttpContext context, LogoutRequest logoutRequest)
+        internal static void AddSentLogoutRequest(HttpContextBase context, LogoutRequest logoutRequest)
 		{
 			Queue logoutRequests = GetSentLogoutRequests(context);
 
@@ -116,16 +118,18 @@ namespace Sun.Identity.Saml2
 			logoutRequests.Enqueue(logoutRequest);
 			context.Session[LogoutRequestSessionAttribute] = logoutRequests;
 
-			var message = new StringBuilder();
-			message.Append("LogoutRequestCache:\r\n");
-			IEnumerator i = logoutRequests.GetEnumerator();
-			while (i.MoveNext())
-			{
-				var l = (LogoutRequest) i.Current;
-				message.Append(l.Id + "\r\n");
-			}
+            ILogger logger = LoggerFactory.GetLogger(typeof(LogoutRequestCache));
 
-			FedletLogger.Info(message.ToString());
+            if (logger.IsInfoEnabled)
+            {
+                var message = new StringBuilder();
+                message.AppendLine("LogoutRequestCache:");
+                foreach (AuthnRequest a in logoutRequests)
+                {
+                    message.AppendLine(a.Id);
+                }
+                logger.Info(message.ToString());
+            }
 		}
 
 		/// <summary>
@@ -140,7 +144,7 @@ namespace Sun.Identity.Saml2
 		/// <param name="logoutRequestId">
 		/// ID of the LogoutRequest to be removed from the cache.
 		/// </param>
-		internal static void RemoveSentLogoutRequest(HttpContext context, string logoutRequestId)
+        internal static void RemoveSentLogoutRequest(HttpContextBase context, string logoutRequestId)
 		{
 			Queue originalCache = GetSentLogoutRequests(context);
 

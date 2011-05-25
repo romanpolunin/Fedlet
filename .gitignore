@@ -9,3 +9,5 @@
 /Fedlet.5.9.TeamCity.user
 Fedlet/Fedlet.csproj.user
 SampleApp/SampleApp.csproj.user
+Fedlet.UnitTests/bin/*
+Fedlet.UnitTests/obj/*

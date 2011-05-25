@@ -149,7 +149,7 @@ namespace Sun.Identity.Saml2
 		/// NameValueCOllection of parameters found in QueryString and Form objects within 
 		/// the given Request.
 		/// </returns>
-		public static NameValueCollection GetRequestParameters(HttpRequest request)
+		public static NameValueCollection GetRequestParameters(HttpRequestBase request)
 		{
 			var parameters = new NameValueCollection();
 

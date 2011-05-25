@@ -43,65 +43,78 @@ namespace Sun.Identity.Common
 	///     &lt;/appSettings&gt;
 	/// </para>
 	/// </summary>
-	public class EventLogLogger : ILogger
-	{
-		#region Members
+    public class EventLogLogger : ILogger
+    {
 
-		/// <summary>
-		/// Parameter key in the &lt;appSettings/&gt; section of the 
-		/// Web.config file of the desired .NET application for specifying 
-		/// the log level. 
-		/// </summary>
-		public const string AppSettingParameter = "fedletLogLevel";
+        /// <summary>
+        /// Parameter key in the &lt;appSettings/&gt; section of the 
+        /// Web.config file of the desired .NET application for specifying 
+        /// the log level. 
+        /// </summary>
+        public const string AppSettingParameter = "fedletLogLevel";
 
-		/// <summary>
-		/// Constant for the ERROR log level.
-		/// </summary>
-		public const string LogLevelError = "ERROR";
+        /// <summary>
+        /// Constant for the ERROR log level.
+        /// </summary>
+        public const string LogLevelError = "ERROR";
 
-		/// <summary>
-		/// Constant for the INFO log level.
-		/// </summary>
-		public const string LogLevelInfo = "INFO";
+        /// <summary>
+        /// Constant for the INFO log level.
+        /// </summary>
+        public const string LogLevelInfo = "INFO";
 
-		/// <summary>
-		/// Constant for the WARNING log level.
-		/// </summary>
-		public const string LogLevelWarning = "WARNING";
+        /// <summary>
+        /// Constant for the WARNING log level.
+        /// </summary>
+        public const string LogLevelWarning = "WARNING";
 
-		/// <summary>
-		/// Constant that specifies the Windows event log to use, in this
-		/// case, the Application log.
-		/// </summary>
-		public const string Log = "Application";
+        /// <summary>
+        /// Constant that specifies the Windows event log to use, in this
+        /// case, the Application log.
+        /// </summary>
+        public const string Log = "Application";
 
-		/// <summary>
-		/// Constant that specifies the source of the log entry, in this
-		/// case, the Fedlet.
-		/// </summary>
-		public const string LogSource = "Fedlet";
+        /// <summary>
+        /// Constant that specifies the source of the log entry, in this
+        /// case, the Fedlet.
+        /// </summary>
+        public const string LogSource = "Fedlet";
 
-		#endregion
+        private static string logLevel;
 
-		#region Methods
+        private static string GetLogLevel()
+        {
+            if (logLevel == null)
+            {
+                logLevel = ConfigurationManager.AppSettings[AppSettingParameter];
+                if (logLevel != null)
+                {
+                    logLevel = logLevel.ToUpperInvariant();
+                }
+            }
+            return logLevel;
+        }
 
-		/// <summary>
-		/// Method to write an error message to the event log.
-		/// </summary>
-		/// <param name="message">Message to be written.</param>
-		public void Error(string message)
-		{
-			LogMessage(message, EventLogEntryType.Error);
-		}
+        ///<summary>Returns true if Info level logging is enabled</summary>
+        public bool IsInfoEnabled
+        {
+            get { return IsEnabled(EventLogEntryType.Information); }
+        }
 
-		/// <summary>
-		/// Method to write an information message to the event log.
-		/// </summary>
-		/// <param name="message">Message to be written.</param>
-		public void Info(string message)
-		{
-			LogMessage(message, EventLogEntryType.Information);
-		}
+        ///<summary>Returns true if Warn level logging is enabled</summary>
+        public bool IsWarnEnabled
+        {
+            get { return IsEnabled(EventLogEntryType.Warning); }
+        }
+
+        /// <summary>
+        /// Method to write an information message to the event log.
+        /// </summary>
+        /// <param name="message">Message to be written.</param>
+        public void Info(string message)
+        {
+            LogMessage(message, EventLogEntryType.Information);
+        }
 
         /// <summary>
         /// Method to write an information message to the event log.
@@ -112,13 +125,13 @@ namespace Sun.Identity.Common
         }
 
         /// <summary>
-		/// Method to write a warning message to the event log.
-		/// </summary>
-		/// <param name="message">Message to be written.</param>
-		public void Warning(string message)
-		{
-			LogMessage(message, EventLogEntryType.Warning);
-		}
+        /// Method to write a warning message to the event log.
+        /// </summary>
+        /// <param name="message">Message to be written.</param>
+        public void Warning(string message)
+        {
+            LogMessage(message, EventLogEntryType.Warning);
+        }
 
         /// <summary>
         /// Method to write a warning message to the event log.
@@ -129,32 +142,34 @@ namespace Sun.Identity.Common
         }
 
         /// <summary>
-		/// Method to write a message with the given entry type.  Currently
-		/// only Info, Warning, and Error are supported from the default
-		/// messages available from the framework.
-		/// </summary>
-		/// <see cref="System.Diagnostics.EventLogEntryType"/>
-		/// <param name="message">Message to be written.</param>
-		/// <param name="entryType">
-		/// EventLogEntryType to associate with message.
-		/// </param>
-		private void LogMessage(string message, EventLogEntryType entryType)
-		{
-			string logLevel = ConfigurationSettings.AppSettings[AppSettingParameter];
+        /// Method to write a message with the given entry type.  Currently
+        /// only Info, Warning, and Error are supported from the default
+        /// messages available from the framework.
+        /// </summary>
+        /// <see cref="System.Diagnostics.EventLogEntryType"/>
+        /// <param name="message">Message to be written.</param>
+        /// <param name="entryType">
+        /// EventLogEntryType to associate with message.
+        /// </param>
+        private void LogMessage(string message, EventLogEntryType entryType)
+        {
+            if(IsEnabled(entryType))
+            {
+                EventLog.WriteEntry(LogSource, message, entryType);
+            }
+        }
 
-			if (!string.IsNullOrEmpty(logLevel))
-			{
-				logLevel = logLevel.ToUpperInvariant();
+        private bool IsEnabled(EventLogEntryType entryType)
+        {
+            string logLevel = GetLogLevel();
+            if (string.IsNullOrEmpty(logLevel))
+            {
+                return false;
+            }
 
-				if ((logLevel == LogLevelError && entryType == EventLogEntryType.Error)
-				    || (logLevel == LogLevelWarning && entryType <= EventLogEntryType.Warning)
-				    || (logLevel == LogLevelInfo && entryType <= EventLogEntryType.Information))
-				{
-					EventLog.WriteEntry(LogSource, message, entryType);
-				}
-			}
-		}
-
-		#endregion
-	}
+            return (entryType == EventLogEntryType.Error && logLevel == LogLevelError)
+                   || (entryType <= EventLogEntryType.Warning && logLevel == LogLevelWarning)
+                   || (entryType <= EventLogEntryType.Information && logLevel == LogLevelInfo);
+        }
+    }
 }
