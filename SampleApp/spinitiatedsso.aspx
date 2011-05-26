@@ -101,41 +101,44 @@
      *                    
      */
 
+    var contextBase = new HttpContextWrapper(Context);
+    var requestBase = new HttpRequestWrapper(Request);
+    
 	var serviceProviderUtility = (ServiceProviderUtility) Cache["spu"];
 	if (serviceProviderUtility == null)
  {
- 	serviceProviderUtility = new ServiceProviderUtility(Context);
+ 	serviceProviderUtility = new ServiceProviderUtility(contextBase);
  	Cache["spu"] = serviceProviderUtility;
  }
 
 	// Store parameters for initializing SSO
-	NameValueCollection parameters = Saml2Utils.GetRequestParameters(Request);
+	NameValueCollection parameters = Saml2Utils.GetRequestParameters(requestBase);
 	string idpEntityId = parameters["idpEntityId"];
 
 	// If the IDP entity ID not specified, discover it.
 	if (String.IsNullOrEmpty(idpEntityId))
  {
  	// Determine if the IDP has already been discovered...
- 	idpEntityId = IdentityProviderDiscoveryUtils.GetPreferredIdentityProvider(Request);
+     idpEntityId = IdentityProviderDiscoveryUtils.GetPreferredIdentityProvider(requestBase);
 
  	if (idpEntityId == null)
  	{
  		// Discover the IDP by redirecting to the reader service.
- 		IdentityProviderDiscoveryUtils.StoreRequestParameters(Context);
+        IdentityProviderDiscoveryUtils.StoreRequestParameters(contextBase);
 
- 		Uri readerServiceUrl = IdentityProviderDiscoveryUtils.GetReaderServiceUrl(serviceProviderUtility, Context);
+        Uri readerServiceUrl = IdentityProviderDiscoveryUtils.GetReaderServiceUrl(serviceProviderUtility, contextBase);
 
  		if (readerServiceUrl != null)
  		{
- 			IdentityProviderDiscoveryUtils.RedirectToReaderService(readerServiceUrl, Context);
+            IdentityProviderDiscoveryUtils.RedirectToReaderService(readerServiceUrl, contextBase);
  			return;
  		}
  	}
 
  	// Retrieve all previously stored parameters and reset the discovery
  	// process if we've exhausted all reader services...
- 	parameters = IdentityProviderDiscoveryUtils.RetrieveRequestParameters(Context);
- 	IdentityProviderDiscoveryUtils.ResetDiscovery(Context);
+    parameters = IdentityProviderDiscoveryUtils.RetrieveRequestParameters(contextBase);
+    IdentityProviderDiscoveryUtils.ResetDiscovery(contextBase);
  }
 
 	// If the IDP entity ID is still null, use the first one configured
@@ -163,7 +166,7 @@
  	}
 
  	// Perform SP initiated SSO
- 	serviceProviderUtility.SendAuthnRequest(Context, idpEntityId, parameters);
+ 	serviceProviderUtility.SendAuthnRequest(contextBase, idpEntityId, parameters);
  }
  catch (Saml2Exception se)
  {

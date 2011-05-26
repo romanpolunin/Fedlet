@@ -53,11 +53,11 @@
 	var serviceProviderUtility = (ServiceProviderUtility) Cache["spu"];
 	if (serviceProviderUtility == null)
  {
- 	serviceProviderUtility = new ServiceProviderUtility(Context);
+     serviceProviderUtility = new ServiceProviderUtility(new HttpContextWrapper(Context));
  	Cache["spu"] = serviceProviderUtility;
  }
 
-	NameValueCollection parameters = Saml2Utils.GetRequestParameters(Request);
+	NameValueCollection parameters = Saml2Utils.GetRequestParameters(new HttpRequestWrapper(Request));
 	string samlRequest = parameters[Saml2Constants.RequestParameter];
 	string samlResponse = parameters[Saml2Constants.ResponseParameter];
 
@@ -67,7 +67,7 @@
  	if (!String.IsNullOrEmpty(samlResponse))
  	{
  		// process the logout response from SP initiated SLO
- 		LogoutResponse logoutResponse = serviceProviderUtility.GetLogoutResponse(Context);
+        LogoutResponse logoutResponse = serviceProviderUtility.GetLogoutResponse(new HttpContextWrapper(Context));
 
  		// do local app specific post-logout behavior
 
@@ -87,22 +87,22 @@
  	else if (!String.IsNullOrEmpty(samlRequest))
  	{
  		// obtain the logout request from IDP initiated SLO
- 		LogoutRequest logoutRequest = serviceProviderUtility.GetLogoutRequest(Context);
+        LogoutRequest logoutRequest = serviceProviderUtility.GetLogoutRequest(new HttpContextWrapper(Context));
 
  		// do local app specific logout
 
  		// send the logout response
- 		serviceProviderUtility.SendLogoutResponse(Context, logoutRequest);
+        serviceProviderUtility.SendLogoutResponse(new HttpContextWrapper(Context), logoutRequest);
  	}
  	else
  	{
  		// obtain logout soap request
- 		LogoutRequest logoutRequest = serviceProviderUtility.GetLogoutRequest(Context);
+        LogoutRequest logoutRequest = serviceProviderUtility.GetLogoutRequest(new HttpContextWrapper(Context));
 
  		// do local app specific logout
 
  		// respond with the soap logout response
- 		serviceProviderUtility.SendSoapLogoutResponse(Context, logoutRequest);
+        serviceProviderUtility.SendSoapLogoutResponse(new HttpContextWrapper(Context), logoutRequest);
  	}
  }
  catch (Saml2Exception se)

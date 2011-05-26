@@ -50,8 +50,6 @@ namespace Sun.Identity.Saml2
 	/// </summary>
 	public static class Saml2Utils
 	{
-		#region Methods
-
 		/// <summary>
 		/// Converts the string from the base64 encoded input.
 		/// </summary>
@@ -607,7 +605,5 @@ namespace Sun.Identity.Saml2
 				throw new Saml2Exception(Resources.SignedQueryStringUnsupportedSigAlg);
 			}
 		}
-
-		#endregion
 	}
 }

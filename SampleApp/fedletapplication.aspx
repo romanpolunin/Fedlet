@@ -45,11 +45,12 @@
      	serviceProviderUtility = (ServiceProviderUtility) Cache["spu"];
      	if (serviceProviderUtility == null)
      	{
-     		serviceProviderUtility = new ServiceProviderUtility(Context);
+
+            serviceProviderUtility = new ServiceProviderUtility(new HttpContextWrapper(Context));
      		Cache["spu"] = serviceProviderUtility;
      	}
 
-     	authnResponse = serviceProviderUtility.GetAuthnResponse(Context);
+        authnResponse = serviceProviderUtility.GetAuthnResponse(new HttpContextWrapper(Context));
      }
      catch (Saml2Exception se)
      {

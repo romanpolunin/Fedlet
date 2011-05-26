@@ -58,16 +58,18 @@
      *                    logout.
      *                    
      */
+    var contextBase = new HttpContextWrapper(Context);
+    var requestBase = new HttpRequestWrapper(Request);
 
 	var serviceProviderUtility = (ServiceProviderUtility) Cache["spu"];
 	if (serviceProviderUtility == null)
  {
- 	serviceProviderUtility = new ServiceProviderUtility(Context);
+     serviceProviderUtility = new ServiceProviderUtility(contextBase);
  	Cache["spu"] = serviceProviderUtility;
  }
 
 	// Store parameters for initializing SLO
-	NameValueCollection parameters = Saml2Utils.GetRequestParameters(Request);
+	NameValueCollection parameters = Saml2Utils.GetRequestParameters(requestBase);
 	string idpEntityId = parameters[Saml2Constants.IdpEntityId];
 
 	if (String.IsNullOrEmpty(parameters[Saml2Constants.Binding]))
@@ -100,7 +102,7 @@
  	}
 
  	// Perform SP initiated SSO
- 	serviceProviderUtility.SendLogoutRequest(Context, idpEntityId, parameters);
+    serviceProviderUtility.SendLogoutRequest(contextBase, idpEntityId, parameters);
 
  	// If SOAP was the binding and no exception thrown, redirect to the relay state
  	if (parameters[Saml2Constants.Binding] == Saml2Constants.HttpSoapProtocolBinding)

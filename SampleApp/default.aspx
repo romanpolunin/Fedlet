@@ -95,7 +95,7 @@
  	serviceProviderUtility = (ServiceProviderUtility) Cache["spu"];
  	if (serviceProviderUtility == null)
  	{
- 		serviceProviderUtility = new ServiceProviderUtility(Context);
+        serviceProviderUtility = new ServiceProviderUtility(new HttpContextWrapper(Context));
  		Cache["spu"] = serviceProviderUtility;
  	}
 
