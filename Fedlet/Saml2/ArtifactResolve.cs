@@ -58,7 +58,7 @@ namespace Sun.Identity.Saml2
 		/// </summary>
 		/// <param name="serviceProvider">Service Provider to issue this request</param>
 		/// <param name="artifact">SAMLv2 Artifact</param>
-		public ArtifactResolve(ServiceProvider serviceProvider, Artifact artifact)
+		public ArtifactResolve(IServiceProvider serviceProvider, Artifact artifact)
 		{
 			xml = new XmlDocument();
 			xml.PreserveWhitespace = true;

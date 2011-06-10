@@ -183,8 +183,8 @@
         
 <%
      	string fedletUrl = Request.Url.AbsoluteUri.Substring(0, Request.Url.AbsoluteUri.LastIndexOf("/") + 1);
-     	Hashtable identityProviders = serviceProviderUtility.IdentityProviders;
-     	var idp = (IdentityProvider) identityProviders[authnResponse.Issuer];
+     	Dictionary<string, IdentityProvider> identityProviders = serviceProviderUtility.IdentityProviders;
+     	var idp = identityProviders[authnResponse.Issuer];
      	var sloListItems = new StringBuilder();
      	string sloListItemFormat = "<li><a href=\"{0}\">Run {1} initiated Single Logout using {2} binding</a></li>";
 

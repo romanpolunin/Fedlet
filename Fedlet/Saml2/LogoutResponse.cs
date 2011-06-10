@@ -103,8 +103,8 @@ namespace Sun.Identity.Saml2
 		/// construction of the LogoutResponse.
 		/// </param>
 		public LogoutResponse(
-			IdentityProvider identityProvider,
-			ServiceProvider serviceProvider,
+			IIdentityProvider identityProvider,
+			IServiceProvider serviceProvider,
 			LogoutRequest logoutRequest,
 			NameValueCollection parameters)
 		{

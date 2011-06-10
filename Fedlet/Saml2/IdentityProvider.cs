@@ -37,7 +37,7 @@ namespace Sun.Identity.Saml2
 	/// <summary>
 	/// Class representing all metadata for an Identity Provider.
 	/// </summary>
-	public class IdentityProvider
+	public class IdentityProvider : IIdentityProvider
 	{
 		#region Members
 
@@ -45,22 +45,22 @@ namespace Sun.Identity.Saml2
 		/// XML document representing the extended metadata for this Identity 
 		/// Provider.
 		/// </summary>
-		private readonly XmlDocument extendedMetadata;
+		private readonly XmlDocument _extendedMetadata;
 
 		/// <summary>
 		/// Namespace Manager for the extended metadata.
 		/// </summary>
-		private readonly XmlNamespaceManager extendedMetadataNsMgr;
+		private readonly XmlNamespaceManager _extendedMetadataNsMgr;
 
 		/// <summary>
 		/// XML document representing the metadata for this Identity Provider.
 		/// </summary>
-		private readonly XmlDocument metadata;
+		private readonly XmlDocument _metadata;
 
 		/// <summary>
 		/// Namespace Manager for the metadata.
 		/// </summary>
-		private readonly XmlNamespaceManager metadataNsMgr;
+		private readonly XmlNamespaceManager _metadataNsMgr;
 
 		/// <summary>
 		/// Identity Provider's X509 certificate.
@@ -74,35 +74,23 @@ namespace Sun.Identity.Saml2
 		/// <summary>
 		/// Initializes a new instance of the IdentityProvider class.
 		/// </summary>
-		/// <param name="metadataFileName">Name of file for metdata.</param>
-		/// <param name="extendedMetadataFileName">Name of file for extended metadata.</param>
-		public IdentityProvider(string metadataFileName, string extendedMetadataFileName)
+		public IdentityProvider(XmlDocument metadata, XmlDocument extendedMetadata)
 		{
 			try
 			{
-				metadata = new XmlDocument();
-				metadata.Load(metadataFileName);
-				metadataNsMgr = new XmlNamespaceManager(metadata.NameTable);
-				metadataNsMgr.AddNamespace("md", "urn:oasis:names:tc:SAML:2.0:metadata");
-				metadataNsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
+				_metadata = metadata;
+				_metadataNsMgr = new XmlNamespaceManager(_metadata.NameTable);
+				_metadataNsMgr.AddNamespace("md", "urn:oasis:names:tc:SAML:2.0:metadata");
+				_metadataNsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
 
-				extendedMetadata = new XmlDocument();
-				extendedMetadata.Load(extendedMetadataFileName);
-				extendedMetadataNsMgr = new XmlNamespaceManager(extendedMetadata.NameTable);
-				extendedMetadataNsMgr.AddNamespace("mdx", "urn:sun:fm:SAML:2.0:entityconfig");
+				_extendedMetadata = extendedMetadata;
+				_extendedMetadataNsMgr = new XmlNamespaceManager(_extendedMetadata.NameTable);
+				_extendedMetadataNsMgr.AddNamespace("mdx", "urn:sun:fm:SAML:2.0:entityconfig");
 
 				// Load now since a) it doesn't change and b) its a 
 				// performance dog on Win 2003 64-bit.
 				byte[] byteArray = Encoding.UTF8.GetBytes(EncodedSigningCertificate);
 				signingCertificate = new X509Certificate2(byteArray);
-			}
-			catch (DirectoryNotFoundException dnfe)
-			{
-				throw new IdentityProviderException(Resources.IdentityProviderDirNotFound, dnfe);
-			}
-			catch (FileNotFoundException fnfe)
-			{
-				throw new IdentityProviderException(Resources.IdentityProviderFileNotFound, fnfe);
 			}
 			catch (XmlException xe)
 			{
@@ -122,8 +110,8 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				string xpath = "/md:EntityDescriptor";
-				XmlNode root = metadata.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, metadataNsMgr);
+				XmlNode root = _metadata.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, _metadataNsMgr);
 				return node.Attributes["entityID"].Value.Trim();
 			}
 		}
@@ -138,8 +126,8 @@ namespace Sun.Identity.Saml2
 			{
 				string xpath =
 					"/md:EntityDescriptor/md:IDPSSODescriptor/md:KeyDescriptor[@use='signing']/ds:KeyInfo/ds:X509Data/ds:X509Certificate";
-				XmlNode root = metadata.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, metadataNsMgr);
+				XmlNode root = _metadata.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, _metadataNsMgr);
 				string value = node.InnerText.Trim(); // Regex.Replace(node.InnerText.Trim(), @"[\r\t]", "");
 				return value;
 			}
@@ -162,8 +150,8 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				string xpath = "/md:EntityDescriptor/md:IDPSSODescriptor/md:SingleLogoutService";
-				XmlNode root = metadata.DocumentElement;
-				XmlNodeList nodeList = root.SelectNodes(xpath, metadataNsMgr);
+				XmlNode root = _metadata.DocumentElement;
+				XmlNodeList nodeList = root.SelectNodes(xpath, _metadataNsMgr);
 
 				return nodeList;
 			}
@@ -178,8 +166,8 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				string xpath = "/md:EntityDescriptor/md:IDPSSODescriptor/md:SingleSignOnService";
-				XmlNode root = metadata.DocumentElement;
-				XmlNodeList nodeList = root.SelectNodes(xpath, metadataNsMgr);
+				XmlNode root = _metadata.DocumentElement;
+				XmlNodeList nodeList = root.SelectNodes(xpath, _metadataNsMgr);
 
 				return nodeList;
 			}
@@ -194,8 +182,8 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				string xpath = "/mdx:EntityConfig/mdx:IDPSSOConfig/mdx:Attribute[@name='wantArtifactResolveSigned']/mdx:Value";
-				XmlNode root = extendedMetadata.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, extendedMetadataNsMgr);
+				XmlNode root = _extendedMetadata.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, _extendedMetadataNsMgr);
 
 				if (node != null)
 				{
@@ -216,8 +204,8 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				string xpath = "/md:EntityDescriptor/md:IDPSSODescriptor";
-				XmlNode root = metadata.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, metadataNsMgr);
+				XmlNode root = _metadata.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, _metadataNsMgr);
 
 				if (node != null)
 				{
@@ -239,8 +227,8 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				string xpath = "/mdx:EntityConfig/mdx:IDPSSOConfig/mdx:Attribute[@name='wantLogoutRequestSigned']/mdx:Value";
-				XmlNode root = extendedMetadata.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, extendedMetadataNsMgr);
+				XmlNode root = _extendedMetadata.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, _extendedMetadataNsMgr);
 
 				if (node != null)
 				{
@@ -261,8 +249,8 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				string xpath = "/mdx:EntityConfig/mdx:IDPSSOConfig/mdx:Attribute[@name='wantLogoutResponseSigned']/mdx:Value";
-				XmlNode root = extendedMetadata.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, extendedMetadataNsMgr);
+				XmlNode root = _extendedMetadata.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, _extendedMetadataNsMgr);
 
 				if (node != null)
 				{
@@ -291,8 +279,8 @@ namespace Sun.Identity.Saml2
 			xpath.Append(binding);
 			xpath.Append("']");
 
-			XmlNode root = metadata.DocumentElement;
-			XmlNode node = root.SelectSingleNode(xpath.ToString(), metadataNsMgr);
+			XmlNode root = _metadata.DocumentElement;
+			XmlNode node = root.SelectSingleNode(xpath.ToString(), _metadataNsMgr);
 			if (node != null)
 			{
 				return node.Attributes["Location"].Value.Trim();
@@ -319,8 +307,8 @@ namespace Sun.Identity.Saml2
 			xpath.Append(binding);
 			xpath.Append("']");
 
-			XmlNode root = metadata.DocumentElement;
-			XmlNode node = root.SelectSingleNode(xpath.ToString(), metadataNsMgr);
+			XmlNode root = _metadata.DocumentElement;
+			XmlNode node = root.SelectSingleNode(xpath.ToString(), _metadataNsMgr);
 			if (node != null)
 			{
 				return node.Attributes["Location"].Value.Trim();
@@ -348,8 +336,8 @@ namespace Sun.Identity.Saml2
 			xpath.Append(binding);
 			xpath.Append("']");
 
-			XmlNode root = metadata.DocumentElement;
-			XmlNode node = root.SelectSingleNode(xpath.ToString(), metadataNsMgr);
+			XmlNode root = _metadata.DocumentElement;
+			XmlNode node = root.SelectSingleNode(xpath.ToString(), _metadataNsMgr);
 			if (node != null)
 			{
 				return node.Attributes["ResponseLocation"].Value.Trim();
@@ -371,8 +359,8 @@ namespace Sun.Identity.Saml2
 			xpath.Append(binding);
 			xpath.Append("']");
 
-			XmlNode root = metadata.DocumentElement;
-			XmlNode node = root.SelectSingleNode(xpath.ToString(), metadataNsMgr);
+			XmlNode root = _metadata.DocumentElement;
+			XmlNode node = root.SelectSingleNode(xpath.ToString(), _metadataNsMgr);
 			if (node != null)
 			{
 				return node.Attributes["Location"].Value.Trim();

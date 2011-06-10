@@ -72,7 +72,7 @@ namespace Sun.Identity.Saml2
 		/// NameValueCollection of varying parameters for use in the 
 		/// construction of the AuthnRequest.
 		/// </param>
-		public AuthnRequest(IdentityProvider identityProvider, ServiceProvider serviceProvider, NameValueCollection parameters)
+		public AuthnRequest(IIdentityProvider identityProvider, IServiceProvider serviceProvider, NameValueCollection parameters)
 		{
 			xml = new XmlDocument();
 			xml.PreserveWhitespace = true;
@@ -260,7 +260,7 @@ namespace Sun.Identity.Saml2
 		/// constructing the RequetedAuthnContext.
 		/// </param>
 		/// <returns>RequestedAuthContext object or null if parameters are not present.</returns>
-		private static RequestedAuthnContext GetRequestedAuthnContext(ServiceProvider serviceProvider,
+		private static RequestedAuthnContext GetRequestedAuthnContext(IServiceProvider serviceProvider,
 		                                                              NameValueCollection parameters)
 		{
 			RequestedAuthnContext reqAuthnContext = null;

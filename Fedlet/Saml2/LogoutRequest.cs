@@ -101,8 +101,8 @@ namespace Sun.Identity.Saml2
 		/// construction of the LogoutRequest.
 		/// </param>
 		public LogoutRequest(
-			IdentityProvider identityProvider,
-			ServiceProvider serviceProvider,
+			IIdentityProvider identityProvider,
+			IServiceProvider serviceProvider,
 			NameValueCollection parameters)
 		{
 			try

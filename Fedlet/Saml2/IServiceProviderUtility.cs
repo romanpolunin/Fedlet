@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Web;
 
@@ -13,21 +14,21 @@ namespace Sun.Identity.Saml2
         /// <summary>
         /// Gets the service provider configured for the hosted application.
         /// </summary>
-        ServiceProvider ServiceProvider { get; }
+        IServiceProvider ServiceProvider { get; }
 
         /// <summary>
         /// Gets the collection of identity providers configured for the
         /// hosted application where the key is the identity provider's
         /// entity ID.
         /// </summary>
-        Hashtable IdentityProviders { get; }
+        Dictionary<string, IdentityProvider> IdentityProviders { get; }
 
         /// <summary>
         /// Gets the collection of circle-of-trusts configured for the
         /// hosted application where the key is the circle-of-trust's
         /// "cot-name".
         /// </summary>
-        Hashtable CircleOfTrusts { get; }
+        Dictionary<string, CircleOfTrust> CircleOfTrusts { get; }
 
         /// <summary>
         /// Retrieve the ArtifactResponse object with the given SAMLv2 

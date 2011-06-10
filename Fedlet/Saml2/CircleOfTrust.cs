@@ -27,9 +27,6 @@
 
 using System;
 using System.Collections.Specialized;
-using System.IO;
-using Sun.Identity.Properties;
-using Sun.Identity.Saml2.Exceptions;
 
 namespace Sun.Identity.Saml2
 {
@@ -62,38 +59,10 @@ namespace Sun.Identity.Saml2
 		/// <summary>
 		/// Initializes a new instance of the CircleOfTrust class.
 		/// </summary>
-		/// <param name="fileName">The file used to initiliaze this class.</param>
-		public CircleOfTrust(string fileName)
+		/// <param name="attributes">name-value pair collection of attributes.</param>
+		public CircleOfTrust(NameValueCollection attributes)
 		{
-			try
-			{
-				Attributes = new NameValueCollection();
-
-				var streamReader = new StreamReader(File.OpenRead(fileName));
-				char[] separators = {'='};
-				while (streamReader.Peek() >= 0)
-				{
-					string line = streamReader.ReadLine();
-					string[] tokens = line.Split(separators);
-					string key = tokens[0];
-					string value = tokens[1];
-					Attributes[key] = value;
-				}
-
-				streamReader.Close();
-			}
-			catch (DirectoryNotFoundException dnfe)
-			{
-				throw new CircleOfTrustException(Resources.CircleOfTrustDirNotFound, dnfe);
-			}
-			catch (FileNotFoundException fnfe)
-			{
-				throw new CircleOfTrustException(Resources.CircleOfTrustFileNotFound, fnfe);
-			}
-			catch (Exception e)
-			{
-				throw new CircleOfTrustException(Resources.CircleOfTrustUnhandledException, e);
-			}
+			Attributes = attributes;
 		}
 
 		#endregion
@@ -101,8 +70,7 @@ namespace Sun.Identity.Saml2
 		#region Properties
 
 		/// <summary>
-		/// Gets a name-value pair collection of attributes loaded from 
-		/// the fedlet.cot configuration file.
+		/// Gets a name-value pair collection of attributes
 		/// </summary>
 		public NameValueCollection Attributes { get; private set; }
 

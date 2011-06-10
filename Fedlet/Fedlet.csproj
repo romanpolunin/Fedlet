@@ -77,6 +77,9 @@
   <ItemGroup>
     <Compile Include="Common\EventLogLogger.cs" />
     <Compile Include="Common\FedletCertificateFactory.cs" />
+    <Compile Include="Common\FileFedletRepository.cs" />
+    <Compile Include="Common\FileWatcherFedletRepository.cs" />
+    <Compile Include="Common\IFedletRepository.cs" />
     <Compile Include="Common\ILogger.cs" />
     <Compile Include="Common\LoggerFactory.cs" />
     <Compile Include="Saml2\Artifact.cs" />
@@ -84,6 +87,8 @@
     <Compile Include="Saml2\ArtifactResponse.cs" />
     <Compile Include="Saml2\AuthnRequest.cs" />
     <Compile Include="Saml2\AuthnRequestCache.cs" />
+    <Compile Include="Saml2\IIdentityProvider.cs" />
+    <Compile Include="Saml2\IServiceProvider.cs" />
     <Compile Include="Saml2\IServiceProviderUtility.cs" />
     <Compile Include="Saml2\LogoutRequestCache.cs" />
     <Compile Include="Saml2\LogoutResponse.cs" />

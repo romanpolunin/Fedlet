@@ -27,6 +27,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Globalization;
 using System.IO;
@@ -48,12 +49,10 @@ namespace Sun.Identity.Saml2
 	/// </summary>
 	public class ServiceProviderUtility : IServiceProviderUtility
     {
-		#region Members
+    	private readonly IFedletRepository _repository;
 
-		/// <summary>
-		/// Home folder containing configuration and metadata.
-		/// </summary>
-        private string homeFolder;
+    	#region Members
+
         private ILogger logger = LoggerFactory.GetLogger<ServiceProviderUtility>();
 
 		#endregion
@@ -68,8 +67,8 @@ namespace Sun.Identity.Saml2
 		/// </summary>
 		/// <param name="context">HttpContext used for reading application data.</param>
         public ServiceProviderUtility(HttpContextBase context)
+			: this(context.Server.MapPath(@"App_Data"))
 		{
-			Initialize(context.Server.MapPath(@"App_Data"));
 		}
 
 		/// <summary>
@@ -78,32 +77,42 @@ namespace Sun.Identity.Saml2
 		/// </summary>
 		/// <param name="homeFolder">Home folder containing configuration and metadata.</param>
 		public ServiceProviderUtility(string homeFolder)
+			: this(new FileWatcherFedletRepository(homeFolder))
 		{
-			Initialize(homeFolder);
 		}
 
-		#endregion
+		/// <summary>
+		/// Initializes a new instance of the ServiceProviderUtility class
+		/// using the given repository for configuration and metadata.
+		/// </summary>
+		/// <param name="repository">repository containing configuration and metadata.</param>
+		public ServiceProviderUtility(IFedletRepository repository)
+		{
+			_repository = repository;
+		}
+
+    	#endregion
 
 		#region Properties
 
 		/// <summary>
 		/// Gets the service provider configured for the hosted application.
 		/// </summary>
-		public ServiceProvider ServiceProvider { get; private set; }
+		public IServiceProvider ServiceProvider { get { return _repository.GetServiceProvider(); } }
 
 		/// <summary>
 		/// Gets the collection of identity providers configured for the
 		/// hosted application where the key is the identity provider's
 		/// entity ID.
 		/// </summary>
-		public Hashtable IdentityProviders { get; private set; }
+		public Dictionary<string, IdentityProvider> IdentityProviders { get { return _repository.GetIdentityProviders(); } }
 
 		/// <summary>
 		/// Gets the collection of circle-of-trusts configured for the
 		/// hosted application where the key is the circle-of-trust's
 		/// "cot-name".
 		/// </summary>
-		public Hashtable CircleOfTrusts { get; private set; }
+		public Dictionary<string, CircleOfTrust> CircleOfTrusts { get { return _repository.GetCircleOfTrusts(); } }
 
 		#endregion
 
@@ -120,7 +129,7 @@ namespace Sun.Identity.Saml2
 			var artifactResolve = new ArtifactResolve(ServiceProvider, artifact);
 			ArtifactResponse artifactResponse = null;
 
-			IdentityProvider idp = GetIdpFromArtifact(artifact);
+			IIdentityProvider idp = GetIdpFromArtifact(artifact);
 			if (idp == null)
 			{
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdpNotDeterminedFromArtifact);
@@ -1415,102 +1424,6 @@ namespace Sun.Identity.Saml2
 		#region Non-static Private Methods
 
 		/// <summary>
-		/// Internal method to load configuration information and metadata
-		/// for the hosted service provider and associated identity providers.
-		/// </summary>
-		/// <param name="homeFolder">Home folder containing configuration and metadata.</param>
-		private void Initialize(string homeFolder)
-		{
-			var dirInfo = new DirectoryInfo(homeFolder);
-			if (!dirInfo.Exists)
-			{
-				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityHomeFolderNotFound);
-			}
-
-			this.homeFolder = homeFolder;
-
-			// Load the metadata for this service provider.
-			ServiceProvider = new ServiceProvider(this.homeFolder);
-
-			// Load the configuration for one or more circle of trusts.
-			CircleOfTrusts = new Hashtable();
-			InitializeCircleOfTrusts();
-
-			// Load metadata for one or more identity providers.
-			IdentityProviders = new Hashtable();
-			InitializeIdentityProviders();
-		}
-
-		/// <summary>
-		/// Internal method to load all configuration information for all
-		/// circle of trusts found in the home folder.
-		/// </summary>
-		private void InitializeCircleOfTrusts()
-		{
-			var dirInfo = new DirectoryInfo(homeFolder);
-			FileInfo[] files = dirInfo.GetFiles("fedlet*.cot");
-
-			foreach (FileInfo file in files)
-			{
-				var cot = new CircleOfTrust(file.FullName);
-				string key = cot.Attributes["cot-name"];
-				CircleOfTrusts.Add(key, cot);
-			}
-
-			if (CircleOfTrusts.Count <= 0)
-			{
-				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtiltyCircleOfTrustsNotFound);
-			}
-		}
-
-		/// <summary>
-		/// Internal method to load all configuration information for all
-		/// identity providers' metadata founds in the home folder.
-		/// </summary>
-		private void InitializeIdentityProviders()
-		{
-			var dirInfo = new DirectoryInfo(homeFolder);
-			FileInfo[] files = dirInfo.GetFiles("idp*.xml");
-
-			string metadataFilePattern = "idp(.*).xml"; // for regex.match
-			string extendedFilePattern = "idp{0}-extended.xml"; // for string.format
-			string fileIndex = null;
-
-			foreach (FileInfo metadataFile in files)
-			{
-				Match m = Regex.Match(metadataFile.Name, metadataFilePattern);
-
-				// determine index
-				if (m.Success)
-				{
-					fileIndex = m.Groups[1].Value;
-				}
-
-				string extendedFileName;
-				if (fileIndex == null)
-				{
-					extendedFileName = string.Format(CultureInfo.InvariantCulture, extendedFilePattern, string.Empty);
-				}
-				else
-				{
-					extendedFileName = string.Format(CultureInfo.InvariantCulture, extendedFilePattern, fileIndex);
-				}
-
-				var extendedFile = new FileInfo(homeFolder + @"/" + extendedFileName);
-				if (metadataFile.Exists && extendedFile.Exists)
-				{
-					var identityProvider = new IdentityProvider(metadataFile.FullName, extendedFile.FullName);
-					IdentityProviders.Add(identityProvider.EntityId, identityProvider);
-				}
-			}
-
-			if (IdentityProviders.Count <= 0)
-			{
-				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProvidersNotFound);
-			}
-		}
-
-		/// <summary>
 		/// Checks if the provided entity ID matches one of the known entity
 		/// Identity Provider ID's, otherwise a Saml2Exception is thrown..
 		/// </summary>
@@ -1784,10 +1697,10 @@ namespace Sun.Identity.Saml2
 		/// Identity Provider who's entity ID matches the source ID
 		/// within the artifact, null if not found.
 		/// </returns>
-		private IdentityProvider GetIdpFromArtifact(Artifact artifact)
+		private IIdentityProvider GetIdpFromArtifact(Artifact artifact)
 		{
 			SHA1 sha1 = new SHA1CryptoServiceProvider();
-			IdentityProvider idp = null;
+			IIdentityProvider idp = null;
 			string idpEntityIdHashed = null;
 
 			foreach (string idpEntityId in IdentityProviders.Keys)
@@ -1797,7 +1710,7 @@ namespace Sun.Identity.Saml2
 
 				if (idpEntityIdHashed == artifact.SourceId)
 				{
-					idp = (IdentityProvider) IdentityProviders[idpEntityId];
+					idp = (IIdentityProvider) IdentityProviders[idpEntityId];
 					break;
 				}
 			}

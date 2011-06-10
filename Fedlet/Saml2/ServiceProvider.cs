@@ -37,43 +37,32 @@ using Sun.Identity.Saml2.Exceptions;
 namespace Sun.Identity.Saml2
 {
 	/// <summary>
-	/// Service Provider (SP) for the Fedlet in the ASP.NET environment. 
+	/// Represents all metadata for a Service Provider.
 	/// </summary>
-	public class ServiceProvider
+	public class ServiceProvider : IServiceProvider
 	{
 		#region Members
-
-		/// <summary>
-		/// Constant for the name of the service provider's metadata file.
-		/// </summary>
-		private static string metadataFilename = "sp.xml";
-
-		/// <summary>
-		/// Constant for the name of the service provider's extended metadata
-		/// file.
-		/// </summary>
-		private static string extendedMetadataFilename = "sp-extended.xml";
 
 		/// <summary>
 		/// XML document representing the extended metadata for this Service 
 		/// Provider.
 		/// </summary>
-		private readonly XmlDocument extendedMetadata;
+		private readonly XmlDocument _extendedMetadata;
 
 		/// <summary>
 		/// Namespace Manager for the extended metadata.
 		/// </summary>
-		private readonly XmlNamespaceManager extendedMetadataNsMgr;
+		private readonly XmlNamespaceManager _extendedMetadataNsMgr;
 
 		/// <summary>
 		/// XML document representing the metadata for this Service Provider.
 		/// </summary>
-		private readonly XmlDocument metadata;
+		private readonly XmlDocument _metadata;
 
 		/// <summary>
 		/// Namespace Manager for the metadata.
 		/// </summary>
-		private readonly XmlNamespaceManager metadataNsMgr;
+		private readonly XmlNamespaceManager _metadataNsMgr;
 
 		#endregion
 
@@ -82,28 +71,17 @@ namespace Sun.Identity.Saml2
 		/// <summary>
 		/// Initializes a new instance of the ServiceProvider class. 
 		/// </summary>
-		/// <param name="homeFolder">Home folder containing configuration and metadata.</param>
-		public ServiceProvider(string homeFolder)
+		public ServiceProvider(XmlDocument metadata, XmlDocument extendedMetadata)
 		{
 			try
 			{
-				metadata = new XmlDocument();
-				metadata.Load(homeFolder + "\\" + metadataFilename);
-				metadataNsMgr = new XmlNamespaceManager(metadata.NameTable);
-				metadataNsMgr.AddNamespace("md", "urn:oasis:names:tc:SAML:2.0:metadata");
+				_metadata = metadata;
+				_metadataNsMgr = new XmlNamespaceManager(metadata.NameTable);
+				_metadataNsMgr.AddNamespace("md", "urn:oasis:names:tc:SAML:2.0:metadata");
 
-				extendedMetadata = new XmlDocument();
-				extendedMetadata.Load(homeFolder + "\\" + extendedMetadataFilename);
-				extendedMetadataNsMgr = new XmlNamespaceManager(extendedMetadata.NameTable);
-				extendedMetadataNsMgr.AddNamespace("mdx", "urn:sun:fm:SAML:2.0:entityconfig");
-			}
-			catch (DirectoryNotFoundException dnfe)
-			{
-				throw new ServiceProviderException(Resources.ServiceProviderDirNotFound, dnfe);
-			}
-			catch (FileNotFoundException fnfe)
-			{
-				throw new ServiceProviderException(Resources.ServiceProviderFileNotFound, fnfe);
+				_extendedMetadata = extendedMetadata;
+				_extendedMetadataNsMgr = new XmlNamespaceManager(extendedMetadata.NameTable);
+				_extendedMetadataNsMgr.AddNamespace("mdx", "urn:sun:fm:SAML:2.0:entityconfig");
 			}
 			catch (XmlException xe)
 			{
@@ -124,8 +102,8 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				string xpath = "/md:EntityDescriptor/md:SPSSODescriptor";
-				XmlNode root = metadata.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, metadataNsMgr);
+				XmlNode root = _metadata.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, _metadataNsMgr);
 				string value = node.Attributes["AuthnRequestsSigned"].Value;
 				return Saml2Utils.GetBoolean(value);
 			}
@@ -139,8 +117,8 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				string xpath = "/md:EntityDescriptor";
-				XmlNode root = metadata.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, metadataNsMgr);
+				XmlNode root = _metadata.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, _metadataNsMgr);
 				return node.Attributes["entityID"].Value.Trim();
 			}
 		}
@@ -153,8 +131,8 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig";
-				XmlNode root = extendedMetadata.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, extendedMetadataNsMgr);
+				XmlNode root = _extendedMetadata.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, _extendedMetadataNsMgr);
 				return node.Attributes["metaAlias"].Value.Trim();
 			}
 		}
@@ -168,8 +146,8 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='encryptionCertAlias']/mdx:Value";
-				XmlNode root = extendedMetadata.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, extendedMetadataNsMgr);
+				XmlNode root = _extendedMetadata.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, _extendedMetadataNsMgr);
 
 				if (node != null)
 				{
@@ -190,8 +168,8 @@ namespace Sun.Identity.Saml2
 			{
 				var values = new ArrayList();
 				string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='relayStateUrlList']/mdx:Value";
-				XmlNode root = extendedMetadata.DocumentElement;
-				XmlNodeList nodeList = root.SelectNodes(xpath, extendedMetadataNsMgr);
+				XmlNode root = _extendedMetadata.DocumentElement;
+				XmlNodeList nodeList = root.SelectNodes(xpath, _extendedMetadataNsMgr);
 
 				if (nodeList != null)
 				{
@@ -214,8 +192,8 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='signingCertAlias']/mdx:Value";
-				XmlNode root = extendedMetadata.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, extendedMetadataNsMgr);
+				XmlNode root = _extendedMetadata.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, _extendedMetadataNsMgr);
 
 				if (node != null)
 				{
@@ -235,8 +213,8 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='wantArtifactResponseSigned']/mdx:Value";
-				XmlNode root = extendedMetadata.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, extendedMetadataNsMgr);
+				XmlNode root = _extendedMetadata.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, _extendedMetadataNsMgr);
 
 				if (node != null)
 				{
@@ -257,8 +235,8 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				string xpath = "/md:EntityDescriptor/md:SPSSODescriptor";
-				XmlNode root = metadata.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, metadataNsMgr);
+				XmlNode root = _metadata.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, _metadataNsMgr);
 				string value = node.Attributes["WantAssertionsSigned"].Value;
 				return Saml2Utils.GetBoolean(value);
 			}
@@ -273,8 +251,8 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='wantPOSTResponseSigned']/mdx:Value";
-				XmlNode root = extendedMetadata.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, extendedMetadataNsMgr);
+				XmlNode root = _extendedMetadata.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, _extendedMetadataNsMgr);
 
 				if (node != null)
 				{
@@ -295,8 +273,8 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='wantLogoutRequestSigned']/mdx:Value";
-				XmlNode root = extendedMetadata.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, extendedMetadataNsMgr);
+				XmlNode root = _extendedMetadata.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, _extendedMetadataNsMgr);
 
 				if (node != null)
 				{
@@ -317,8 +295,8 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='wantLogoutResponseSigned']/mdx:Value";
-				XmlNode root = extendedMetadata.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, extendedMetadataNsMgr);
+				XmlNode root = _extendedMetadata.DocumentElement;
+				XmlNode node = root.SelectSingleNode(xpath, _extendedMetadataNsMgr);
 
 				if (node != null)
 				{
@@ -347,8 +325,8 @@ namespace Sun.Identity.Saml2
 			xpath.Append(binding);
 			xpath.Append("']");
 
-			XmlNode root = metadata.DocumentElement;
-			XmlNode node = root.SelectSingleNode(xpath.ToString(), metadataNsMgr);
+			XmlNode root = _metadata.DocumentElement;
+			XmlNode node = root.SelectSingleNode(xpath.ToString(), _metadataNsMgr);
 			if (node != null)
 			{
 				return node.Attributes["Location"].Value.Trim();
@@ -373,8 +351,8 @@ namespace Sun.Identity.Saml2
 			xpath.Append(index);
 			xpath.Append("']");
 
-			XmlNode root = metadata.DocumentElement;
-			XmlNode node = root.SelectSingleNode(xpath.ToString(), metadataNsMgr);
+			XmlNode root = _metadata.DocumentElement;
+			XmlNode node = root.SelectSingleNode(xpath.ToString(), _metadataNsMgr);
 			if (node != null)
 			{
 				return node.Attributes["Location"].Value.Trim();
@@ -475,9 +453,9 @@ namespace Sun.Identity.Saml2
 		/// </returns>
 		public string GetExportableMetadata(bool signMetadata)
 		{
-			var exportableXml = (XmlDocument) metadata.CloneNode(true);
+			var exportableXml = (XmlDocument) _metadata.CloneNode(true);
 			XmlNode entityDescriptorNode
-				= exportableXml.SelectSingleNode("/md:EntityDescriptor", metadataNsMgr);
+				= exportableXml.SelectSingleNode("/md:EntityDescriptor", _metadataNsMgr);
 
 			if (entityDescriptorNode == null)
 			{
@@ -520,8 +498,8 @@ namespace Sun.Identity.Saml2
 			xpath.Append("/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute");
 			xpath.Append("[@name='spAuthncontextClassrefMapping']/mdx:Value");
 
-			XmlNode root = extendedMetadata.DocumentElement;
-			XmlNodeList nodes = root.SelectNodes(xpath.ToString(), extendedMetadataNsMgr);
+			XmlNode root = _extendedMetadata.DocumentElement;
+			XmlNodeList nodes = root.SelectNodes(xpath.ToString(), _extendedMetadataNsMgr);
 			return nodes;
 		}
 
