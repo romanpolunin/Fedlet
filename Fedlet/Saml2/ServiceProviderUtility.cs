@@ -31,6 +31,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -95,24 +96,33 @@ namespace Sun.Identity.Saml2
 
 		#region Properties
 
-		/// <summary>
-		/// Gets the service provider configured for the hosted application.
-		/// </summary>
-		public IServiceProvider ServiceProvider { get { return _repository.GetServiceProvider(); } }
+    	/// <summary>
+    	/// Gets the service provider configured for the hosted application.
+    	/// </summary>
+    	public IServiceProvider ServiceProvider
+    	{
+    		get { return _repository.GetServiceProvider(); }
+    	}
 
-		/// <summary>
-		/// Gets the collection of identity providers configured for the
-		/// hosted application where the key is the identity provider's
-		/// entity ID.
-		/// </summary>
-		public Dictionary<string, IdentityProvider> IdentityProviders { get { return _repository.GetIdentityProviders(); } }
+    	/// <summary>
+    	/// Gets the collection of identity providers configured for the
+    	/// hosted application where the key is the identity provider's
+    	/// entity ID.
+    	/// </summary>
+    	public Dictionary<string, IIdentityProvider> IdentityProviders
+    	{
+    		get { return _repository.GetIdentityProviders(); }
+    	}
 
-		/// <summary>
-		/// Gets the collection of circle-of-trusts configured for the
-		/// hosted application where the key is the circle-of-trust's
-		/// "cot-name".
-		/// </summary>
-		public Dictionary<string, CircleOfTrust> CircleOfTrusts { get { return _repository.GetCircleOfTrusts(); } }
+    	/// <summary>
+    	/// Gets the collection of circle-of-trusts configured for the
+    	/// hosted application where the key is the circle-of-trust's
+    	/// "cot-name".
+    	/// </summary>
+    	public Dictionary<string, ICircleOfTrust> CircleOfTrusts
+    	{
+    		get { return _repository.GetCircleOfTrusts(); }
+    	}
 
 		#endregion
 
@@ -127,7 +137,7 @@ namespace Sun.Identity.Saml2
 		public ArtifactResponse GetArtifactResponse(Artifact artifact)
 		{
 			var artifactResolve = new ArtifactResolve(ServiceProvider, artifact);
-			ArtifactResponse artifactResponse = null;
+			ArtifactResponse artifactResponse;
 
 			IIdentityProvider idp = GetIdpFromArtifact(artifact);
 			if (idp == null)
@@ -141,7 +151,7 @@ namespace Sun.Identity.Saml2
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdpArtifactResSvcLocNotDefined);
 			}
 
-			HttpWebRequest request = null;
+			HttpWebRequest request;
 			HttpWebResponse response = null;
 			try
 			{
@@ -180,9 +190,17 @@ namespace Sun.Identity.Saml2
                 logger.Info("ArtifactResolve:\r\n{0}", artifactResolveXml.OuterXml);
 
 				response = (HttpWebResponse) request.GetResponse();
-				var streamReader = new StreamReader(response.GetResponseStream());
-				string responseContent = streamReader.ReadToEnd();
-				streamReader.Close();
+
+				string responseContent = null;
+				using (var responseStream = response.GetResponseStream())
+				{
+					if (responseStream != null)
+					{
+						var streamReader = new StreamReader(responseStream);
+						responseContent = streamReader.ReadToEnd();
+						streamReader.Close();
+					}
+				}
 
 				var soapResponse = new XmlDocument();
 				soapResponse.PreserveWhitespace = true;
@@ -232,7 +250,7 @@ namespace Sun.Identity.Saml2
 		public AuthnResponse GetAuthnResponse(HttpContextBase context)
 		{
 			ArtifactResponse artifactResponse = null;
-			AuthnResponse authnResponse = null;
+			AuthnResponse authnResponse;
 			ICollection authnRequests = AuthnRequestCache.GetSentAuthnRequests(context);
 			HttpRequestBase request = context.Request;
 
@@ -379,7 +397,7 @@ namespace Sun.Identity.Saml2
 		/// <returns>LogoutResponse object</returns>
         public LogoutResponse GetLogoutResponse(HttpContextBase context)
 		{
-			LogoutResponse logoutResponse = null;
+			LogoutResponse logoutResponse;
             HttpRequestBase request = context.Request;
 
 			// Check if a saml response was received...
@@ -452,8 +470,8 @@ namespace Sun.Identity.Saml2
 				throw new ServiceProviderUtilityException(Resources.AuthnRequestIsNull);
 			}
 
-			var idp = (IdentityProvider) IdentityProviders[idpEntityId];
-			if (idp == null)
+			IIdentityProvider idp;
+			if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
 			{
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
 			}
@@ -479,15 +497,13 @@ namespace Sun.Identity.Saml2
 				{
 					throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilitySignFailedNoCertAlias);
 				}
-				else
-				{
-					Saml2Utils.SignXml(
-						ServiceProvider.SigningCertificateAlias,
-						authnRequestXml,
-						authnRequest.Id,
-						true);
-					logger.Info("Signed AuthnRequest:\r\n{0}", authnRequestXml.InnerXml);
-				}
+				
+				Saml2Utils.SignXml(
+					ServiceProvider.SigningCertificateAlias,
+					authnRequestXml,
+					authnRequest.Id,
+					true);
+				logger.Info("Signed AuthnRequest:\r\n{0}", authnRequestXml.InnerXml);
 			}
 
 			string packagedAuthnRequest = Saml2Utils.ConvertToBase64(authnRequestXml.InnerXml);
@@ -543,8 +559,8 @@ namespace Sun.Identity.Saml2
 				throw new ServiceProviderUtilityException(Resources.AuthnRequestIsNull);
 			}
 
-			var idp = (IdentityProvider) IdentityProviders[idpEntityId];
-			if (idp == null)
+			IIdentityProvider idp;
+			if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
 			{
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
 			}
@@ -572,12 +588,10 @@ namespace Sun.Identity.Saml2
 				{
 					throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilitySignFailedNoCertAlias);
 				}
-				else
-				{
-					queryString += "&" + Saml2Constants.SignatureAlgorithm;
-					queryString += "=" + HttpUtility.UrlEncode(Saml2Constants.SignatureAlgorithmRsa);
-					queryString = Saml2Utils.SignQueryString(ServiceProvider.SigningCertificateAlias, queryString);
-				}
+				
+				queryString += "&" + Saml2Constants.SignatureAlgorithm;
+				queryString += "=" + HttpUtility.UrlEncode(Saml2Constants.SignatureAlgorithmRsa);
+				queryString = Saml2Utils.SignQueryString(ServiceProvider.SigningCertificateAlias, queryString);
 			}
 
 			var redirectUrl = new StringBuilder();
@@ -610,8 +624,8 @@ namespace Sun.Identity.Saml2
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityLogoutRequestIsNull);
 			}
 
-			var idp = (IdentityProvider) IdentityProviders[idpEntityId];
-			if (idp == null)
+			IIdentityProvider idp;
+			if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
 			{
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
 			}
@@ -637,14 +651,12 @@ namespace Sun.Identity.Saml2
 				{
 					throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilitySignFailedNoCertAlias);
 				}
-				else
-				{
-					Saml2Utils.SignXml(
-						ServiceProvider.SigningCertificateAlias,
-						logoutRequestXml,
-						logoutRequest.Id,
-						true);
-				}
+				
+				Saml2Utils.SignXml(
+					ServiceProvider.SigningCertificateAlias,
+					logoutRequestXml,
+					logoutRequest.Id,
+					true);
 			}
 
 			string packagedLogoutRequest = Saml2Utils.ConvertToBase64(logoutRequestXml.InnerXml);
@@ -700,8 +712,8 @@ namespace Sun.Identity.Saml2
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityLogoutRequestIsNull);
 			}
 
-			var idp = (IdentityProvider) IdentityProviders[idpEntityId];
-			if (idp == null)
+			IIdentityProvider idp;
+			if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
 			{
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
 			}
@@ -729,12 +741,10 @@ namespace Sun.Identity.Saml2
 				{
 					throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilitySignFailedNoCertAlias);
 				}
-				else
-				{
-					queryString += "&" + Saml2Constants.SignatureAlgorithm;
-					queryString += "=" + HttpUtility.UrlEncode(Saml2Constants.SignatureAlgorithmRsa);
-					queryString = Saml2Utils.SignQueryString(ServiceProvider.SigningCertificateAlias, queryString);
-				}
+				
+				queryString += "&" + Saml2Constants.SignatureAlgorithm;
+				queryString += "=" + HttpUtility.UrlEncode(Saml2Constants.SignatureAlgorithmRsa);
+				queryString = Saml2Utils.SignQueryString(ServiceProvider.SigningCertificateAlias, queryString);
 			}
 
 			var redirectUrl = new StringBuilder();
@@ -768,8 +778,8 @@ namespace Sun.Identity.Saml2
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityLogoutResponseIsNull);
 			}
 
-			var idp = (IdentityProvider) IdentityProviders[idpEntityId];
-			if (idp == null)
+			IIdentityProvider idp;
+			if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
 			{
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
 			}
@@ -795,14 +805,12 @@ namespace Sun.Identity.Saml2
 				{
 					throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilitySignFailedNoCertAlias);
 				}
-				else
-				{
-					Saml2Utils.SignXml(
-						ServiceProvider.SigningCertificateAlias,
-						logoutResponseXml,
-						logoutResponse.Id,
-						true);
-				}
+				
+				Saml2Utils.SignXml(
+					ServiceProvider.SigningCertificateAlias,
+					logoutResponseXml,
+					logoutResponse.Id,
+					true);
 			}
 
 			string packagedLogoutResponse = Saml2Utils.ConvertToBase64(logoutResponseXml.InnerXml);
@@ -858,8 +866,8 @@ namespace Sun.Identity.Saml2
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityLogoutResponseIsNull);
 			}
 
-			var idp = (IdentityProvider) IdentityProviders[idpEntityId];
-			if (idp == null)
+			IIdentityProvider idp;
+			if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
 			{
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
 			}
@@ -888,12 +896,10 @@ namespace Sun.Identity.Saml2
 				{
 					throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilitySignFailedNoCertAlias);
 				}
-				else
-				{
-					queryString += "&" + Saml2Constants.SignatureAlgorithm;
-					queryString += "=" + HttpUtility.UrlEncode(Saml2Constants.SignatureAlgorithmRsa);
-					queryString = Saml2Utils.SignQueryString(ServiceProvider.SigningCertificateAlias, queryString);
-				}
+				
+				queryString += "&" + Saml2Constants.SignatureAlgorithm;
+				queryString += "=" + HttpUtility.UrlEncode(Saml2Constants.SignatureAlgorithmRsa);
+				queryString = Saml2Utils.SignQueryString(ServiceProvider.SigningCertificateAlias, queryString);
 			}
 
 			var redirectUrl = new StringBuilder();
@@ -924,8 +930,8 @@ namespace Sun.Identity.Saml2
 		/// </param>
 		public void SendAuthnRequest(HttpContextBase context, string idpEntityId, NameValueCollection parameters)
 		{
-			var idp = (IdentityProvider) IdentityProviders[idpEntityId];
-			if (idp == null)
+			IIdentityProvider idp;
+			if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
 			{
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
 			}
@@ -970,8 +976,8 @@ namespace Sun.Identity.Saml2
 		/// </param>
         public void SendLogoutRequest(HttpContextBase context, string idpEntityId, NameValueCollection parameters)
 		{
-			var idp = (IdentityProvider) IdentityProviders[idpEntityId];
-			if (idp == null)
+			IIdentityProvider idp;
+			if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
 			{
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
 			}
@@ -1018,20 +1024,20 @@ namespace Sun.Identity.Saml2
 		/// <param name="idpEntityId">Entity ID of the IDP.</param>
 		public void SendSoapLogoutRequest(LogoutRequest logoutRequest, string idpEntityId)
 		{
-			HttpWebRequest request = null;
+			HttpWebRequest request;
 			HttpWebResponse response = null;
-			LogoutResponse logoutResponse = null;
-			var idp = (IdentityProvider) IdentityProviders[idpEntityId];
 
 			if (logoutRequest == null)
 			{
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityLogoutRequestIsNull);
 			}
-			else if (idp == null)
+
+			IIdentityProvider idp;
+			if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
 			{
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
 			}
-			else if (idp.GetSingleLogoutServiceLocation(Saml2Constants.HttpSoapProtocolBinding) == null)
+			if (idp.GetSingleLogoutServiceLocation(Saml2Constants.HttpSoapProtocolBinding) == null)
 			{
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdpSingleLogoutSvcLocNotDefined);
 			}
@@ -1089,11 +1095,10 @@ namespace Sun.Identity.Saml2
 				XmlNode responseXml = root.SelectSingleNode("/soap:Envelope/soap:Body/samlp:LogoutResponse", soapNsMgr);
 				string logoutResponseXml = responseXml.OuterXml;
 
-				logoutResponse = new LogoutResponse(logoutResponseXml);
+				LogoutResponse logoutResponse = new LogoutResponse(logoutResponseXml);
                 logger.Info("LogoutResponse:\r\n{0}", logoutResponseXml);
 
-				var logoutRequests = new ArrayList();
-				logoutRequests.Add(logoutRequest);
+				var logoutRequests = new ArrayList {logoutRequest};
 				Validate(logoutResponse, logoutRequests);
 			}
 			catch (WebException we)
@@ -1125,9 +1130,9 @@ namespace Sun.Identity.Saml2
 			{
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityLogoutRequestIsNull);
 			}
-
-			var idp = (IdentityProvider) IdentityProviders[logoutRequest.Issuer];
-			if (idp == null)
+			
+			IIdentityProvider idp;
+			if (!IdentityProviders.TryGetValue(logoutRequest.Issuer, out idp))
 			{
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdpNotDeterminedFromLogoutRequest);
 			}
@@ -1174,9 +1179,8 @@ namespace Sun.Identity.Saml2
 		/// </param>
         public void SendSoapLogoutResponse(HttpContextBase context, LogoutRequest logoutRequest)
 		{
-			var idp = (IdentityProvider) IdentityProviders[logoutRequest.Issuer];
-
-			if (idp == null)
+			IIdentityProvider idp;
+			if (!IdentityProviders.TryGetValue(logoutRequest.Issuer, out idp))
 			{
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
 			}
@@ -1193,17 +1197,15 @@ namespace Sun.Identity.Saml2
 				{
 					throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilitySignFailedNoCertAlias);
 				}
-				else
-				{
-					Saml2Utils.SignXml(
-						ServiceProvider.SigningCertificateAlias,
-						logoutResponseXml,
-						logoutResponse.Id,
-						true);
-				}
+				
+				Saml2Utils.SignXml(
+					ServiceProvider.SigningCertificateAlias,
+					logoutResponseXml,
+					logoutResponse.Id,
+					true);
 			}
 
-            logger.Info("LogoutResponse:\r\n{0}", logoutResponseXml.OuterXml);
+			logger.Info("LogoutResponse:\r\n{0}", logoutResponseXml.OuterXml);
 
 			string soapMessage = Saml2Utils.CreateSoapMessage(logoutResponseXml.OuterXml);
 
@@ -1458,8 +1460,8 @@ namespace Sun.Identity.Saml2
 		{
 			AuthnResponse authnResponse = artifactResponse.AuthnResponse;
 
-			var identityProvider = (IdentityProvider) IdentityProviders[authnResponse.Issuer];
-			if (identityProvider == null)
+			IIdentityProvider identityProvider;
+			if (!IdentityProviders.TryGetValue(authnResponse.Issuer, out identityProvider))
 			{
 				throw new Saml2Exception(Resources.InvalidIssuer);
 			}
@@ -1468,20 +1470,20 @@ namespace Sun.Identity.Saml2
 			var responseSignature = (XmlElement) authnResponse.XmlResponseSignature;
 			var assertionSignature = (XmlElement) authnResponse.XmlAssertionSignature;
 
-			XmlElement validationSignature = null;
-			string validationSignatureCert = null;
-			string validationReferenceId = null;
+			XmlElement validationSignature;
+			string validationSignatureCert;
+			string validationReferenceId;
 
 			if (ServiceProvider.WantArtifactResponseSigned && artifactResponseSignature == null)
 			{
 				throw new Saml2Exception(Resources.AuthnResponseInvalidSignatureMissingOnArtifactResponse);
 			}
-			else if (ServiceProvider.WantPostResponseSigned && responseSignature == null && artifactResponseSignature == null)
+			if (ServiceProvider.WantPostResponseSigned && responseSignature == null && artifactResponseSignature == null)
 			{
 				throw new Saml2Exception(Resources.AuthnResponseInvalidSignatureMissingOnResponse);
 			}
-			else if (ServiceProvider.WantAssertionsSigned && assertionSignature == null && responseSignature == null &&
-			         artifactResponseSignature == null)
+			if (ServiceProvider.WantAssertionsSigned && assertionSignature == null && responseSignature == null &&
+			    artifactResponseSignature == null)
 			{
 				throw new Saml2Exception(Resources.AuthnResponseInvalidSignatureMissing);
 			}
@@ -1535,23 +1537,23 @@ namespace Sun.Identity.Saml2
 		/// <seealso cref="ServiceProviderUtility.ValidateForPost(AuthnResponse, ICollection)"/>
 		private void CheckSignature(AuthnResponse authnResponse)
 		{
-			var identityProvider = (IdentityProvider) IdentityProviders[authnResponse.Issuer];
-			if (identityProvider == null)
+			IIdentityProvider identityProvider;
+			if (!IdentityProviders.TryGetValue(authnResponse.Issuer, out identityProvider))
 			{
 				throw new Saml2Exception(Resources.InvalidIssuer);
 			}
 
 			var responseSignature = (XmlElement) authnResponse.XmlResponseSignature;
 			var assertionSignature = (XmlElement) authnResponse.XmlAssertionSignature;
-			XmlElement validationSignature = null;
-			string validationSignatureCert = null;
-			string validationReferenceId = null;
+			XmlElement validationSignature;
+			string validationSignatureCert;
+			string validationReferenceId;
 
 			if (responseSignature == null && assertionSignature == null)
 			{
 				throw new Saml2Exception(Resources.AuthnResponseInvalidSignatureMissing);
 			}
-			else if (ServiceProvider.WantPostResponseSigned && responseSignature == null)
+			if (ServiceProvider.WantPostResponseSigned && responseSignature == null)
 			{
 				throw new Saml2Exception(Resources.AuthnResponseInvalidSignatureMissingOnResponse);
 			}
@@ -1595,9 +1597,9 @@ namespace Sun.Identity.Saml2
 		/// <param name="logoutRequest">SAMLv2 LogoutRequest object.</param>
 		private void CheckSignature(LogoutRequest logoutRequest)
 		{
-			var idp = (IdentityProvider) IdentityProviders[logoutRequest.Issuer];
+			IIdentityProvider idp;
 
-			if (idp == null)
+			if (!IdentityProviders.TryGetValue(logoutRequest.Issuer, out idp))
 			{
 				throw new Saml2Exception(Resources.InvalidIssuer);
 			}
@@ -1619,9 +1621,9 @@ namespace Sun.Identity.Saml2
 		/// </param>
 		private void CheckSignature(LogoutRequest logoutRequest, string queryString)
 		{
-			var idp = (IdentityProvider) IdentityProviders[logoutRequest.Issuer];
+			IIdentityProvider idp;
 
-			if (idp == null)
+			if (!IdentityProviders.TryGetValue(logoutRequest.Issuer, out idp))
 			{
 				throw new Saml2Exception(Resources.InvalidIssuer);
 			}
@@ -1636,9 +1638,9 @@ namespace Sun.Identity.Saml2
 		/// <param name="logoutResponse">SAMLv2 LogoutRequest object.</param>
 		private void CheckSignature(LogoutResponse logoutResponse)
 		{
-			var idp = (IdentityProvider) IdentityProviders[logoutResponse.Issuer];
+			IIdentityProvider idp;
 
-			if (idp == null)
+			if (!IdentityProviders.TryGetValue(logoutResponse.Issuer, out idp))
 			{
 				throw new Saml2Exception(Resources.InvalidIssuer);
 			}
@@ -1660,7 +1662,7 @@ namespace Sun.Identity.Saml2
 		/// </param>
 		private void CheckSignature(LogoutResponse logoutResponse, string queryString)
 		{
-			var idp = (IdentityProvider) IdentityProviders[logoutResponse.Issuer];
+			var idp = IdentityProviders[logoutResponse.Issuer];
 
 			Saml2Utils.ValidateSignedQueryString(idp.SigningCertificate, queryString);
 		}
@@ -1674,16 +1676,11 @@ namespace Sun.Identity.Saml2
 		{
 			string spEntityId = ServiceProvider.EntityId;
 
-			foreach (string cotName in CircleOfTrusts.Keys)
+			if (!CircleOfTrusts.Values
+				.Any(cot => cot.AreProvidersTrusted(spEntityId, idpEntityId)))
 			{
-				var cot = (CircleOfTrust) CircleOfTrusts[cotName];
-				if (cot.AreProvidersTrusted(spEntityId, idpEntityId))
-				{
-					return;
-				}
+				throw new Saml2Exception(Resources.InvalidIdpEntityIdNotInCircleOfTrust);
 			}
-
-			throw new Saml2Exception(Resources.InvalidIdpEntityIdNotInCircleOfTrust);
 		}
 
 		/// <summary>
@@ -1701,7 +1698,7 @@ namespace Sun.Identity.Saml2
 		{
 			SHA1 sha1 = new SHA1CryptoServiceProvider();
 			IIdentityProvider idp = null;
-			string idpEntityIdHashed = null;
+			string idpEntityIdHashed;
 
 			foreach (string idpEntityId in IdentityProviders.Keys)
 			{
@@ -1710,7 +1707,7 @@ namespace Sun.Identity.Saml2
 
 				if (idpEntityIdHashed == artifact.SourceId)
 				{
-					idp = (IIdentityProvider) IdentityProviders[idpEntityId];
+					idp = IdentityProviders[idpEntityId];
 					break;
 				}
 			}

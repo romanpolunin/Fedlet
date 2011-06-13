@@ -33,7 +33,7 @@ namespace Sun.Identity.Saml2
 	/// <summary>
 	/// Circle Of Trust (COT) for the Fedlet in the ASP.NET environment. 
 	/// </summary>
-	public class CircleOfTrust
+	public class CircleOfTrust : ICircleOfTrust
 	{
 		#region Members
 

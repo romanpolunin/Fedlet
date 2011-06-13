@@ -268,6 +268,15 @@ namespace Sun.Identity.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The name for the circle of trust file could not be found..
+        /// </summary>
+        public static string CircleOfTrustNameNotFound {
+            get {
+                return ResourceManager.GetString("CircleOfTrustNameNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to An exception occurred in acquiring circle of trust information..
         /// </summary>
         public static string CircleOfTrustUnhandledException {

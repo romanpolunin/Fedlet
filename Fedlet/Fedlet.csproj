@@ -87,6 +87,7 @@
     <Compile Include="Saml2\ArtifactResponse.cs" />
     <Compile Include="Saml2\AuthnRequest.cs" />
     <Compile Include="Saml2\AuthnRequestCache.cs" />
+    <Compile Include="Saml2\ICircleOfTrust.cs" />
     <Compile Include="Saml2\IIdentityProvider.cs" />
     <Compile Include="Saml2\IServiceProvider.cs" />
     <Compile Include="Saml2\IServiceProviderUtility.cs" />

@@ -7,12 +7,12 @@ namespace Sun.Identity.Common
 	public interface IFedletRepository
 	{
 		/// <summary>Get all configuration information for all circles of trust.</summary>
-		Dictionary<string, CircleOfTrust> GetCircleOfTrusts();
+		Dictionary<string, ICircleOfTrust> GetCircleOfTrusts();
 
 		/// <summary>Get all configuration information for the service provider.</summary>
 		IServiceProvider GetServiceProvider();
 
 		/// <summary>Get all configuration information for all identity providers.</summary>
-		Dictionary<string, IdentityProvider> GetIdentityProviders();
+		Dictionary<string, IIdentityProvider> GetIdentityProviders();
 	}
 }

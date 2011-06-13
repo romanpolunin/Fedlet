@@ -18,6 +18,7 @@ namespace Sun.Identity.Common
 	/// </summary>
 	public class FileFedletRepository : IFedletRepository
 	{
+		private const string CircleOfTrustNameAttribute = "cot-name";
 		private readonly DirectoryInfo _homeFolder;
 
 		/// <summary>
@@ -35,12 +36,12 @@ namespace Sun.Identity.Common
 		}
 
 		/// <summary>Get all configuration information for all circles of trust found in the home folder.</summary>
-		public Dictionary<string, CircleOfTrust> GetCircleOfTrusts()
+		public Dictionary<string, ICircleOfTrust> GetCircleOfTrusts()
 		{
 			var circleOfTrusts = _homeFolder
 				.GetFiles("fedlet*.cot")
 				.Select(GetCircleOfTrust)
-				.ToDictionary(c => c.Attributes["cot-name"]);
+				.ToDictionary(c => c.Attributes[CircleOfTrustNameAttribute]);
 
 			if (circleOfTrusts.Count == 0)
 			{
@@ -50,7 +51,7 @@ namespace Sun.Identity.Common
 			return circleOfTrusts;
 		}
 
-		private CircleOfTrust GetCircleOfTrust(FileInfo fileInfo)
+		private ICircleOfTrust GetCircleOfTrust(FileInfo fileInfo)
 		{
 			try
 			{
@@ -58,12 +59,18 @@ namespace Sun.Identity.Common
 				var attributes = new NameValueCollection();
 
 				var allLines = File.ReadAllLines(fileInfo.FullName);
-				foreach (var line in allLines.Where(l => string.IsNullOrEmpty(l)))
+				foreach (var line in allLines.Where(l => !string.IsNullOrEmpty(l)))
 				{
 					string[] tokens = line.Split(separators);
 					string key = tokens[0];
 					string value = tokens[1];
 					attributes[key] = value;
+				}
+
+				if (string.IsNullOrEmpty(attributes[CircleOfTrustNameAttribute]))
+				{
+					throw new ServiceProviderUtilityException(
+						Resources.CircleOfTrustNameNotFound + " in file " + fileInfo.FullName);
 				}
 				return new CircleOfTrust(attributes);
 			}
@@ -109,7 +116,7 @@ namespace Sun.Identity.Common
 		}
 
 		/// <summary>Get all configuration information for all identity providers found in the home folder.</summary>
-		public Dictionary<string, IdentityProvider> GetIdentityProviders()
+		public Dictionary<string, IIdentityProvider> GetIdentityProviders()
 		{
 			try
 			{
@@ -141,7 +148,7 @@ namespace Sun.Identity.Common
 			}
 		}
 
-		private IdentityProvider GetIdentityProvider(FileInfo metadataFile)
+		private IIdentityProvider GetIdentityProvider(FileInfo metadataFile)
 		{
 			const string metadataFilePattern = "idp(.*).xml";
 			const string extendedFilePattern = "idp{0}-extended.xml";

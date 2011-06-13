@@ -121,7 +121,7 @@ namespace Sun.Identity.Saml2
 				cotList = new ArrayList();
 				foreach (string cotName in serviceProviderUtility.CircleOfTrusts.Keys)
 				{
-					var cot = (CircleOfTrust) serviceProviderUtility.CircleOfTrusts[cotName];
+					var cot = serviceProviderUtility.CircleOfTrusts[cotName];
 					if (cot.ReaderServiceUrl != null)
 					{
 						cotList.Add(cotName);
@@ -136,7 +136,7 @@ namespace Sun.Identity.Saml2
 				var cotName = (string) enumerator.Current;
 				cotList.Remove(cotName);
 				session[CommonDomainDiscoverySessionAttribute] = cotList;
-				var cot = (CircleOfTrust) serviceProviderUtility.CircleOfTrusts[cotName];
+				var cot = serviceProviderUtility.CircleOfTrusts[cotName];
 				readerSvcUrl = new Uri(cot.ReaderServiceUrl.AbsoluteUri);
 			}
 
