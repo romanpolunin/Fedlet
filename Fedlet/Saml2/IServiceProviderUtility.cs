@@ -21,14 +21,14 @@ namespace Sun.Identity.Saml2
         /// hosted application where the key is the identity provider's
         /// entity ID.
         /// </summary>
-        Dictionary<string, IdentityProvider> IdentityProviders { get; }
+        Dictionary<string, IIdentityProvider> IdentityProviders { get; }
 
         /// <summary>
         /// Gets the collection of circle-of-trusts configured for the
         /// hosted application where the key is the circle-of-trust's
         /// "cot-name".
         /// </summary>
-        Dictionary<string, CircleOfTrust> CircleOfTrusts { get; }
+        Dictionary<string, ICircleOfTrust> CircleOfTrusts { get; }
 
         /// <summary>
         /// Retrieve the ArtifactResponse object with the given SAMLv2 

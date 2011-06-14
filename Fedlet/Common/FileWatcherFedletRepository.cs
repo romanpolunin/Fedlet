@@ -16,10 +16,12 @@ namespace Sun.Identity.Common
 		private IFedletRepository _innerRepository;
 		private FileSystemWatcher _fileSystemWatcher;
 		private Timer _timer;
+		private int _clearCacheAttempts = 0;
 
 		private Dictionary<string, ICircleOfTrust> _cirlcesOfTrust;
 		private ISamlServiceProvider _serviceProvider;
 		private Dictionary<string, IIdentityProvider> _identityProviders;
+		private string _homeFolder;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="FileWatcherFedletRepository"/> class.
@@ -27,6 +29,7 @@ namespace Sun.Identity.Common
 		/// <param name="homeFolder">The folder containing the configuration files.</param>
 		public FileWatcherFedletRepository(string homeFolder)
 		{
+			_homeFolder = homeFolder;
 			_innerRepository = new FileFedletRepository(homeFolder);
 			_fileSystemWatcher = new FileSystemWatcher(homeFolder);
 			_timer = new Timer(ReplaceCache);
@@ -41,6 +44,8 @@ namespace Sun.Identity.Common
 		{
 			try
 			{
+				_clearCacheAttempts++;
+
 				//don't replace any cached values unless all cached values can be replaced
 				//  if a file is locked, the exception will reschedule replacing the cache
 				var serviceProvider = _innerRepository.GetServiceProvider();
@@ -50,9 +55,16 @@ namespace Sun.Identity.Common
 				_serviceProvider = serviceProvider;
 				_cirlcesOfTrust = circleOfTrusts;
 				_identityProviders = identityProviders;
+
+				_clearCacheAttempts = 0;
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
+				if (_clearCacheAttempts > 0 && _clearCacheAttempts % 100 == 0)
+				{
+					ex.Data["homeFolder"] = _homeFolder;
+					LoggerFactory.GetLogger<ServiceProviderUtility>().Error(ex, "Unable to load configuration");
+				}
 				ClearCache(null, null);
 			}
 		}
