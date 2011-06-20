@@ -41,7 +41,7 @@ namespace Sun.Identity.Common
 			var circleOfTrusts = _homeFolder
 				.GetFiles("fedlet*.cot")
 				.Select(GetCircleOfTrust)
-				.ToDictionary(c => c.Attributes[CircleOfTrustNameAttribute]);
+				.ToDictionary(c => c.Name);
 
 			if (circleOfTrusts.Count == 0)
 			{

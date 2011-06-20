@@ -26,7 +26,9 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Linq;
 
 namespace Sun.Identity.Saml2
 {
@@ -35,26 +37,30 @@ namespace Sun.Identity.Saml2
 	/// </summary>
 	public class CircleOfTrust : ICircleOfTrust
 	{
-		#region Members
-
-		/// <summary>
-		/// Name of key of property used for the saml2 reader service url.
-		/// </summary>
+		private const string CircleOfTrustNameAttribute = "cot-name";
 		private const string Saml2ReaderServiceKey = "sun-fm-saml2-readerservice-url";
-
-		/// <summary>
-		/// Name of key of property used for the saml2 writer service url.
-		/// </summary>
 		private const string Saml2WriterServiceKey = "sun-fm-saml2-writerservice-url";
-
-		/// <summary>
-		/// Name of key of property used for list of trusted providers.
-		/// </summary>
 		private const string TrustedProvidersKey = "sun-fm-trusted-providers";
 
-		#endregion
+		private HashSet<string> _trustedEntities = new HashSet<string>();
 
-		#region Constructors
+
+		/// <summary>
+		/// Gets the name of the circle of trust
+		/// </summary>
+		public string Name { get; private set; }
+
+		/// <summary>
+		/// Gets the saml2 reader service url, empty string if not specified,
+		/// null attribute is not found.
+		/// </summary>
+		public Uri ReaderServiceUrl { get; private set; }
+
+		/// <summary>
+		/// Gets the saml2 writer service url, empty string if not specified,
+		/// null attribute is not found.
+		/// </summary>
+		public Uri WriterServiceUrl { get; private set; }
 
 		/// <summary>
 		/// Initializes a new instance of the CircleOfTrust class.
@@ -62,63 +68,26 @@ namespace Sun.Identity.Saml2
 		/// <param name="attributes">name-value pair collection of attributes.</param>
 		public CircleOfTrust(NameValueCollection attributes)
 		{
-			Attributes = attributes;
-		}
+			Name = attributes[CircleOfTrustNameAttribute];
 
-		#endregion
+			string value = attributes[Saml2ReaderServiceKey];
+			ReaderServiceUrl = String.IsNullOrEmpty(value) ? null : new Uri(value);
 
-		#region Properties
+			value = attributes[Saml2WriterServiceKey];
+			WriterServiceUrl = String.IsNullOrEmpty(value) ? null : new Uri(value);
+			
+			string trusted = attributes[TrustedProvidersKey];
 
-		/// <summary>
-		/// Gets a name-value pair collection of attributes
-		/// </summary>
-		public NameValueCollection Attributes { get; private set; }
-
-		/// <summary>
-		/// Gets the saml2 reader service url, empty string if not specified,
-		/// null attribute is not found.
-		/// </summary>
-		public Uri ReaderServiceUrl
-		{
-			get
+			if (trusted != null)
 			{
-				string value = Attributes[Saml2ReaderServiceKey];
+				string[] separator = {","};
 
-				if (!String.IsNullOrEmpty(value))
+				foreach (var t in trusted.Split(separator, StringSplitOptions.RemoveEmptyEntries))
 				{
-					return new Uri(value);
-				}
-				else
-				{
-					return null;
+					_trustedEntities.Add(t.Trim());
 				}
 			}
 		}
-
-		/// <summary>
-		/// Gets the saml2 writer service url, empty string if not specified,
-		/// null attribute is not found.
-		/// </summary>
-		public Uri WriterServiceUrl
-		{
-			get
-			{
-				string value = Attributes[Saml2WriterServiceKey];
-
-				if (!String.IsNullOrEmpty(value))
-				{
-					return new Uri(value);
-				}
-				else
-				{
-					return null;
-				}
-			}
-		}
-
-		#endregion
-
-		#region Methods
 
 		/// <summary>
 		/// Checks service provider and identity provider Entity ID's to
@@ -129,28 +98,8 @@ namespace Sun.Identity.Saml2
 		/// <returns>True if providers are trusted, false otherwise.</returns>
 		public bool AreProvidersTrusted(string serviceProviderEntityId, string identityProviderEntityId)
 		{
-			bool results = false;
-			string trusted = Attributes[TrustedProvidersKey];
-
-			if (trusted != null)
-			{
-				string[] separator = {","};
-				string[] values = trusted.Split(separator, StringSplitOptions.RemoveEmptyEntries);
-				var entities = new StringCollection();
-				for (int i = 0; i < values.Length; i++)
-				{
-					entities.Add(values[i].Trim());
-				}
-
-				if (entities.Contains(serviceProviderEntityId) && entities.Contains(identityProviderEntityId))
-				{
-					results = true;
-				}
-			}
-
-			return results;
+			return _trustedEntities.Contains(serviceProviderEntityId)
+			       && _trustedEntities.Contains(identityProviderEntityId);
 		}
-
-		#endregion
 	}
 }

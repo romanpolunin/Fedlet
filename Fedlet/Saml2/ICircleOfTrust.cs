@@ -6,9 +6,9 @@ namespace Sun.Identity.Saml2
 	public interface ICircleOfTrust
 	{
 		/// <summary>
-		/// Gets a name-value pair collection of attributes
+		/// Gets the name of the circle of trust
 		/// </summary>
-		NameValueCollection Attributes { get; }
+		string Name { get; }
 
 		/// <summary>
 		/// Gets the saml2 reader service url, empty string if not specified,
