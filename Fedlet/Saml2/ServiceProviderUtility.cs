@@ -51,13 +51,7 @@ namespace Sun.Identity.Saml2
 	public class ServiceProviderUtility : IServiceProviderUtility
     {
     	private readonly IFedletRepository _repository;
-
-    	#region Members
-
-        private ILogger logger = LoggerFactory.GetLogger<ServiceProviderUtility>();
-
-		#endregion
-
+        private ILogger _logger = LoggerFactory.GetLogger<ServiceProviderUtility>();
 
 		#region Constructors
 
@@ -187,7 +181,7 @@ namespace Sun.Identity.Saml2
 				requestStream.Write(byteArray, 0, byteArray.Length);
 				requestStream.Close();
 
-                logger.Info("ArtifactResolve:\r\n{0}", artifactResolveXml.OuterXml);
+                _logger.Info("ArtifactResolve:\r\n{0}", artifactResolveXml.OuterXml);
 
 				response = (HttpWebResponse) request.GetResponse();
 
@@ -261,7 +255,7 @@ namespace Sun.Identity.Saml2
 				authnResponse = new AuthnResponse(samlResponse);
 
 				var xmlDoc = (XmlDocument) authnResponse.XmlDom;
-                logger.Info("AuthnResponse:\r\n{0}", xmlDoc.OuterXml);
+                _logger.Info("AuthnResponse:\r\n{0}", xmlDoc.OuterXml);
 			}
 			else if (!string.IsNullOrWhiteSpace(request[Saml2Constants.ArtifactParameter]))
 			{
@@ -270,7 +264,7 @@ namespace Sun.Identity.Saml2
 				authnResponse = artifactResponse.AuthnResponse;
 
 				var xmlDoc = (XmlDocument) artifactResponse.XmlDom;
-                logger.Info("ArtifactResponse:\r\n{0}", xmlDoc.OuterXml);
+                _logger.Info("ArtifactResponse:\r\n{0}", xmlDoc.OuterXml);
 			}
 			else
             {
@@ -360,7 +354,7 @@ namespace Sun.Identity.Saml2
 			var logoutRequest = new LogoutRequest(samlRequest);
 
 			var xmlDoc = (XmlDocument) logoutRequest.XmlDom;
-            logger.Info("LogoutRequest:\r\n{0}", xmlDoc.OuterXml);
+            _logger.Info("LogoutRequest:\r\n{0}", xmlDoc.OuterXml);
 
 			try
 			{
@@ -368,7 +362,7 @@ namespace Sun.Identity.Saml2
 				{
 					string queryString
 						= request.RawUrl.Substring(request.RawUrl.IndexOf("?", StringComparison.Ordinal) + 1);
-					logger.Info("LogoutRequest query string:\r\n{0}", queryString);
+					_logger.Info("LogoutRequest query string:\r\n{0}", queryString);
 					ValidateForRedirect(logoutRequest, queryString);
 				}
 				else
@@ -419,7 +413,7 @@ namespace Sun.Identity.Saml2
 			}
 
 			var xmlDoc = (XmlDocument) logoutResponse.XmlDom;
-            logger.Info("LogoutResponse:\r\n{0}", xmlDoc.OuterXml);
+            _logger.Info("LogoutResponse:\r\n{0}", xmlDoc.OuterXml);
 
 			string prevLogoutRequestId = logoutResponse.InResponseTo;
 			try
@@ -428,7 +422,7 @@ namespace Sun.Identity.Saml2
 				{
 					string queryString
 						= request.RawUrl.Substring(request.RawUrl.IndexOf("?", StringComparison.Ordinal) + 1);
-					logger.Info("LogoutResponse query string:\r\n{0}", queryString);
+					_logger.Info("LogoutResponse query string:\r\n{0}", queryString);
 					ValidateForRedirect(logoutResponse, LogoutRequestCache.GetSentLogoutRequests(context), queryString);
 				}
 				else
@@ -503,7 +497,7 @@ namespace Sun.Identity.Saml2
 					authnRequestXml,
 					authnRequest.Id,
 					true);
-				logger.Info("Signed AuthnRequest:\r\n{0}", authnRequestXml.InnerXml);
+				_logger.Info("Signed AuthnRequest:\r\n{0}", authnRequestXml.InnerXml);
 			}
 
 			string packagedAuthnRequest = Saml2Utils.ConvertToBase64(authnRequestXml.InnerXml);
@@ -599,7 +593,7 @@ namespace Sun.Identity.Saml2
 			redirectUrl.Append(Saml2Utils.GetQueryStringDelimiter(ssoRedirectLocation));
 			redirectUrl.Append(queryString);
 
-			logger.Info("AuthnRequest via Redirect:\r\n{0}", redirectUrl);
+			_logger.Info("AuthnRequest via Redirect:\r\n{0}", redirectUrl);
 
 			return redirectUrl.ToString();
 		}
@@ -752,7 +746,7 @@ namespace Sun.Identity.Saml2
 			redirectUrl.Append(Saml2Utils.GetQueryStringDelimiter(sloRedirectLocation));
 			redirectUrl.Append(queryString);
 
-			logger.Info("LogoutRequest via Redirect:\r\n{0}", redirectUrl);
+			_logger.Info("LogoutRequest via Redirect:\r\n{0}", redirectUrl);
 
 			return redirectUrl.ToString();
 		}
@@ -907,7 +901,7 @@ namespace Sun.Identity.Saml2
 			redirectUrl.Append(Saml2Utils.GetQueryStringDelimiter(sloRedirectResponseLocation));
 			redirectUrl.Append(queryString);
 
-			logger.Info("LogoutResponse via Redirect:\r\n{0}", redirectUrl);
+			_logger.Info("LogoutResponse via Redirect:\r\n{0}", redirectUrl);
 
 			return redirectUrl.ToString();
 		}
@@ -943,7 +937,7 @@ namespace Sun.Identity.Saml2
 
 			var authnRequest = new AuthnRequest(idp, ServiceProvider, parameters);
 			var xmlDoc = (XmlDocument) authnRequest.XmlDom;
-            logger.Info("AuthnRequest:\r\n{0}", xmlDoc.OuterXml);
+            _logger.Info("AuthnRequest:\r\n{0}", xmlDoc.OuterXml);
 
 			// Add this AuthnRequest for this user for validation on AuthnResponse
 			AuthnRequestCache.AddSentAuthnRequest(context, authnRequest);
@@ -989,7 +983,7 @@ namespace Sun.Identity.Saml2
 
 			var logoutRequest = new LogoutRequest(idp, ServiceProvider, parameters);
 			var xmlDoc = (XmlDocument) logoutRequest.XmlDom;
-            logger.Info("LogoutRequest:\r\n{0}", xmlDoc.OuterXml);
+            _logger.Info("LogoutRequest:\r\n{0}", xmlDoc.OuterXml);
 
 			// Send with Redirect, POST, or SOAP based on the 'Binding' parameter.
 			if (parameters[Saml2Constants.Binding] == Saml2Constants.HttpPostProtocolBinding)
@@ -1096,7 +1090,7 @@ namespace Sun.Identity.Saml2
 				string logoutResponseXml = responseXml.OuterXml;
 
 				LogoutResponse logoutResponse = new LogoutResponse(logoutResponseXml);
-                logger.Info("LogoutResponse:\r\n{0}", logoutResponseXml);
+                _logger.Info("LogoutResponse:\r\n{0}", logoutResponseXml);
 
 				var logoutRequests = new ArrayList {logoutRequest};
 				Validate(logoutResponse, logoutRequests);
@@ -1145,7 +1139,7 @@ namespace Sun.Identity.Saml2
 				var logoutResponse = new LogoutResponse(idp, ServiceProvider, logoutRequest, parameters);
 
 				var xmlDoc = (XmlDocument) logoutResponse.XmlDom;
-                logger.Info("LogoutResponse:\r\n{0}", xmlDoc.OuterXml);
+                _logger.Info("LogoutResponse:\r\n{0}", xmlDoc.OuterXml);
 
 				parameters = Saml2Utils.GetRequestParameters(context.Request);
 				string redirectUrl = GetLogoutResponseRedirectLocation(logoutResponse, idp.EntityId, parameters);
@@ -1158,7 +1152,7 @@ namespace Sun.Identity.Saml2
 				var logoutResponse = new LogoutResponse(idp, ServiceProvider, logoutRequest, parameters);
 
 				var xmlDoc = (XmlDocument) logoutResponse.XmlDom;
-                logger.Info("LogoutResponse:\r\n{0}", xmlDoc.OuterXml);
+                _logger.Info("LogoutResponse:\r\n{0}", xmlDoc.OuterXml);
 
 				parameters = Saml2Utils.GetRequestParameters(context.Request);
 				string postHtml = GetLogoutResponsePostHtml(logoutResponse, idp.EntityId, parameters);
@@ -1205,7 +1199,7 @@ namespace Sun.Identity.Saml2
 					true);
 			}
 
-			logger.Info("LogoutResponse:\r\n{0}", logoutResponseXml.OuterXml);
+			_logger.Info("LogoutResponse:\r\n{0}", logoutResponseXml.OuterXml);
 
 			string soapMessage = Saml2Utils.CreateSoapMessage(logoutResponseXml.OuterXml);
 
