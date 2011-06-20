@@ -80,22 +80,27 @@ namespace Sun.Identity.Common
         /// </summary>
         public const string LogSource = "Fedlet";
 
-        private static string logLevel;
+        private static string _logLevel;
 
         private static string GetLogLevel()
         {
-            if (logLevel == null)
+            if (_logLevel == null)
             {
-                logLevel = ConfigurationManager.AppSettings[AppSettingParameter];
-                if (logLevel != null)
+                _logLevel = ConfigurationManager.AppSettings[AppSettingParameter];
+                if (_logLevel != null)
                 {
-                    logLevel = logLevel.ToUpperInvariant();
+                    _logLevel = _logLevel.ToUpperInvariant();
                 }
             }
-            return logLevel;
+            return _logLevel;
         }
 
-        ///<summary>Returns true if Info level logging is enabled</summary>
+    	public bool IsErrorEnabled
+		{
+			get { return IsEnabled(EventLogEntryType.Error); }
+    	}
+
+    	///<summary>Returns true if Info level logging is enabled</summary>
         public bool IsInfoEnabled
         {
             get { return IsEnabled(EventLogEntryType.Information); }
@@ -107,7 +112,17 @@ namespace Sun.Identity.Common
             get { return IsEnabled(EventLogEntryType.Warning); }
         }
 
-        /// <summary>
+    	public void Error(Exception ex, string message)
+		{
+			LogMessage(message + Environment.NewLine + ex, EventLogEntryType.Information);
+    	}
+
+    	public void Error(Exception ex, string format, params object[] args)
+		{
+			LogMessage(string.Format(format, args) + Environment.NewLine + ex, EventLogEntryType.Information);
+    	}
+
+    	/// <summary>
         /// Method to write an information message to the event log.
         /// </summary>
         /// <param name="message">Message to be written.</param>
