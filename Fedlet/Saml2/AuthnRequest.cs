@@ -59,20 +59,21 @@ namespace Sun.Identity.Saml2
 
 		#region Constructor
 
-		/// <summary>
-		/// Initializes a new instance of the AuthnRequest class.
-		/// </summary>
-		/// <param name="identityProvider">
-		/// IdentityProvider to receive the AuthnRequest
-		/// </param>
-		/// <param name="serviceProvider">
-		/// ServiceProvider to issue the AuthnRequest
-		/// </param>
-		/// <param name="parameters">
-		/// NameValueCollection of varying parameters for use in the 
-		/// construction of the AuthnRequest.
-		/// </param>
-		public AuthnRequest(IIdentityProvider identityProvider, IServiceProvider serviceProvider, NameValueCollection parameters, Saml2Utils saml2Utils)
+	    /// <summary>
+	    /// Initializes a new instance of the AuthnRequest class.
+	    /// </summary>
+	    /// <param name="identityProvider">
+	    /// IdentityProvider to receive the AuthnRequest
+	    /// </param>
+	    /// <param name="serviceProvider">
+	    /// ServiceProvider to issue the AuthnRequest
+	    /// </param>
+	    /// <param name="parameters">
+	    /// NameValueCollection of varying parameters for use in the 
+	    /// construction of the AuthnRequest.
+	    /// </param>
+	    /// <param name="saml2Utils">Utilities class</param>
+	    public AuthnRequest(IIdentityProvider identityProvider, IServiceProvider serviceProvider, NameValueCollection parameters, Saml2Utils saml2Utils)
 		{
 			xml = new XmlDocument();
 			xml.PreserveWhitespace = true;
