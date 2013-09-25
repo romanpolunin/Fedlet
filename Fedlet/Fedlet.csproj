@@ -79,6 +79,7 @@
     <Compile Include="Common\FedletCertificateFactory.cs" />
     <Compile Include="Common\FileFedletRepository.cs" />
     <Compile Include="Common\FileWatcherFedletRepository.cs" />
+    <Compile Include="Common\IFedletCertificateFactory.cs" />
     <Compile Include="Common\IFedletRepository.cs" />
     <Compile Include="Common\ILogger.cs" />
     <Compile Include="Common\LoggerFactory.cs" />

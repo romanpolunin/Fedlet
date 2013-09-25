@@ -91,7 +91,7 @@ namespace Sun.Identity.Saml2
 
 				if (listOfIdpEntityIds.Length > 0)
 				{
-					idpEntityId = Saml2Utils.ConvertFromBase64(listOfIdpEntityIds[listOfIdpEntityIds.Length - 1]);
+					idpEntityId = Saml2Utils.DefaultInstance().ConvertFromBase64(listOfIdpEntityIds[listOfIdpEntityIds.Length - 1]);
 				}
 			}
 

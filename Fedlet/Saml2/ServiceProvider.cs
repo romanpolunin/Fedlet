@@ -41,7 +41,9 @@ namespace Sun.Identity.Saml2
 	/// </summary>
 	public class ServiceProvider : IServiceProvider
 	{
-		#region Members
+	    private readonly Saml2Utils _saml2Utils;
+
+	    #region Members
 
 		/// <summary>
 		/// XML document representing the extended metadata for this Service 
@@ -71,9 +73,10 @@ namespace Sun.Identity.Saml2
 		/// <summary>
 		/// Initializes a new instance of the ServiceProvider class. 
 		/// </summary>
-		public ServiceProvider(XmlDocument metadata, XmlDocument extendedMetadata)
+		public ServiceProvider(XmlDocument metadata, XmlDocument extendedMetadata, Saml2Utils saml2Utils)
 		{
-			try
+		    _saml2Utils = saml2Utils;
+		    try
 			{
 				_metadata = metadata;
 				_metadataNsMgr = new XmlNamespaceManager(metadata.NameTable);
@@ -89,7 +92,7 @@ namespace Sun.Identity.Saml2
 			}
 		}
 
-		#endregion
+	    #endregion
 
 		#region Properties
 
@@ -105,7 +108,7 @@ namespace Sun.Identity.Saml2
 				XmlNode root = _metadata.DocumentElement;
 				XmlNode node = root.SelectSingleNode(xpath, _metadataNsMgr);
 				string value = node.Attributes["AuthnRequestsSigned"].Value;
-				return Saml2Utils.GetBoolean(value);
+				return _saml2Utils.GetBoolean(value);
 			}
 		}
 
@@ -219,7 +222,7 @@ namespace Sun.Identity.Saml2
 				if (node != null)
 				{
 					string value = node.InnerText.Trim();
-					return Saml2Utils.GetBoolean(value);
+                    return _saml2Utils.GetBoolean(value);
 				}
 
 				return false;
@@ -238,7 +241,7 @@ namespace Sun.Identity.Saml2
 				XmlNode root = _metadata.DocumentElement;
 				XmlNode node = root.SelectSingleNode(xpath, _metadataNsMgr);
 				string value = node.Attributes["WantAssertionsSigned"].Value;
-				return Saml2Utils.GetBoolean(value);
+                return _saml2Utils.GetBoolean(value);
 			}
 		}
 
@@ -257,7 +260,7 @@ namespace Sun.Identity.Saml2
 				if (node != null)
 				{
 					string value = node.InnerText.Trim();
-					return Saml2Utils.GetBoolean(value);
+                    return _saml2Utils.GetBoolean(value);
 				}
 
 				return false;
@@ -279,7 +282,7 @@ namespace Sun.Identity.Saml2
 				if (node != null)
 				{
 					string value = node.InnerText.Trim();
-					return Saml2Utils.GetBoolean(value);
+                    return _saml2Utils.GetBoolean(value);
 				}
 
 				return false;
@@ -301,7 +304,7 @@ namespace Sun.Identity.Saml2
 				if (node != null)
 				{
 					string value = node.InnerText.Trim();
-					return Saml2Utils.GetBoolean(value);
+                    return _saml2Utils.GetBoolean(value);
 				}
 
 				return false;
@@ -470,10 +473,10 @@ namespace Sun.Identity.Saml2
 			if (signMetadata)
 			{
 				XmlAttribute descriptorId = exportableXml.CreateAttribute("ID");
-				descriptorId.Value = Saml2Utils.GenerateId();
+                descriptorId.Value = _saml2Utils.GenerateId();
 				entityDescriptorNode.Attributes.Append(descriptorId);
 
-				Saml2Utils.SignXml(SigningCertificateAlias, exportableXml, descriptorId.Value, true);
+                _saml2Utils.SignXml(SigningCertificateAlias, exportableXml, descriptorId.Value, true);
 			}
 
 			return exportableXml.InnerXml;

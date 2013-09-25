@@ -35,11 +35,9 @@ namespace Sun.Identity.Common
 	/// <summary>
 	/// Class for performing X509 certificate related tasks.
 	/// </summary>
-	public static class FedletCertificateFactory
+    public class FedletCertificateFactory : IFedletCertificateFactory
 	{
-		#region Methods
-
-		/// <summary>
+	    /// <summary>
 		/// Finds the X509 certificate in this machine's key store.
 		/// </summary>
 		/// <param name="friendlyName">
@@ -48,9 +46,9 @@ namespace Sun.Identity.Common
 		/// <returns>
 		/// X509Certificate2 object that matches the given friendly name.
 		/// </returns>
-		public static X509Certificate2 GetCertificateByFriendlyName(string friendlyName)
+		public X509Certificate2 GetCertificateByFriendlyName(string friendlyName)
 		{
-			X509Certificate2 cert = null;
+			X509Certificate2 cert = new X509Certificate2();
 			var store = new X509Store(StoreLocation.LocalMachine);
 			string errorMessage = null;
 
@@ -91,7 +89,5 @@ namespace Sun.Identity.Common
 
 			return cert;
 		}
-
-		#endregion
 	}
 }

@@ -39,7 +39,9 @@ namespace Sun.Identity.Saml2
 	/// </summary>
 	public class IdentityProvider : IIdentityProvider
 	{
-		#region Members
+	    #region Members
+
+	    private Saml2Utils _saml2Utils;
 
 		/// <summary>
 		/// XML document representing the extended metadata for this Identity 
@@ -74,10 +76,11 @@ namespace Sun.Identity.Saml2
 		/// <summary>
 		/// Initializes a new instance of the IdentityProvider class.
 		/// </summary>
-		public IdentityProvider(XmlDocument metadata, XmlDocument extendedMetadata)
+        public IdentityProvider(XmlDocument metadata, XmlDocument extendedMetadata, Saml2Utils saml2Utils)
 		{
-			try
+		    try
 			{
+                _saml2Utils = saml2Utils;
 				_metadata = metadata;
 				_metadataNsMgr = new XmlNamespaceManager(_metadata.NameTable);
 				_metadataNsMgr.AddNamespace("md", "urn:oasis:names:tc:SAML:2.0:metadata");
@@ -98,7 +101,7 @@ namespace Sun.Identity.Saml2
 			}
 		}
 
-		#endregion
+	    #endregion
 
 		#region Properties
 
@@ -188,7 +191,7 @@ namespace Sun.Identity.Saml2
 				if (node != null)
 				{
 					string value = node.InnerText.Trim();
-					return Saml2Utils.GetBoolean(value);
+					return _saml2Utils.GetBoolean(value);
 				}
 
 				return false;
@@ -210,7 +213,7 @@ namespace Sun.Identity.Saml2
 				if (node != null)
 				{
 					string value = node.Attributes["WantAuthnRequestsSigned"].Value;
-					return Saml2Utils.GetBoolean(value);
+					return _saml2Utils.GetBoolean(value);
 				}
 
 				return false;
@@ -233,7 +236,7 @@ namespace Sun.Identity.Saml2
 				if (node != null)
 				{
 					string value = node.InnerText.Trim();
-					return Saml2Utils.GetBoolean(value);
+					return _saml2Utils.GetBoolean(value);
 				}
 
 				return false;
@@ -255,7 +258,7 @@ namespace Sun.Identity.Saml2
 				if (node != null)
 				{
 					string value = node.InnerText.Trim();
-					return Saml2Utils.GetBoolean(value);
+					return _saml2Utils.GetBoolean(value);
 				}
 
 				return false;

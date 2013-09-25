@@ -87,23 +87,25 @@ namespace Sun.Identity.Saml2
 			}
 		}
 
-		/// <summary>
-		/// Initializes a new instance of the LogoutRequest class.
-		/// </summary>
-		/// <param name="identityProvider">
-		/// IdentityProvider of the LogoutRequest
-		/// </param>
-		/// <param name="serviceProvider">
-		/// ServiceProvider of the LogoutRequest
-		/// </param>
-		/// <param name="parameters">
-		/// NameValueCollection of varying parameters for use in the 
-		/// construction of the LogoutRequest.
-		/// </param>
-		public LogoutRequest(
+	    /// <summary>
+	    /// Initializes a new instance of the LogoutRequest class.
+	    /// </summary>
+	    /// <param name="identityProvider">
+	    /// IdentityProvider of the LogoutRequest
+	    /// </param>
+	    /// <param name="serviceProvider">
+	    /// ServiceProvider of the LogoutRequest
+	    /// </param>
+	    /// <param name="parameters">
+	    /// NameValueCollection of varying parameters for use in the 
+	    /// construction of the LogoutRequest.
+	    /// </param>
+	    /// <param name="saml2Utils">Utilities Class</param>
+	    public LogoutRequest(
 			IIdentityProvider identityProvider,
 			IServiceProvider serviceProvider,
-			NameValueCollection parameters)
+			NameValueCollection parameters,
+            Saml2Utils saml2Utils)
 		{
 			try
 			{
@@ -158,9 +160,9 @@ namespace Sun.Identity.Saml2
 
 				var rawXml = new StringBuilder();
 				rawXml.Append("<samlp:LogoutRequest xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\"");
-				rawXml.Append(" ID=\"" + Saml2Utils.GenerateId() + "\"");
+                rawXml.Append(" ID=\"" + saml2Utils.GenerateId() + "\"");
 				rawXml.Append(" Version=\"2.0\"");
-				rawXml.Append(" IssueInstant=\"" + Saml2Utils.GenerateIssueInstant() + "\"");
+                rawXml.Append(" IssueInstant=\"" + saml2Utils.GenerateIssueInstant() + "\"");
 
 				if (!String.IsNullOrEmpty(destination))
 				{

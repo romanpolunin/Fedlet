@@ -48,14 +48,21 @@ namespace Sun.Identity.Saml2
 	/// <summary>
 	/// Utility class for performing SAMLv2 operations.
 	/// </summary>
-	public static class Saml2Utils
+	public class Saml2Utils
 	{
-		/// <summary>
+	    private readonly IFedletCertificateFactory _certificateFactory;
+
+	    public Saml2Utils(IFedletCertificateFactory certificateFactory)
+        {
+            _certificateFactory = certificateFactory;
+        }
+
+	    /// <summary>
 		/// Converts the string from the base64 encoded input.
 		/// </summary>
 		/// <param name="value">Base64 encoded string.</param>
 		/// <returns>String contained within the base64 encoded string.</returns>
-		public static string ConvertFromBase64(string value)
+		public string ConvertFromBase64(string value)
 		{
 			byte[] byteArray = Convert.FromBase64String(value);
 			return Encoding.UTF8.GetString(byteArray);
@@ -67,7 +74,7 @@ namespace Sun.Identity.Saml2
 		/// </summary>
 		/// <param name="message">message to undergo the process</param>
 		/// <returns>String output from the process.</returns>
-		public static string ConvertFromBase64Decompress(string message)
+		public string ConvertFromBase64Decompress(string message)
 		{
 			// convert from base 64
 			byte[] byteArray = Convert.FromBase64String(message);
@@ -87,7 +94,7 @@ namespace Sun.Identity.Saml2
 		/// </summary>
 		/// <param name="value">String to be encoded.</param>
 		/// <returns>Base64 encoded output of the specified string.</returns>
-		public static string ConvertToBase64(string value)
+		public string ConvertToBase64(string value)
 		{
 			return Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
 		}
@@ -98,7 +105,7 @@ namespace Sun.Identity.Saml2
 		/// </summary>
 		/// <param name="xmlPayload">XML to be placed within the body of this message.</param>
 		/// <returns>String representation of the SOAP message.</returns>
-		public static string CreateSoapMessage(string xmlPayload)
+		public string CreateSoapMessage(string xmlPayload)
 		{
 			var soapMessage = new StringBuilder();
 			soapMessage.Append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
@@ -116,7 +123,7 @@ namespace Sun.Identity.Saml2
 		/// responses.
 		/// </summary>
 		/// <returns>String representing a random ID with length specified by Saml2Constants.IdLength</returns>
-		public static string GenerateId()
+		public string GenerateId()
 		{
 			var random = new Random();
 			var byteArray = new byte[Saml2Constants.IdLength];
@@ -132,7 +139,7 @@ namespace Sun.Identity.Saml2
 		/// responses.
 		/// </summary>
 		/// <returns>Current time in UTC, invariant culture format.</returns>
-		public static string GenerateIssueInstant()
+		public string GenerateIssueInstant()
 		{
 			string issueInstant = DateTime.UtcNow.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'", DateTimeFormatInfo.InvariantInfo);
 
@@ -147,7 +154,7 @@ namespace Sun.Identity.Saml2
 		/// NameValueCOllection of parameters found in QueryString and Form objects within 
 		/// the given Request.
 		/// </returns>
-		public static NameValueCollection GetRequestParameters(HttpRequestBase request)
+		public NameValueCollection GetRequestParameters(HttpRequestBase request)
 		{
 			var parameters = new NameValueCollection();
 
@@ -172,7 +179,7 @@ namespace Sun.Identity.Saml2
 		/// <returns>
 		/// Results from Boolean.Parse(string), false if exception thrown.
 		/// </returns>
-		public static bool GetBoolean(string value)
+		public bool GetBoolean(string value)
 		{
 			try
 			{
@@ -199,7 +206,7 @@ namespace Sun.Identity.Saml2
 		/// Returns &quot; if it doesn't currently exist in the given URL, otherwise
 		/// &amp; is returned.
 		/// </returns>
-		public static string GetQueryStringDelimiter(string location)
+		public string GetQueryStringDelimiter(string location)
 		{
 			if (location.Contains("?"))
 			{
@@ -217,7 +224,7 @@ namespace Sun.Identity.Saml2
 		/// </summary>
 		/// <param name="xml">XML to undergo the process</param>
 		/// <returns>String output from the process.</returns>
-		public static string CompressConvertToBase64UrlEncode(IXPathNavigable xml)
+		public string CompressConvertToBase64UrlEncode(IXPathNavigable xml)
 		{
 			var xmlDoc = (XmlDocument) xml;
 
@@ -244,7 +251,7 @@ namespace Sun.Identity.Saml2
 		/// </summary>
 		/// <param name="message">message to undergo the process</param>
 		/// <returns>String output from the process.</returns>
-		public static string UrlDecodeConvertFromBase64Decompress(string message)
+		public string UrlDecodeConvertFromBase64Decompress(string message)
 		{
 			// url decode it
 			string decodedMessage = HttpUtility.UrlDecode(message);
@@ -276,7 +283,7 @@ namespace Sun.Identity.Saml2
 		/// <returns>
 		/// A signed query string where a digital signature is added.
 		/// </returns>
-		public static string SignQueryString(string certFriendlyName, string queryString)
+		public string SignQueryString(string certFriendlyName, string queryString)
 		{
 			if (string.IsNullOrEmpty(certFriendlyName))
 			{
@@ -303,7 +310,7 @@ namespace Sun.Identity.Saml2
 				throw new Saml2Exception(Resources.SignedQueryStringSigAlgMissing);
 			}
 
-			X509Certificate2 cert = FedletCertificateFactory.GetCertificateByFriendlyName(certFriendlyName);
+			X509Certificate2 cert = _certificateFactory.GetCertificateByFriendlyName(certFriendlyName);
 			if (cert == null)
 			{
 				throw new Saml2Exception(Resources.SignedQueryStringCertNotFound);
@@ -359,7 +366,7 @@ namespace Sun.Identity.Saml2
 		/// Flag to determine whether to include the public key in the 
 		/// signed xml.
 		/// </param>
-		public static void SignXml(string certFriendlyName, IXPathNavigable xmlDoc, string targetReferenceId,
+		public void SignXml(string certFriendlyName, IXPathNavigable xmlDoc, string targetReferenceId,
 		                           bool includePublicKey)
 		{
 			if (string.IsNullOrEmpty(certFriendlyName))
@@ -377,7 +384,7 @@ namespace Sun.Identity.Saml2
 				throw new Saml2Exception(Resources.SignedXmlInvalidTargetRefId);
 			}
 
-			X509Certificate2 cert = FedletCertificateFactory.GetCertificateByFriendlyName(certFriendlyName);
+			X509Certificate2 cert = _certificateFactory.GetCertificateByFriendlyName(certFriendlyName);
 			if (cert == null)
 			{
 				throw new Saml2Exception(Resources.SignedXmlCertNotFound);
@@ -436,7 +443,7 @@ namespace Sun.Identity.Saml2
 		/// Throws Saml2Exception if a relay state is provided and does not
 		/// match any of the allowed relay states.
 		/// </exception>
-		public static void ValidateRelayState(string relayState, ArrayList allowedRelayStates)
+		public void ValidateRelayState(string relayState, ArrayList allowedRelayStates)
 		{
 			if (string.IsNullOrEmpty(relayState) || allowedRelayStates == null || allowedRelayStates.Count == 0)
 			{
@@ -483,7 +490,7 @@ namespace Sun.Identity.Saml2
 		/// <param name="targetReferenceId">
 		/// Reference element that should be signed.
 		/// </param>
-		public static void ValidateSignedXml(X509Certificate2 cert, IXPathNavigable xmlDoc, IXPathNavigable xmlSignature,
+		public void ValidateSignedXml(X509Certificate2 cert, IXPathNavigable xmlDoc, IXPathNavigable xmlSignature,
 		                                     string targetReferenceId)
 		{
 			var signedXml = new SignedXml((XmlDocument) xmlDoc);
@@ -521,7 +528,7 @@ namespace Sun.Identity.Saml2
 		/// Query string to validate.  SigAlg and Signature are expected
 		/// to in the set of parameters.
 		/// </param>
-		public static void ValidateSignedQueryString(X509Certificate2 cert, string queryString)
+		public void ValidateSignedQueryString(X509Certificate2 cert, string queryString)
 		{
 			if (cert == null)
 			{
@@ -605,5 +612,10 @@ namespace Sun.Identity.Saml2
 				throw new Saml2Exception(Resources.SignedQueryStringUnsupportedSigAlg);
 			}
 		}
+
+	    public static Saml2Utils DefaultInstance()
+	    {
+	        return new Saml2Utils(new FedletCertificateFactory());
+	    }
 	}
 }

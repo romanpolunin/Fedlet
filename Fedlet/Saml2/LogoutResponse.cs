@@ -85,28 +85,30 @@ namespace Sun.Identity.Saml2
 			}
 		}
 
-		/// <summary>
-		/// Initializes a new instance of the LogoutResponse class based on
-		/// the complimentary logout request.
-		/// </summary>
-		/// <param name="identityProvider">
-		/// IdentityProvider of the LogoutResponse
-		/// </param>
-		/// <param name="serviceProvider">
-		/// ServiceProvider of the LogoutResponse
-		/// </param>
-		/// <param name="logoutRequest">
-		/// Logout request that requires this response
-		/// </param>
-		/// <param name="parameters">
-		/// NameValueCollection of varying parameters for use in the 
-		/// construction of the LogoutResponse.
-		/// </param>
-		public LogoutResponse(
+	    /// <summary>
+	    /// Initializes a new instance of the LogoutResponse class based on
+	    /// the complimentary logout request.
+	    /// </summary>
+	    /// <param name="identityProvider">
+	    /// IdentityProvider of the LogoutResponse
+	    /// </param>
+	    /// <param name="serviceProvider">
+	    /// ServiceProvider of the LogoutResponse
+	    /// </param>
+	    /// <param name="logoutRequest">
+	    /// Logout request that requires this response
+	    /// </param>
+	    /// <param name="parameters">
+	    /// NameValueCollection of varying parameters for use in the 
+	    /// construction of the LogoutResponse.
+	    /// </param>
+	    /// <param name="saml2Utils">Utilities class</param>
+	    public LogoutResponse(
 			IIdentityProvider identityProvider,
 			IServiceProvider serviceProvider,
 			LogoutRequest logoutRequest,
-			NameValueCollection parameters)
+			NameValueCollection parameters,
+            Saml2Utils saml2Utils)
 		{
 			if (identityProvider == null)
 			{
@@ -150,8 +152,8 @@ namespace Sun.Identity.Saml2
 
 			var rawXml = new StringBuilder();
 			rawXml.Append("<samlp:LogoutResponse xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\" ");
-			rawXml.Append(" ID=\"" + Saml2Utils.GenerateId() + "\" Version=\"2.0\" ");
-			rawXml.Append(" IssueInstant=\"" + Saml2Utils.GenerateIssueInstant() + "\" ");
+            rawXml.Append(" ID=\"" + saml2Utils.GenerateId() + "\" Version=\"2.0\" ");
+            rawXml.Append(" IssueInstant=\"" + saml2Utils.GenerateIssueInstant() + "\" ");
 
 			if (idpSvcResponseLocation != null)
 			{

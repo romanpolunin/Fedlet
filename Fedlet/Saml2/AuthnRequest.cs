@@ -72,7 +72,7 @@ namespace Sun.Identity.Saml2
 		/// NameValueCollection of varying parameters for use in the 
 		/// construction of the AuthnRequest.
 		/// </param>
-		public AuthnRequest(IIdentityProvider identityProvider, IServiceProvider serviceProvider, NameValueCollection parameters)
+		public AuthnRequest(IIdentityProvider identityProvider, IServiceProvider serviceProvider, NameValueCollection parameters, Saml2Utils saml2Utils)
 		{
 			xml = new XmlDocument();
 			xml.PreserveWhitespace = true;
@@ -81,19 +81,19 @@ namespace Sun.Identity.Saml2
 			nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
 			nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
 
-			Id = Saml2Utils.GenerateId();
-			IssueInstant = Saml2Utils.GenerateIssueInstant();
+            Id = saml2Utils.GenerateId();
+            IssueInstant = saml2Utils.GenerateIssueInstant();
 			Issuer = serviceProvider.EntityId;
 
 			if (parameters != null)
 			{
-				AllowCreate = Saml2Utils.GetBoolean(parameters[Saml2Constants.AllowCreate]);
+                AllowCreate = saml2Utils.GetBoolean(parameters[Saml2Constants.AllowCreate]);
 				AssertionConsumerServiceIndex = parameters[Saml2Constants.AssertionConsumerServiceIndex];
 				Binding = parameters[Saml2Constants.Binding];
 				Consent = parameters[Saml2Constants.Consent];
 				Destination = parameters[Saml2Constants.Destination];
-				ForceAuthn = Saml2Utils.GetBoolean(parameters[Saml2Constants.ForceAuthn]);
-				IsPassive = Saml2Utils.GetBoolean(parameters[Saml2Constants.IsPassive]);
+                ForceAuthn = saml2Utils.GetBoolean(parameters[Saml2Constants.ForceAuthn]);
+                IsPassive = saml2Utils.GetBoolean(parameters[Saml2Constants.IsPassive]);
 			}
 
 			string assertionConsumerSvcUrl = null;
