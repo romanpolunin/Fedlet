@@ -943,7 +943,7 @@ namespace Sun.Identity.Saml2
             _logger.Info("AuthnRequest:\r\n{0}", xmlDoc.OuterXml);
 
 			// Add this AuthnRequest for this user for validation on AuthnResponse
-			AuthnRequestCache.AddSentAuthnRequest(context, authnRequest);
+			//AuthnRequestCache.AddSentAuthnRequest(context, authnRequest);
 
 			// Send with Redirect or Post based on the 'reqBinding' parameter.
 			if (parameters[Saml2Constants.RequestBinding] == Saml2Constants.HttpPostProtocolBinding)
