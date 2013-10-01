@@ -126,9 +126,9 @@ namespace Sun.Identity.Saml2
 		public string GenerateId()
 		{
 			var random = new Random();
-			var byteArray = new byte[Saml2Constants.IdLength];
+			var byteArray = new byte[Saml2Constants.IdLength - 1];
 			random.NextBytes(byteArray);
-			string id = BitConverter.ToString(byteArray).Replace("-", string.Empty);
+			string id = "A" + BitConverter.ToString(byteArray).Replace("-", string.Empty);
 
 			return id;
 		}
