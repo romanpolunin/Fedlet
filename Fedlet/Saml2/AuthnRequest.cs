@@ -170,12 +170,13 @@ namespace Sun.Identity.Saml2
 			              "</saml:Issuer>");
 
 			rawXml.Append("<samlp:NameIdPolicy Format=\"urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress\" AllowCreate=\"" + AllowCreate + "\" />");
-			rawXml.Append("</samlp:AuthnRequest>");
-            
+			
             if (reqAuthnContext != null)
 			{
 				rawXml.Append(reqAuthnContext.GenerateXmlString());
 			}
+            
+            rawXml.Append("</samlp:AuthnRequest>");
 
 			xml.LoadXml(rawXml.ToString());
 		}
