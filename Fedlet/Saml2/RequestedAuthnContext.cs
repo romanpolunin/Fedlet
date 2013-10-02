@@ -101,7 +101,7 @@ namespace Sun.Identity.Saml2
 
 			var rawXml = new StringBuilder();
 
-			rawXml.Append("<RequestedAuthnContext Comparison=\"");
+            rawXml.Append("<samlp:RequestedAuthnContext Comparison=\"");
 			rawXml.Append(Comparison);
 			rawXml.Append("\">");
 
@@ -109,9 +109,9 @@ namespace Sun.Identity.Saml2
 			{
 				foreach (string value in AuthnContextClassRef)
 				{
-					rawXml.Append("<AuthnContextClassRef>");
+                    rawXml.Append("<samlp:AuthnContextClassRef xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">");
 					rawXml.Append(value);
-					rawXml.Append("</AuthnContextClassRef>");
+                    rawXml.Append("</samlp:AuthnContextClassRef>");
 				}
 			}
 
@@ -119,13 +119,13 @@ namespace Sun.Identity.Saml2
 			{
 				foreach (string value in AuthnContextDeclRef)
 				{
-					rawXml.Append("<AuthnContextDeclRef>");
+                    rawXml.Append("<samlp:AuthnContextDeclRef>");
 					rawXml.Append(value);
-					rawXml.Append("</AuthnContextDeclRef>");
+                    rawXml.Append("</samlp:AuthnContextDeclRef>");
 				}
 			}
 
-			rawXml.Append("</RequestedAuthnContext>");
+            rawXml.Append("</samlp:RequestedAuthnContext>");
 
 			return rawXml.ToString();
 		}

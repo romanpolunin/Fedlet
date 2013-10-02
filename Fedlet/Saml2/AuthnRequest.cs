@@ -169,13 +169,13 @@ namespace Sun.Identity.Saml2
 			rawXml.Append("<saml:Issuer xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">" + serviceProvider.EntityId +
 			              "</saml:Issuer>");
 
-			if (reqAuthnContext != null)
+			rawXml.Append("<samlp:NameIdPolicy Format=\"urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress\" AllowCreate=\"" + AllowCreate + "\" />");
+			rawXml.Append("</samlp:AuthnRequest>");
+            
+            if (reqAuthnContext != null)
 			{
 				rawXml.Append(reqAuthnContext.GenerateXmlString());
 			}
-
-			rawXml.Append("<samlp:NameIdPolicy AllowCreate=\"" + AllowCreate + "\" />");
-			rawXml.Append("</samlp:AuthnRequest>");
 
 			xml.LoadXml(rawXml.ToString());
 		}
