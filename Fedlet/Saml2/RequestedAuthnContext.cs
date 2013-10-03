@@ -109,9 +109,9 @@ namespace Sun.Identity.Saml2
 			{
 				foreach (string value in AuthnContextClassRef)
 				{
-                    rawXml.Append("<samlp:AuthnContextClassRef xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">");
+                    rawXml.Append("<saml:AuthnContextClassRef xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">");
 					rawXml.Append(value);
-                    rawXml.Append("</samlp:AuthnContextClassRef>");
+                    rawXml.Append("</saml:AuthnContextClassRef>");
 				}
 			}
 
@@ -119,9 +119,9 @@ namespace Sun.Identity.Saml2
 			{
 				foreach (string value in AuthnContextDeclRef)
 				{
-                    rawXml.Append("<samlp:AuthnContextDeclRef>");
+                    rawXml.Append("<saml:AuthnContextDeclRef>");
 					rawXml.Append(value);
-                    rawXml.Append("</samlp:AuthnContextDeclRef>");
+                    rawXml.Append("</saml:AuthnContextDeclRef>");
 				}
 			}
 
