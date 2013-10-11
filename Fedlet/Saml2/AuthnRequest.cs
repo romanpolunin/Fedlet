@@ -89,6 +89,7 @@ namespace Sun.Identity.Saml2
 				Destination = parameters[Saml2Constants.Destination];
                 ForceAuthn = saml2Utils.GetBoolean(parameters[Saml2Constants.ForceAuthn]);
                 IsPassive = saml2Utils.GetBoolean(parameters[Saml2Constants.IsPassive]);
+			    NameIDPolicyFormat = parameters[Saml2Constants.NameIDPolicyFormat];
 			}
 
 			string assertionConsumerSvcUrl = null;
@@ -163,7 +164,7 @@ namespace Sun.Identity.Saml2
 			rawXml.Append("<saml:Issuer xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">" + serviceProvider.EntityId +
 			              "</saml:Issuer>");
 
-            rawXml.Append("<samlp:NameIDPolicy Format=\"urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress\" AllowCreate=\"" + AllowCreate.ToString().ToLower() + "\" />");
+            rawXml.Append("<samlp:NameIDPolicy Format=\"" + NameIDPolicyFormat + "\" AllowCreate=\"" + AllowCreate.ToString().ToLower() + "\" />");
 			
             if (reqAuthnContext != null)
 			{
@@ -179,6 +180,11 @@ namespace Sun.Identity.Saml2
 		/// Gets a value indicating whether AllowCreate is true or false.
 		/// </summary>
 		public bool AllowCreate { get; private set; }
+
+        /// <summary>
+        /// The NameIDPolicy Format requested by the IdP 
+        /// </summary>
+        public string NameIDPolicyFormat { get; private set; }
 
 		/// <summary>
 		/// Gets the AssertionConsumerServiceIndex.
