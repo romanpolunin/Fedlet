@@ -43,9 +43,7 @@ namespace Sun.Identity.Saml2
 	/// </summary>
 	public class AuthnRequest
 	{
-		#region Members
-
-		/// <summary>
+	    /// <summary>
 		/// Namespace Manager for this authn request.
 		/// </summary>
 		private readonly XmlNamespaceManager nsMgr;
@@ -54,10 +52,6 @@ namespace Sun.Identity.Saml2
 		/// XML representation of the authn request.
 		/// </summary>
 		private readonly XmlDocument xml;
-
-		#endregion
-
-		#region Constructor
 
 	    /// <summary>
 	    /// Initializes a new instance of the AuthnRequest class.
@@ -142,8 +136,8 @@ namespace Sun.Identity.Saml2
 			rawXml.Append(" ID=\"" + Id + "\"");
 			rawXml.Append(" Version=\"2.0\"");
 			rawXml.Append(" IssueInstant=\"" + IssueInstant + "\"");
-			rawXml.Append(" IsPassive=\"" + IsPassive + "\"");
-			rawXml.Append(" ForceAuthn=\"" + ForceAuthn + "\"");
+			rawXml.Append(" IsPassive=\"" + IsPassive.ToString().ToLower() + "\"");
+            rawXml.Append(" ForceAuthn=\"" + ForceAuthn.ToString().ToLower() + "\"");
 
 			if (!String.IsNullOrEmpty(Consent))
 			{
@@ -169,7 +163,7 @@ namespace Sun.Identity.Saml2
 			rawXml.Append("<saml:Issuer xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">" + serviceProvider.EntityId +
 			              "</saml:Issuer>");
 
-			rawXml.Append("<samlp:NameIdPolicy Format=\"urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress\" AllowCreate=\"" + AllowCreate + "\" />");
+            rawXml.Append("<samlp:NameIDPolicy Format=\"urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress\" AllowCreate=\"" + AllowCreate.ToString().ToLower() + "\" />");
 			
             if (reqAuthnContext != null)
 			{
@@ -181,11 +175,7 @@ namespace Sun.Identity.Saml2
 			xml.LoadXml(rawXml.ToString());
 		}
 
-		#endregion
-
-		#region Properties
-
-		/// <summary>
+	    /// <summary>
 		/// Gets a value indicating whether AllowCreate is true or false.
 		/// </summary>
 		public bool AllowCreate { get; private set; }
@@ -243,11 +233,7 @@ namespace Sun.Identity.Saml2
 			get { return xml; }
 		}
 
-		#endregion
-
-		#region Methods
-
-		/// <summary>
+	    /// <summary>
 		/// Getst the RequestedAuthnContext element based on supplied 
 		/// parameters for the given service provider.
 		/// <seealso cref="Saml2Constants.AuthnContextClassRef"/>
@@ -303,7 +289,5 @@ namespace Sun.Identity.Saml2
 
 			return reqAuthnContext;
 		}
-
-		#endregion
 	}
 }
