@@ -1726,10 +1726,12 @@ namespace Sun.Identity.Saml2
 		/// <see cref="ServiceProviderUtility.ValidateForPost(AuthnResponse, ICollection)"/>
 		private void Validate(AuthnResponse authnResponse, ICollection authnRequests)
 		{
-			if (authnResponse.InResponseTo != null)
+			/* Commenting this section out since we had to remove the Session caching of Authnresponses due
+             * to some session sharing issues
+            if (authnResponse.InResponseTo != null)
 			{
 				CheckInResponseTo(authnResponse, authnRequests);
-			}
+			}*/
 
 			CheckIssuer(authnResponse.Issuer);
 			CheckStatusCode(authnResponse.StatusCode);
