@@ -23,14 +23,15 @@ namespace Sun.Identity.Common
 		private Dictionary<string, IIdentityProvider> _identityProviders;
 		private string _homeFolder;
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="FileWatcherFedletRepository"/> class.
-		/// </summary>
-		/// <param name="homeFolder">The folder containing the configuration files.</param>
-		public FileWatcherFedletRepository(string homeFolder)
+	    /// <summary>
+	    /// Initializes a new instance of the <see cref="FileWatcherFedletRepository"/> class.
+	    /// </summary>
+	    /// <param name="homeFolder">The folder containing the configuration files.</param>
+	    /// <param name="saml2Utils">Utilities</param>
+	    public FileWatcherFedletRepository(string homeFolder, Saml2Utils saml2Utils)
 		{
 			_homeFolder = homeFolder;
-			_innerRepository = new FileFedletRepository(homeFolder);
+            _innerRepository = new FileFedletRepository(homeFolder, saml2Utils);
 			_fileSystemWatcher = new FileSystemWatcher(homeFolder);
 			_timer = new Timer(ReplaceCache);
 			_fileSystemWatcher.Changed += ClearCache;

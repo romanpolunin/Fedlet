@@ -37,7 +37,7 @@ namespace Sun.Identity.Saml2
 	/// </summary>
 	public class ArtifactResolve
 	{
-		#region Members
+	    #region Members
 
 		/// <summary>
 		/// Namespace Manager for this class.
@@ -58,17 +58,17 @@ namespace Sun.Identity.Saml2
 		/// </summary>
 		/// <param name="serviceProvider">Service Provider to issue this request</param>
 		/// <param name="artifact">SAMLv2 Artifact</param>
-		public ArtifactResolve(IServiceProvider serviceProvider, Artifact artifact)
+		public ArtifactResolve(IServiceProvider serviceProvider, Artifact artifact, Saml2Utils saml2Utils)
 		{
-			xml = new XmlDocument();
+		    xml = new XmlDocument();
 			xml.PreserveWhitespace = true;
 
 			nsMgr = new XmlNamespaceManager(xml.NameTable);
 			nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
 			nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
 
-			Id = Saml2Utils.GenerateId();
-			IssueInstant = Saml2Utils.GenerateIssueInstant();
+            Id = saml2Utils.GenerateId();
+            IssueInstant = saml2Utils.GenerateIssueInstant();
 			Issuer = serviceProvider.EntityId;
 			Artifact = artifact;
 

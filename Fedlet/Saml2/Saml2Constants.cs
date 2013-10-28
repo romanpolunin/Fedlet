@@ -32,7 +32,12 @@ namespace Sun.Identity.Saml2
 	/// </summary>
 	public static class Saml2Constants
 	{
-		/// <summary>
+        /// <summary>
+        /// Constant for the NameIDPolicy Format for SAML AuthnRequest
+        /// </summary>
+        public const string NameIDPolicyFormat = "NameIDPolicyFormat";
+
+	    /// <summary>
 		/// Constant for the request parameter to specify AllowCreate
 		/// in the AuthnRequest.
 		/// </summary>

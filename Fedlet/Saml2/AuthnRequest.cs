@@ -43,9 +43,7 @@ namespace Sun.Identity.Saml2
 	/// </summary>
 	public class AuthnRequest
 	{
-		#region Members
-
-		/// <summary>
+	    /// <summary>
 		/// Namespace Manager for this authn request.
 		/// </summary>
 		private readonly XmlNamespaceManager nsMgr;
@@ -55,24 +53,21 @@ namespace Sun.Identity.Saml2
 		/// </summary>
 		private readonly XmlDocument xml;
 
-		#endregion
-
-		#region Constructor
-
-		/// <summary>
-		/// Initializes a new instance of the AuthnRequest class.
-		/// </summary>
-		/// <param name="identityProvider">
-		/// IdentityProvider to receive the AuthnRequest
-		/// </param>
-		/// <param name="serviceProvider">
-		/// ServiceProvider to issue the AuthnRequest
-		/// </param>
-		/// <param name="parameters">
-		/// NameValueCollection of varying parameters for use in the 
-		/// construction of the AuthnRequest.
-		/// </param>
-		public AuthnRequest(IIdentityProvider identityProvider, IServiceProvider serviceProvider, NameValueCollection parameters)
+	    /// <summary>
+	    /// Initializes a new instance of the AuthnRequest class.
+	    /// </summary>
+	    /// <param name="identityProvider">
+	    /// IdentityProvider to receive the AuthnRequest
+	    /// </param>
+	    /// <param name="serviceProvider">
+	    /// ServiceProvider to issue the AuthnRequest
+	    /// </param>
+	    /// <param name="parameters">
+	    /// NameValueCollection of varying parameters for use in the 
+	    /// construction of the AuthnRequest.
+	    /// </param>
+	    /// <param name="saml2Utils">Utilities class</param>
+	    public AuthnRequest(IIdentityProvider identityProvider, IServiceProvider serviceProvider, NameValueCollection parameters, Saml2Utils saml2Utils)
 		{
 			xml = new XmlDocument();
 			xml.PreserveWhitespace = true;
@@ -81,19 +76,20 @@ namespace Sun.Identity.Saml2
 			nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
 			nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
 
-			Id = Saml2Utils.GenerateId();
-			IssueInstant = Saml2Utils.GenerateIssueInstant();
+            Id = saml2Utils.GenerateId();
+            IssueInstant = saml2Utils.GenerateIssueInstant();
 			Issuer = serviceProvider.EntityId;
 
 			if (parameters != null)
 			{
-				AllowCreate = Saml2Utils.GetBoolean(parameters[Saml2Constants.AllowCreate]);
+                AllowCreate = saml2Utils.GetBoolean(parameters[Saml2Constants.AllowCreate]);
 				AssertionConsumerServiceIndex = parameters[Saml2Constants.AssertionConsumerServiceIndex];
 				Binding = parameters[Saml2Constants.Binding];
 				Consent = parameters[Saml2Constants.Consent];
 				Destination = parameters[Saml2Constants.Destination];
-				ForceAuthn = Saml2Utils.GetBoolean(parameters[Saml2Constants.ForceAuthn]);
-				IsPassive = Saml2Utils.GetBoolean(parameters[Saml2Constants.IsPassive]);
+                ForceAuthn = saml2Utils.GetBoolean(parameters[Saml2Constants.ForceAuthn]);
+                IsPassive = saml2Utils.GetBoolean(parameters[Saml2Constants.IsPassive]);
+			    NameIDPolicyFormat = parameters[Saml2Constants.NameIDPolicyFormat];
 			}
 
 			string assertionConsumerSvcUrl = null;
@@ -141,8 +137,8 @@ namespace Sun.Identity.Saml2
 			rawXml.Append(" ID=\"" + Id + "\"");
 			rawXml.Append(" Version=\"2.0\"");
 			rawXml.Append(" IssueInstant=\"" + IssueInstant + "\"");
-			rawXml.Append(" IsPassive=\"" + IsPassive + "\"");
-			rawXml.Append(" ForceAuthn=\"" + ForceAuthn + "\"");
+			rawXml.Append(" IsPassive=\"" + IsPassive.ToString().ToLower() + "\"");
+            rawXml.Append(" ForceAuthn=\"" + ForceAuthn.ToString().ToLower() + "\"");
 
 			if (!String.IsNullOrEmpty(Consent))
 			{
@@ -168,25 +164,27 @@ namespace Sun.Identity.Saml2
 			rawXml.Append("<saml:Issuer xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">" + serviceProvider.EntityId +
 			              "</saml:Issuer>");
 
-			if (reqAuthnContext != null)
+            rawXml.Append("<samlp:NameIDPolicy Format=\"" + NameIDPolicyFormat + "\" AllowCreate=\"" + AllowCreate.ToString().ToLower() + "\" />");
+			
+            if (reqAuthnContext != null)
 			{
 				rawXml.Append(reqAuthnContext.GenerateXmlString());
 			}
-
-			rawXml.Append("<samlp:NameIdPolicy AllowCreate=\"" + AllowCreate + "\" />");
-			rawXml.Append("</samlp:AuthnRequest>");
+            
+            rawXml.Append("</samlp:AuthnRequest>");
 
 			xml.LoadXml(rawXml.ToString());
 		}
 
-		#endregion
-
-		#region Properties
-
-		/// <summary>
+	    /// <summary>
 		/// Gets a value indicating whether AllowCreate is true or false.
 		/// </summary>
 		public bool AllowCreate { get; private set; }
+
+        /// <summary>
+        /// The NameIDPolicy Format requested by the IdP 
+        /// </summary>
+        public string NameIDPolicyFormat { get; private set; }
 
 		/// <summary>
 		/// Gets the AssertionConsumerServiceIndex.
@@ -241,11 +239,7 @@ namespace Sun.Identity.Saml2
 			get { return xml; }
 		}
 
-		#endregion
-
-		#region Methods
-
-		/// <summary>
+	    /// <summary>
 		/// Getst the RequestedAuthnContext element based on supplied 
 		/// parameters for the given service provider.
 		/// <seealso cref="Saml2Constants.AuthnContextClassRef"/>
@@ -301,7 +295,5 @@ namespace Sun.Identity.Saml2
 
 			return reqAuthnContext;
 		}
-
-		#endregion
 	}
 }

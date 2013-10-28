@@ -18,16 +18,19 @@ namespace Sun.Identity.Common
 	/// </summary>
 	public class FileFedletRepository : IFedletRepository
 	{
-		private const string CircleOfTrustNameAttribute = "cot-name";
+	    private readonly Saml2Utils _saml2Utils;
+	    private const string CircleOfTrustNameAttribute = "cot-name";
 		private readonly DirectoryInfo _homeFolder;
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="FileFedletRepository"/> class.
-		/// </summary>
-		/// <param name="homeFolder">The folder containing the configuration files.</param>
-		public FileFedletRepository(string homeFolder)
+	    /// <summary>
+	    /// Initializes a new instance of the <see cref="FileFedletRepository"/> class.
+	    /// </summary>
+	    /// <param name="homeFolder">The folder containing the configuration files.</param>
+	    /// <param name="saml2Utils"></param>
+	    public FileFedletRepository(string homeFolder, Saml2Utils saml2Utils)
 		{
-			if (!Directory.Exists(homeFolder))
+	        _saml2Utils = saml2Utils;
+	        if (!Directory.Exists(homeFolder))
 			{
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityHomeFolderNotFound);
 			}
@@ -99,7 +102,7 @@ namespace Sun.Identity.Common
 				var extendedMetadata = new XmlDocument();
 				extendedMetadata.Load(Path.Combine(_homeFolder.FullName, "sp-extended.xml"));
 
-				return new ServiceProvider(metadata, extendedMetadata);
+				return new ServiceProvider(metadata, extendedMetadata, _saml2Utils);
 			}
 			catch (DirectoryNotFoundException dnfe)
 			{
@@ -184,7 +187,7 @@ namespace Sun.Identity.Common
 			var extendedMetadata = new XmlDocument();
 			extendedMetadata.Load(metadataFile.FullName);
 
-			return new IdentityProvider(metadata, extendedMetadata);
+            return new IdentityProvider(metadata, extendedMetadata, _saml2Utils);
 		}
 	}
 }
