@@ -69,7 +69,7 @@ namespace Sun.Identity.Saml2
 		/// <returns>Preferred IDP Entity ID, null if not available.</returns>
 		public static string GetPreferredIdentityProvider(HttpRequestBase request)
 		{
-			string commonDomainCookieValue = request.QueryString[CommonDomainCookieName];
+			var commonDomainCookieValue = request.QueryString[CommonDomainCookieName];
 			return GetPreferredIdentityProvider(commonDomainCookieValue);
 		}
 
@@ -83,7 +83,7 @@ namespace Sun.Identity.Saml2
 		{
 			string idpEntityId = null;
 
-			if (!String.IsNullOrEmpty(commonDomainCookieValue))
+			if (!string.IsNullOrEmpty(commonDomainCookieValue))
 			{
 				char[] separator = {' '};
 				string[] listOfIdpEntityIds = commonDomainCookieValue.Split(separator);
@@ -109,7 +109,7 @@ namespace Sun.Identity.Saml2
 		/// </returns>
 		public static Uri GetReaderServiceUrl(ServiceProviderUtility serviceProviderUtility, HttpContextBase context)
 		{
-			HttpSessionStateBase session = context.Session;
+			var session = context.Session;
 			Uri readerSvcUrl = null;
 
 			var cotList = (ArrayList) session[CommonDomainDiscoverySessionAttribute];
@@ -118,7 +118,7 @@ namespace Sun.Identity.Saml2
 				// Obtain the list of currently tracked circle-of-trusts with 
 				// reader service if not already known.
 				cotList = new ArrayList();
-				foreach (string cotName in serviceProviderUtility.CircleOfTrusts.Keys)
+				foreach (var cotName in serviceProviderUtility.CircleOfTrusts.Keys)
 				{
 					var cot = serviceProviderUtility.CircleOfTrusts[cotName];
 					if (cot.ReaderServiceUrl != null)
@@ -128,7 +128,7 @@ namespace Sun.Identity.Saml2
 				}
 			}
 
-			IEnumerator enumerator = cotList.GetEnumerator();
+			var enumerator = cotList.GetEnumerator();
 			if (enumerator.MoveNext())
 			{
 				// Try the first service in the list
@@ -149,12 +149,12 @@ namespace Sun.Identity.Saml2
 		/// <param name="context">HttpContext containing session, request, and response objects.</param>
 		public static void RedirectToReaderService(Uri readerServiceUrl, HttpContextBase context)
 		{
-			HttpRequestBase request = context.Request;
-			HttpResponseBase response = context.Response;
+			var request = context.Request;
+			var response = context.Response;
 
 			// Set the RelayState for the reader service to the requestede without
 			// the query information already saved to the session.
-			string relayStateForReaderSvc = request.Url.AbsoluteUri;
+			var relayStateForReaderSvc = request.Url.AbsoluteUri;
 			if (!string.IsNullOrEmpty(request.Url.Query))
 			{
 				relayStateForReaderSvc = relayStateForReaderSvc.Replace(request.Url.Query, string.Empty);
@@ -163,8 +163,7 @@ namespace Sun.Identity.Saml2
 			// Redirect to the service and terminate the calling response.
 			var redirectUrl = new StringBuilder();
 			redirectUrl.Append(readerServiceUrl);
-			redirectUrl.Append("?");
-			redirectUrl.Append("RelayState=");
+			redirectUrl.Append("?RelayState=");
 			redirectUrl.Append(relayStateForReaderSvc);
 
 			response.Redirect(redirectUrl.ToString(), true);
@@ -176,7 +175,7 @@ namespace Sun.Identity.Saml2
 		/// <param name="context">HttpContext containing session, request, and response objects.</param>
 		public static void ResetDiscovery(HttpContextBase context)
 		{
-            HttpSessionStateBase session = context.Session;
+            var session = context.Session;
 
 			session[CommonDomainDiscoverySessionAttribute] = null;
 			session[OriginalParametersSessionAttribute] = null;
@@ -194,7 +193,7 @@ namespace Sun.Identity.Saml2
 		/// </returns>
         public static NameValueCollection RetrieveRequestParameters(HttpContextBase context)
 		{
-            HttpSessionStateBase session = context.Session;
+            var session = context.Session;
 			return (NameValueCollection) session[OriginalParametersSessionAttribute];
 		}
 
@@ -205,16 +204,11 @@ namespace Sun.Identity.Saml2
 		/// <param name="context">HttpContext containing session, request, and response objects.</param>
         public static void StoreRequestParameters(HttpContextBase context)
 		{
-            HttpSessionStateBase session = context.Session;
-            HttpRequestBase request = context.Request;
-			var parameters = (NameValueCollection) session[OriginalParametersSessionAttribute];
+            var session = context.Session;
+            var request = context.Request;
+			var parameters = (NameValueCollection) session[OriginalParametersSessionAttribute] ?? new NameValueCollection();
 
-			if (parameters == null)
-			{
-				parameters = new NameValueCollection();
-			}
-
-			foreach (string name in request.QueryString.Keys)
+		    foreach (string name in request.QueryString.Keys)
 			{
 				parameters[name] = request.QueryString[name];
 			}

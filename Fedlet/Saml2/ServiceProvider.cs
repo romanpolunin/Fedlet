@@ -284,13 +284,8 @@ namespace Sun.Identity.Saml2
 		/// <returns>Service location as defined in the metadata for the binding, null if not found.</returns>
 		public string GetAssertionConsumerServiceLocation(string binding)
 		{
-			var xpath = new StringBuilder();
-			xpath.Append("/md:EntityDescriptor/md:SPSSODescriptor/md:AssertionConsumerService");
-			xpath.Append("[@Binding='");
-			xpath.Append(binding);
-			xpath.Append("']");
-
-            return Saml2Utils.TryGetAttributeValue(_metadata, _metadataNsMgr, xpath.ToString(), "Location");
+		    var xpath = $"/md:EntityDescriptor/md:SPSSODescriptor/md:AssertionConsumerService[@Binding='{binding}']";
+            return Saml2Utils.TryGetAttributeValue(_metadata, _metadataNsMgr, xpath, "Location");
 		}
 
 		/// <summary>
@@ -301,15 +296,8 @@ namespace Sun.Identity.Saml2
 		/// <returns>Service location as defined in the metadata for the binding, null if not found.</returns>
 		public string GetAssertionConsumerServiceLocation(string binding, string index)
 		{
-			var xpath = new StringBuilder();
-			xpath.Append("/md:EntityDescriptor/md:SPSSODescriptor/md:AssertionConsumerService");
-			xpath.Append("[@Binding='");
-			xpath.Append(binding);
-			xpath.Append("' and index='");
-			xpath.Append(index);
-			xpath.Append("']");
-
-            return Saml2Utils.TryGetAttributeValue(_metadata, _metadataNsMgr, xpath.ToString(), "Location");
+		    var xpath = $"/md:EntityDescriptor/md:SPSSODescriptor/md:AssertionConsumerService[@Binding='{binding}' and index='{index}']";
+            return Saml2Utils.TryGetAttributeValue(_metadata, _metadataNsMgr, xpath, "Location");
         }
 
 		/// <summary>
@@ -330,9 +318,9 @@ namespace Sun.Identity.Saml2
 		/// <returns>Mapped integer for the given class reference.</returns>
 		public int GetAuthLevelFromAuthnContextClassRef(string classReference)
 		{
-			int authLevel = -1;
+			var authLevel = -1;
 
-			XmlNodeList nodes = GetAuthnContextClassRefMap();
+			var nodes = GetAuthnContextClassRefMap();
 			//IEnumerator i = nodes.GetEnumerator();
 
 			//while (i.MoveNext())
@@ -405,8 +393,7 @@ namespace Sun.Identity.Saml2
 		public string GetExportableMetadata(bool signMetadata)
 		{
 			var exportableXml = (XmlDocument) _metadata.CloneNode(true);
-			XmlNode entityDescriptorNode
-				= exportableXml.SelectSingleNode("/md:EntityDescriptor", _metadataNsMgr);
+			var entityDescriptorNode = exportableXml.SelectSingleNode("/md:EntityDescriptor", _metadataNsMgr);
 
 			if (entityDescriptorNode == null)
 			{

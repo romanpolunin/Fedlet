@@ -90,7 +90,7 @@ namespace Sun.Identity.Saml2
 				throw new Saml2Exception(Resources.RequestedAuthnContextClassRefOrDeclRefNotDefined);
 			}
 
-			if (String.IsNullOrEmpty(Comparison))
+			if (string.IsNullOrEmpty(Comparison))
 			{
 				Comparison = "exact";
 			}
