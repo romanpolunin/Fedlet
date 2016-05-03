@@ -4,14 +4,14 @@ namespace Sun.Identity.Common
 {
     public static class LoggerFactory
     {
-        private static Func<Type, ILogger> GetLoggerCallback = type => new EventLogLogger();
+        private static Func<Type, ILogger> _getLoggerCallback = type => new EventLogLogger();
 
         ///<summary>
         /// Replaces the current callback used to determine an ILogger for a given Type
         ///</summary>
         public static void SetFactory(Func<Type, ILogger> factoryCallback)
         {
-            GetLoggerCallback = factoryCallback;
+            _getLoggerCallback = factoryCallback;
         }
 
         ///<summary>
@@ -29,7 +29,7 @@ namespace Sun.Identity.Common
         ///<returns></returns>
         public static ILogger GetLogger(Type type)
         {
-            return GetLoggerCallback(type);
+            return _getLoggerCallback(type);
         }
     }
 }

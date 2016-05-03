@@ -1,3 +1,18 @@
+********************************
+README by @romanpolunin
+********************************
+
+This is a modified version of Fedlet C# implementation, based on https://github.com/daptiv/Fedlet.git
+Source code is subject to COMMON DEVELOPMENT AND DISTRIBUTION LICENSE Version 1.0 (CDDL-1.0) license, found at https://solaris.java.net/license.html
+
+Added support for AssertionTimeSkew, some bugfixes and changes in behavior for better handling of some use cases.
+Ported to .NET 4.6.1.
+Validated against a number of commercial IdPs.
+
+********************************
+ORIGINAL README
+********************************
+
 This is the C# solution for the OpenAM (OpenSSO) Fedlet project.
 The source was originally pulled from https://svn.forgerock.org/openam/trunk/opensso/products/federation/library/csharpsource.
 

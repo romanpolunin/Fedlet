@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Specialized;
 
 namespace Sun.Identity.Saml2
 {

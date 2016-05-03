@@ -62,7 +62,7 @@ namespace Sun.Identity.Saml2
 		/// <summary>
 		/// Original string representation of the Artifact object.
 		/// </summary>
-		private readonly string artifact;
+		private readonly string _artifact;
 
 		#endregion
 
@@ -79,11 +79,11 @@ namespace Sun.Identity.Saml2
 				throw new Saml2Exception(Resources.ArtifactNullOrEmpty);
 			}
 
-			artifact = samlArt;
+			_artifact = samlArt;
 
 			try
 			{
-				byte[] byteArray = Convert.FromBase64String(artifact);
+				byte[] byteArray = Convert.FromBase64String(_artifact);
 
 				if (byteArray.Length != RequiredByteLength)
 				{
@@ -135,7 +135,7 @@ namespace Sun.Identity.Saml2
 		/// <returns>Returns a string representing the 44-byte SAML artifact.</returns>
 		public override string ToString()
 		{
-			return artifact;
+			return _artifact;
 		}
 
 		#endregion

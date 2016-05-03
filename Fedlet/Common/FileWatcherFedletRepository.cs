@@ -13,15 +13,15 @@ namespace Sun.Identity.Common
 	/// </summary>
 	public class FileWatcherFedletRepository : IFedletRepository
 	{
-		private IFedletRepository _innerRepository;
-		private FileSystemWatcher _fileSystemWatcher;
-		private Timer _timer;
-		private int _clearCacheAttempts = 0;
+		private readonly IFedletRepository _innerRepository;
+		private readonly FileSystemWatcher _fileSystemWatcher;
+		private readonly Timer _timer;
+		private int _clearCacheAttempts;
 
 		private Dictionary<string, ICircleOfTrust> _cirlcesOfTrust;
 		private ISamlServiceProvider _serviceProvider;
 		private Dictionary<string, IIdentityProvider> _identityProviders;
-		private string _homeFolder;
+		private readonly string _homeFolder;
 
 	    /// <summary>
 	    /// Initializes a new instance of the <see cref="FileWatcherFedletRepository"/> class.
@@ -75,17 +75,20 @@ namespace Sun.Identity.Common
 			_timer.Change(500, -1);
 		}
 
-		public Dictionary<string, ICircleOfTrust> GetCircleOfTrusts()
+	    /// <summary>Get all configuration information for all circles of trust.</summary>
+	    public Dictionary<string, ICircleOfTrust> GetCircleOfTrusts()
 		{
 			return _cirlcesOfTrust ?? (_cirlcesOfTrust = _innerRepository.GetCircleOfTrusts());
 		}
 
-		public ISamlServiceProvider GetServiceProvider()
+	    /// <summary>Get all configuration information for the service provider.</summary>
+	    public ISamlServiceProvider GetServiceProvider()
 		{
 			return _serviceProvider ?? (_serviceProvider = _innerRepository.GetServiceProvider());
 		}
 
-		public Dictionary<string, IIdentityProvider> GetIdentityProviders()
+	    /// <summary>Get all configuration information for all identity providers.</summary>
+	    public Dictionary<string, IIdentityProvider> GetIdentityProviders()
 		{
 			return _identityProviders ?? (_identityProviders = _innerRepository.GetIdentityProviders());
 		}

@@ -52,7 +52,10 @@ namespace Sun.Identity.Saml2
 	{
 	    private readonly IFedletCertificateFactory _certificateFactory;
 
-	    public Saml2Utils(IFedletCertificateFactory certificateFactory)
+	    /// <summary>
+	    /// Ctr.
+	    /// </summary>
+        public Saml2Utils(IFedletCertificateFactory certificateFactory)
         {
             _certificateFactory = certificateFactory;
         }
@@ -179,20 +182,10 @@ namespace Sun.Identity.Saml2
 		/// <returns>
 		/// Results from Boolean.Parse(string), false if exception thrown.
 		/// </returns>
-		public bool GetBoolean(string value)
+		public static bool GetBoolean(string value)
 		{
-			try
-			{
-				return Boolean.Parse(value);
-			}
-			catch (ArgumentNullException)
-			{
-				return false;
-			}
-			catch (FormatException)
-			{
-				return false;
-			}
+		    bool result;
+		    return Boolean.TryParse(value, out result) && result;
 		}
 
 		/// <summary>
@@ -206,19 +199,17 @@ namespace Sun.Identity.Saml2
 		/// Returns &quot; if it doesn't currently exist in the given URL, otherwise
 		/// &amp; is returned.
 		/// </returns>
-		public string GetQueryStringDelimiter(string location)
+        public static string GetQueryStringDelimiter(string location)
 		{
-			if (location.Contains("?"))
-			{
-				return "&";
-			}
-			else
-			{
-				return "?";
-			}
+		    if (location == null)
+		    {
+		        throw new ArgumentNullException(nameof(location));
+		    }
+
+            return location.Contains("?") ? "&" : "?";
 		}
 
-		/// <summary>
+	    /// <summary>
 		/// Compresses, converts to Base64, then URL encodes the given 
 		/// parameter and returns the ensuing string.
 		/// </summary>
@@ -253,10 +244,15 @@ namespace Sun.Identity.Saml2
 		/// <returns>String output from the process.</returns>
 		public string UrlDecodeConvertFromBase64Decompress(string message)
 		{
-			// url decode it
+            // url decode it
 			string decodedMessage = HttpUtility.UrlDecode(message);
 
-			// convert from base 64
+            if (string.IsNullOrEmpty(decodedMessage))
+            {
+                throw new ArgumentException("Empty message");
+            }
+
+            // convert from base 64
 			byte[] byteArray = Convert.FromBase64String(decodedMessage);
 
 			// inflate the gzip deflated message
@@ -321,7 +317,7 @@ namespace Sun.Identity.Saml2
 				throw new Saml2Exception(Resources.SignedQueryStringCertHasNoPrivateKey);
 			}
 
-			string encodedSignature = string.Empty;
+			string encodedSignature;
 			string signatureAlgorithm = HttpUtility.UrlDecode(queryParams[Saml2Constants.SignatureAlgorithm]);
 
 			if (signatureAlgorithm == Saml2Constants.SignatureAlgorithmRsa)
@@ -391,8 +387,8 @@ namespace Sun.Identity.Saml2
 			}
 
 			var xml = (XmlDocument) xmlDoc;
-			var signedXml = new SignedXml(xml);
-			signedXml.SigningKey = cert.PrivateKey;
+		    var signedXml = new SignedXml(xml) {SigningKey = cert.PrivateKey};
+		    signedXml.SignedInfo.CanonicalizationMethod = SignedXml.XmlDsigExcC14NTransformUrl;
 
 			if (includePublicKey)
 			{
@@ -401,11 +397,10 @@ namespace Sun.Identity.Saml2
 				signedXml.KeyInfo = keyInfo;
 			}
 
-			var reference = new Reference();
-			reference.Uri = "#" + targetReferenceId;
+		    var reference = new Reference {Uri = "#" + targetReferenceId};
 
-			var envelopSigTransform = new XmlDsigEnvelopedSignatureTransform();
-			reference.AddTransform(envelopSigTransform);
+		    reference.AddTransform(new XmlDsigEnvelopedSignatureTransform());
+		    reference.AddTransform(new XmlDsigExcC14NTransform());
 
 			signedXml.AddReference(reference);
 			signedXml.ComputeSignature();
@@ -417,15 +412,16 @@ namespace Sun.Identity.Saml2
 			nsMgr.AddNamespace("saml", Saml2Constants.NamespaceSamlAssertion);
 			nsMgr.AddNamespace("samlp", Saml2Constants.NamespaceSamlProtocol);
 
-			XmlNode issuerNode = xml.DocumentElement.SelectSingleNode("saml:Issuer", nsMgr);
+		    var root = RequireRootElement(xml);
+            var issuerNode = root.SelectSingleNode("saml:Issuer", nsMgr);
 			if (issuerNode != null)
 			{
-				xml.DocumentElement.InsertAfter(xmlSignature, issuerNode);
+				root.InsertAfter(xmlSignature, issuerNode);
 			}
 			else
 			{
 				// Insert as a child to the target reference id
-				XmlNode targetNode = xml.DocumentElement.SelectSingleNode("//*[@ID='" + targetReferenceId + "']", nsMgr);
+                var targetNode = root.SelectSingleNode("//*[@ID='" + targetReferenceId + "']", nsMgr);
 				targetNode.PrependChild(xmlSignature);
 			}
 		}
@@ -451,16 +447,16 @@ namespace Sun.Identity.Saml2
 				return;
 			}
 
-			try
-			{
-				var relayStateUrl = new Uri(relayState);
-			}
-			catch (UriFormatException)
-			{
-				throw new Saml2Exception(Resources.MalformedRelayState);
-			}
+            //try
+            //{
+            //    var relayStateUrl = new Uri(relayState);
+            //}
+            //catch (UriFormatException)
+            //{
+            //    throw new Saml2Exception(Resources.MalformedRelayState);
+            //}
 
-			bool valid = false;
+			var valid = false;
 			foreach (string pattern in allowedRelayStates)
 			{
 				if (!string.IsNullOrEmpty(pattern) && Regex.IsMatch(relayState, pattern))
@@ -496,13 +492,13 @@ namespace Sun.Identity.Saml2
 			var signedXml = new SignedXml((XmlDocument) xmlDoc);
 			signedXml.LoadXml((XmlElement) xmlSignature);
 
-			bool results = signedXml.CheckSignature(cert, true);
+			var results = signedXml.CheckSignature(cert, true);
 			if (results == false)
 			{
 				throw new Saml2Exception(Resources.SignedXmlCheckSignatureFailed);
 			}
 
-			bool foundValidSignedReference = false;
+			var foundValidSignedReference = false;
 			foreach (Reference r in signedXml.SignedInfo.References)
 			{
 				string referenceId = r.Uri.Substring(1);
@@ -560,11 +556,11 @@ namespace Sun.Identity.Saml2
 				throw new Saml2Exception(Resources.SignedQueryStringMissingSignature);
 			}
 
-			string sigAlg = HttpUtility.UrlDecode(queryParams[Saml2Constants.SignatureAlgorithm]);
-			string signature = HttpUtility.UrlDecode(queryParams[Saml2Constants.Signature]);
+			var sigAlg = HttpUtility.UrlDecode(queryParams[Saml2Constants.SignatureAlgorithm]);
+			var signature = HttpUtility.UrlDecode(queryParams[Saml2Constants.Signature]);
 
 			// construct a new query string with specific sequence and no signature param
-			string newQueryString = string.Empty;
+			var newQueryString = string.Empty;
 			if (!string.IsNullOrEmpty(queryParams[Saml2Constants.RequestParameter]))
 			{
 				newQueryString = Saml2Constants.RequestParameter + "=" + queryParams[Saml2Constants.RequestParameter];
@@ -599,7 +595,8 @@ namespace Sun.Identity.Saml2
                  */
 				throw new Saml2Exception(Resources.SignedQueryStringUnsupportedSigAlg);
 			}
-			else if (sigAlg == Saml2Constants.SignatureAlgorithmRsa)
+
+            if (sigAlg == Saml2Constants.SignatureAlgorithmRsa)
 			{
 				var publicKey = (RSACryptoServiceProvider) cert.PublicKey.Key;
 				if (!publicKey.VerifyData(dataBuffer, new SHA1CryptoServiceProvider(), sigBuffer))
@@ -613,9 +610,81 @@ namespace Sun.Identity.Saml2
 			}
 		}
 
-	    public static Saml2Utils DefaultInstance()
+	    /// <summary>
+	    /// Creates a new instance of <see cref="Saml2Utils"/>.
+	    /// </summary>
+	    public static Saml2Utils Create()
 	    {
 	        return new Saml2Utils(new FedletCertificateFactory());
 	    }
+
+        /// <summary>
+        /// Xml utility.
+        /// </summary>
+        public static string RequireAttributeValue(XmlDocument document, XmlNamespaceManager nsmgr, string xpath, string attribute)
+        {
+            var root = RequireRootElement(document);
+            var node = root.SelectSingleNode(xpath, nsmgr);
+            var att = node?.Attributes?[attribute];
+            if (!string.IsNullOrEmpty(att?.Value))
+            {
+                return att.Value.Trim();
+            }
+            throw new Saml2Exception($"Could not resolve attribute {xpath} at {attribute}");
+        }
+
+        /// <summary>
+        /// Xml utility.
+        /// </summary>
+        public static string TryGetAttributeValue(XmlDocument document, XmlNamespaceManager nsmgr, string xpath, string attribute)
+        {
+            var root = RequireRootElement(document);
+            var node = root.SelectSingleNode(xpath, nsmgr);
+            if (node?.Attributes == null)
+            {
+                return null;
+            }
+
+            var att = node.Attributes[attribute];
+            return string.IsNullOrEmpty(att?.Value) ? null : att.Value.Trim();
+        }
+
+        /// <summary>
+        /// Xml utility.
+        /// </summary>
+        public static string TryGetNodeText(XmlDocument document, XmlNamespaceManager nsmgr, string xpath)
+        {
+            var root = RequireRootElement(document);
+            var node = root.SelectSingleNode(xpath, nsmgr);
+            return string.IsNullOrEmpty(node?.InnerText) ? null : node.InnerText.Trim();
+        }
+
+        /// <summary>
+        /// Xml utility.
+        /// </summary>
+        public static string RequireNodeText(XmlDocument document, XmlNamespaceManager nsmgr, string xpath)
+        {
+            var root = RequireRootElement(document);
+            var node = root.SelectSingleNode(xpath, nsmgr);
+            var text = node?.InnerText;
+            if (!string.IsNullOrEmpty(text))
+            {
+                return text.Trim();
+            }
+            throw new Saml2Exception("Could not resolve node text at " + xpath);
+        }
+
+        /// <summary>
+        /// Xml utility.
+        /// </summary>
+        public static XmlNode RequireRootElement(XmlDocument xmlDocument)
+        {
+            var root = xmlDocument.DocumentElement;
+            if (root == null)
+            {
+                throw new Saml2Exception("Could not resolve root element");
+            }
+            return root;
+        }
 	}
 }

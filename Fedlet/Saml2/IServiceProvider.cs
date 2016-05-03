@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 
 namespace Sun.Identity.Saml2
@@ -7,7 +8,13 @@ namespace Sun.Identity.Saml2
 	/// </summary>
 	public interface IServiceProvider
 	{
-		/// <summary>
+        /// <summary>
+        /// Gets a TimeSpan value to help tolerate NotOnOrAfter and NotBefore constraints checks
+        /// due to SP-IdP time difference. 
+        /// </summary>
+        TimeSpan AssertionTimeSkew { get; }
+
+        /// <summary>
 		/// Gets a value indicating whether the standard metadata value for 
 		/// AuthnRequestsSigned is true or false.
 		/// </summary>

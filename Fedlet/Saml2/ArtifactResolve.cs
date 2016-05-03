@@ -42,30 +42,30 @@ namespace Sun.Identity.Saml2
 		/// <summary>
 		/// Namespace Manager for this class.
 		/// </summary>
-		private readonly XmlNamespaceManager nsMgr;
+		private readonly XmlNamespaceManager _nsMgr;
 
 		/// <summary>
 		/// XML representation of class.
 		/// </summary>
-		private readonly XmlDocument xml;
+		private readonly XmlDocument _xml;
 
 		#endregion
 
 		#region Constructor
 
-		/// <summary>
-		/// Initializes a new instance of the ArtifactResolve class.
-		/// </summary>
-		/// <param name="serviceProvider">Service Provider to issue this request</param>
-		/// <param name="artifact">SAMLv2 Artifact</param>
-		public ArtifactResolve(IServiceProvider serviceProvider, Artifact artifact, Saml2Utils saml2Utils)
+	    /// <summary>
+	    /// Initializes a new instance of the ArtifactResolve class.
+	    /// </summary>
+	    /// <param name="serviceProvider">Service Provider to issue this request</param>
+	    /// <param name="artifact">SAMLv2 Artifact</param>
+	    /// <param name="saml2Utils">Utils object</param>
+	    public ArtifactResolve(IServiceProvider serviceProvider, Artifact artifact, Saml2Utils saml2Utils)
 		{
-		    xml = new XmlDocument();
-			xml.PreserveWhitespace = true;
+	        _xml = new XmlDocument {PreserveWhitespace = true};
 
-			nsMgr = new XmlNamespaceManager(xml.NameTable);
-			nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
-			nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
+	        _nsMgr = new XmlNamespaceManager(_xml.NameTable);
+			_nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
+			_nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
 
             Id = saml2Utils.GenerateId();
             IssueInstant = saml2Utils.GenerateIssueInstant();
@@ -84,7 +84,7 @@ namespace Sun.Identity.Saml2
 			rawXml.Append(" <samlp:Artifact>" + Artifact + "</samlp:Artifact>");
 			rawXml.Append("</samlp:ArtifactResolve>");
 
-			xml.LoadXml(rawXml.ToString());
+			_xml.LoadXml(rawXml.ToString());
 		}
 
 		#endregion
@@ -94,32 +94,29 @@ namespace Sun.Identity.Saml2
 		/// <summary>
 		/// Gets the Artifact.
 		/// </summary>
-		public Artifact Artifact { get; private set; }
+		public Artifact Artifact { get; }
 
 		/// <summary>
 		/// Gets the ID.
 		/// </summary>
-		public string Id { get; private set; }
+		public string Id { get; }
 
 		/// <summary>
 		/// Gets the Issuer.
 		/// </summary>
-		public string Issuer { get; private set; }
+		public string Issuer { get; }
 
 		/// <summary>
 		/// Gets the IssueInstant.
 		/// </summary>
-		public string IssueInstant { get; private set; }
+		public string IssueInstant { get; }
 
 		/// <summary>
 		/// Gets the XML representation.
 		/// </summary>
-		public IXPathNavigable XmlDom
-		{
-			get { return xml; }
-		}
+		public IXPathNavigable XmlDom => _xml;
 
-		#endregion
+	    #endregion
 
 		#region Methods
 

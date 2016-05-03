@@ -87,37 +87,34 @@ namespace Sun.Identity.Common
             if (_logLevel == null)
             {
                 _logLevel = ConfigurationManager.AppSettings[AppSettingParameter];
-                if (_logLevel != null)
-                {
-                    _logLevel = _logLevel.ToUpperInvariant();
-                }
+                _logLevel = _logLevel?.ToUpperInvariant();
             }
             return _logLevel;
         }
 
-    	public bool IsErrorEnabled
-		{
-			get { return IsEnabled(EventLogEntryType.Error); }
-    	}
+        ///<summary>Returns true if Warn level logging is enabled</summary>
+        public bool IsErrorEnabled => IsEnabled(EventLogEntryType.Error);
 
-    	///<summary>Returns true if Info level logging is enabled</summary>
-        public bool IsInfoEnabled
-        {
-            get { return IsEnabled(EventLogEntryType.Information); }
-        }
+        ///<summary>Returns true if Info level logging is enabled</summary>
+        public bool IsInfoEnabled => IsEnabled(EventLogEntryType.Information);
 
         ///<summary>Returns true if Warn level logging is enabled</summary>
-        public bool IsWarnEnabled
-        {
-            get { return IsEnabled(EventLogEntryType.Warning); }
-        }
+        public bool IsWarnEnabled => IsEnabled(EventLogEntryType.Warning);
 
-    	public void Error(Exception ex, string message)
+        /// <summary>
+        /// Method to write an error message to the event log.
+        /// </summary>
+        /// <param name="ex">The exception to be written.</param>
+        /// <param name="message">Message to be written.</param>
+        public void Error(Exception ex, string message)
 		{
 			LogMessage(message + Environment.NewLine + ex, EventLogEntryType.Information);
     	}
 
-    	public void Error(Exception ex, string format, params object[] args)
+        /// <summary>
+        /// Method to write an error message to the event log.
+        /// </summary>
+        public void Error(Exception ex, string format, params object[] args)
 		{
 			LogMessage(string.Format(format, args) + Environment.NewLine + ex, EventLogEntryType.Information);
     	}

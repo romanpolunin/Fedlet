@@ -30,7 +30,6 @@ using System.Collections;
 using System.Collections.Specialized;
 using System.Text;
 using System.Web;
-using System.Web.SessionState;
 
 namespace Sun.Identity.Saml2
 {
@@ -91,7 +90,7 @@ namespace Sun.Identity.Saml2
 
 				if (listOfIdpEntityIds.Length > 0)
 				{
-					idpEntityId = Saml2Utils.DefaultInstance().ConvertFromBase64(listOfIdpEntityIds[listOfIdpEntityIds.Length - 1]);
+					idpEntityId = Saml2Utils.Create().ConvertFromBase64(listOfIdpEntityIds[listOfIdpEntityIds.Length - 1]);
 				}
 			}
 
@@ -156,7 +155,7 @@ namespace Sun.Identity.Saml2
 			// Set the RelayState for the reader service to the requestede without
 			// the query information already saved to the session.
 			string relayStateForReaderSvc = request.Url.AbsoluteUri;
-			if (!String.IsNullOrEmpty(request.Url.Query))
+			if (!string.IsNullOrEmpty(request.Url.Query))
 			{
 				relayStateForReaderSvc = relayStateForReaderSvc.Replace(request.Url.Query, string.Empty);
 			}

@@ -48,7 +48,7 @@ namespace Sun.Identity.Common
 		/// </returns>
 		public X509Certificate2 GetCertificateByFriendlyName(string friendlyName)
 		{
-			X509Certificate2 cert = new X509Certificate2();
+			var cert = new X509Certificate2();
 			var store = new X509Store(StoreLocation.LocalMachine);
 			string errorMessage = null;
 
@@ -59,7 +59,7 @@ namespace Sun.Identity.Common
 				X509Certificate2Enumerator certEnum = store.Certificates.GetEnumerator();
 				while (certEnum.MoveNext())
 				{
-					if (certEnum.Current.FriendlyName == friendlyName)
+					if (certEnum.Current?.FriendlyName == friendlyName)
 					{
 						cert = certEnum.Current;
 						break;
@@ -76,13 +76,10 @@ namespace Sun.Identity.Common
 			}
 			finally
 			{
-				if (store != null)
-				{
-					store.Close();
-				}
+			    store.Close();
 			}
 
-			if (errorMessage != null)
+	        if (errorMessage != null)
 			{
                 LoggerFactory.GetLogger(typeof(FedletCertificateFactory)).Warning("{0} {1}", Resources.FedletCertificateFactoryGetByFriendlyNameFailed, errorMessage);
 			}

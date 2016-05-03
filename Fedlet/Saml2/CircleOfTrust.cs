@@ -28,7 +28,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Linq;
 
 namespace Sun.Identity.Saml2
 {
@@ -42,25 +41,25 @@ namespace Sun.Identity.Saml2
 		private const string Saml2WriterServiceKey = "sun-fm-saml2-writerservice-url";
 		private const string TrustedProvidersKey = "sun-fm-trusted-providers";
 
-		private HashSet<string> _trustedEntities = new HashSet<string>();
+		private readonly HashSet<string> _trustedEntities = new HashSet<string>();
 
 
 		/// <summary>
 		/// Gets the name of the circle of trust
 		/// </summary>
-		public string Name { get; private set; }
+		public string Name { get; }
 
 		/// <summary>
 		/// Gets the saml2 reader service url, empty string if not specified,
 		/// null attribute is not found.
 		/// </summary>
-		public Uri ReaderServiceUrl { get; private set; }
+		public Uri ReaderServiceUrl { get; }
 
 		/// <summary>
 		/// Gets the saml2 writer service url, empty string if not specified,
 		/// null attribute is not found.
 		/// </summary>
-		public Uri WriterServiceUrl { get; private set; }
+		public Uri WriterServiceUrl { get; }
 
 		/// <summary>
 		/// Initializes a new instance of the CircleOfTrust class.
@@ -71,10 +70,10 @@ namespace Sun.Identity.Saml2
 			Name = attributes[CircleOfTrustNameAttribute];
 
 			string value = attributes[Saml2ReaderServiceKey];
-			ReaderServiceUrl = String.IsNullOrEmpty(value) ? null : new Uri(value);
+			ReaderServiceUrl = string.IsNullOrEmpty(value) ? null : new Uri(value);
 
 			value = attributes[Saml2WriterServiceKey];
-			WriterServiceUrl = String.IsNullOrEmpty(value) ? null : new Uri(value);
+			WriterServiceUrl = string.IsNullOrEmpty(value) ? null : new Uri(value);
 			
 			string trusted = attributes[TrustedProvidersKey];
 

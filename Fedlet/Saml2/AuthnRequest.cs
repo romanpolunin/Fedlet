@@ -51,7 +51,7 @@ namespace Sun.Identity.Saml2
 		/// <summary>
 		/// XML representation of the authn request.
 		/// </summary>
-		private readonly XmlDocument xml;
+		private readonly XmlDocument _xml;
 
 	    /// <summary>
 	    /// Initializes a new instance of the AuthnRequest class.
@@ -69,10 +69,10 @@ namespace Sun.Identity.Saml2
 	    /// <param name="saml2Utils">Utilities class</param>
 	    public AuthnRequest(IIdentityProvider identityProvider, IServiceProvider serviceProvider, NameValueCollection parameters, Saml2Utils saml2Utils)
 		{
-			xml = new XmlDocument();
-			xml.PreserveWhitespace = true;
+			_xml = new XmlDocument();
+			_xml.PreserveWhitespace = true;
 
-			nsMgr = new XmlNamespaceManager(xml.NameTable);
+			nsMgr = new XmlNamespaceManager(_xml.NameTable);
 			nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
 			nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
 
@@ -82,13 +82,13 @@ namespace Sun.Identity.Saml2
 
 			if (parameters != null)
 			{
-                AllowCreate = saml2Utils.GetBoolean(parameters[Saml2Constants.AllowCreate]);
+                AllowCreate = Saml2Utils.GetBoolean(parameters[Saml2Constants.AllowCreate]);
 				AssertionConsumerServiceIndex = parameters[Saml2Constants.AssertionConsumerServiceIndex];
 				Binding = parameters[Saml2Constants.Binding];
 				Consent = parameters[Saml2Constants.Consent];
 				Destination = parameters[Saml2Constants.Destination];
-                ForceAuthn = saml2Utils.GetBoolean(parameters[Saml2Constants.ForceAuthn]);
-                IsPassive = saml2Utils.GetBoolean(parameters[Saml2Constants.IsPassive]);
+                ForceAuthn = Saml2Utils.GetBoolean(parameters[Saml2Constants.ForceAuthn]);
+                IsPassive = Saml2Utils.GetBoolean(parameters[Saml2Constants.IsPassive]);
 			    NameIDPolicyFormat = parameters[Saml2Constants.NameIDPolicyFormat];
 			}
 
@@ -173,7 +173,7 @@ namespace Sun.Identity.Saml2
             
             rawXml.Append("</samlp:AuthnRequest>");
 
-			xml.LoadXml(rawXml.ToString());
+			_xml.LoadXml(rawXml.ToString());
 		}
 
 	    /// <summary>
@@ -236,7 +236,7 @@ namespace Sun.Identity.Saml2
 		/// </summary>
 		public IXPathNavigable XmlDom
 		{
-			get { return xml; }
+			get { return _xml; }
 		}
 
 	    /// <summary>

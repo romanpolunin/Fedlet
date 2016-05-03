@@ -136,33 +136,19 @@ namespace Sun.Identity.Saml2
 		/// <param name="list">The list to become the AuthnContextClassRef.</param>
 		public void SetAuthnContextClassRef(ArrayList list)
 		{
-			if (list == null)
-			{
-				AuthnContextClassRef = new ArrayList();
-			}
-			else
-			{
-				AuthnContextClassRef = list;
-			}
+		    AuthnContextClassRef = list ?? new ArrayList();
 		}
 
-		/// <summary>
+	    /// <summary>
 		/// Sets the SetAuthnContextDeclRef list.
 		/// </summary>
 		/// <param name="list">The list to become the SetAuthnContextDeclRef.</param>
 		public void SetAuthnContextDeclRef(ArrayList list)
-		{
-			if (list == null)
-			{
-				AuthnContextDeclRef = new ArrayList();
-			}
-			else
-			{
-				AuthnContextDeclRef = list;
-			}
-		}
+	    {
+	        AuthnContextDeclRef = list ?? new ArrayList();
+	    }
 
-		/// <summary>
+	    /// <summary>
 		/// Checks to see if the Comparison property is set to a valid
 		/// value based on the SAML specification.
 		/// </summary>

@@ -35,259 +35,245 @@ using Sun.Identity.Saml2.Exceptions;
 
 namespace Sun.Identity.Saml2
 {
-	/// <summary>
-	/// SAMLv2 LogoutResponse object constructed from received message after 
-	/// submission of a LogoutRequest from associated Identity Provider.
-	/// </summary>
-	public class LogoutResponse
-	{
-		#region Members
+    /// <summary>
+    ///     SAMLv2 LogoutResponse object constructed from received message after
+    ///     submission of a LogoutRequest from associated Identity Provider.
+    /// </summary>
+    public class LogoutResponse
+    {
+        #region Members
 
-		/// <summary>
-		/// Namespace Manager for this logout response.
-		/// </summary>
-		private readonly XmlNamespaceManager nsMgr;
+        /// <summary>
+        ///     Namespace Manager for this logout response.
+        /// </summary>
+        private readonly XmlNamespaceManager _nsMgr;
 
-		/// <summary>
-		/// XML representation of the logout response.
-		/// </summary>
-		private readonly XmlDocument xml;
+        /// <summary>
+        ///     XML representation of the logout response.
+        /// </summary>
+        private readonly XmlDocument _xml;
 
-		#endregion
+        #endregion
 
-		#region Constructor
+        #region Constructor
 
-		/// <summary>
-		/// Initializes a new instance of the LogoutResponse class.
-		/// </summary>
-		/// <param name="samlResponse">Decoded SAMLv2 logout response</param>
-		public LogoutResponse(string samlResponse)
-		{
-			try
-			{
-				xml = new XmlDocument();
-				xml.PreserveWhitespace = true;
+        /// <summary>
+        ///     Initializes a new instance of the LogoutResponse class.
+        /// </summary>
+        /// <param name="samlResponse">Decoded SAMLv2 logout response</param>
+        public LogoutResponse(string samlResponse)
+        {
+            try
+            {
+                _xml = new XmlDocument {PreserveWhitespace = true};
 
-				nsMgr = new XmlNamespaceManager(xml.NameTable);
-				nsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
-				nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
-				nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
+                _nsMgr = new XmlNamespaceManager(_xml.NameTable);
+                _nsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
+                _nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
+                _nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
 
-				xml.LoadXml(samlResponse);
-			}
-			catch (ArgumentNullException ane)
-			{
-				throw new Saml2Exception(Resources.LogoutResponseNullArgument, ane);
-			}
-			catch (XmlException xe)
-			{
-				throw new Saml2Exception(Resources.LogoutResponseXmlException, xe);
-			}
-		}
+                _xml.LoadXml(samlResponse);
+            }
+            catch (ArgumentNullException ane)
+            {
+                throw new Saml2Exception(Resources.LogoutResponseNullArgument, ane);
+            }
+            catch (XmlException xe)
+            {
+                throw new Saml2Exception(Resources.LogoutResponseXmlException, xe);
+            }
+        }
 
-	    /// <summary>
-	    /// Initializes a new instance of the LogoutResponse class based on
-	    /// the complimentary logout request.
-	    /// </summary>
-	    /// <param name="identityProvider">
-	    /// IdentityProvider of the LogoutResponse
-	    /// </param>
-	    /// <param name="serviceProvider">
-	    /// ServiceProvider of the LogoutResponse
-	    /// </param>
-	    /// <param name="logoutRequest">
-	    /// Logout request that requires this response
-	    /// </param>
-	    /// <param name="parameters">
-	    /// NameValueCollection of varying parameters for use in the 
-	    /// construction of the LogoutResponse.
-	    /// </param>
-	    /// <param name="saml2Utils">Utilities class</param>
-	    public LogoutResponse(
-			IIdentityProvider identityProvider,
-			IServiceProvider serviceProvider,
-			LogoutRequest logoutRequest,
-			NameValueCollection parameters,
+        /// <summary>
+        ///     Initializes a new instance of the LogoutResponse class based on
+        ///     the complimentary logout request.
+        /// </summary>
+        /// <param name="identityProvider">
+        ///     IdentityProvider of the LogoutResponse
+        /// </param>
+        /// <param name="serviceProvider">
+        ///     ServiceProvider of the LogoutResponse
+        /// </param>
+        /// <param name="logoutRequest">
+        ///     Logout request that requires this response
+        /// </param>
+        /// <param name="parameters">
+        ///     NameValueCollection of varying parameters for use in the
+        ///     construction of the LogoutResponse.
+        /// </param>
+        /// <param name="saml2Utils">Utilities class</param>
+        public LogoutResponse(
+            IIdentityProvider identityProvider,
+            IServiceProvider serviceProvider,
+            LogoutRequest logoutRequest,
+            NameValueCollection parameters,
             Saml2Utils saml2Utils)
-		{
-			if (identityProvider == null)
-			{
-				throw new Saml2Exception(Resources.LogoutResponseIdentityProviderIsNull);
-			}
-			else if (serviceProvider == null)
-			{
-				throw new Saml2Exception(Resources.LogoutResponseServiceProviderIsNull);
-			}
-			else if (logoutRequest == null)
-			{
-				throw new Saml2Exception(Resources.LogoutResponseLogoutRequestIsNull);
-			}
+        {
+            if (identityProvider == null)
+            {
+                throw new Saml2Exception(Resources.LogoutResponseIdentityProviderIsNull);
+            }
+            if (serviceProvider == null)
+            {
+                throw new Saml2Exception(Resources.LogoutResponseServiceProviderIsNull);
+            }
+            if (logoutRequest == null)
+            {
+                throw new Saml2Exception(Resources.LogoutResponseLogoutRequestIsNull);
+            }
 
-			if (parameters == null)
-			{
-				parameters = new NameValueCollection();
-			}
+            if (parameters == null)
+            {
+                parameters = new NameValueCollection();
+            }
 
-			string inResponseToValue = logoutRequest.Id;
-			string issuerValue = serviceProvider.EntityId;
+            var inResponseToValue = logoutRequest.Id;
+            var issuerValue = serviceProvider.EntityId;
 
-			string binding = parameters[Saml2Constants.Binding];
-			if (string.IsNullOrEmpty(binding))
-			{
-				binding = Saml2Constants.HttpPostProtocolBinding;
-			}
+            var binding = parameters[Saml2Constants.Binding];
+            if (string.IsNullOrEmpty(binding))
+            {
+                binding = Saml2Constants.HttpPostProtocolBinding;
+            }
 
-			string idpSvcResponseLocation = null;
-			if (binding != Saml2Constants.HttpSoapProtocolBinding)
-			{
-				idpSvcResponseLocation = identityProvider.GetSingleLogoutServiceResponseLocation(binding);
-			}
+            string idpSvcResponseLocation = null;
+            if (binding != Saml2Constants.HttpSoapProtocolBinding)
+            {
+                idpSvcResponseLocation = identityProvider.GetSingleLogoutServiceResponseLocation(binding);
+            }
 
-			xml = new XmlDocument();
-			xml.PreserveWhitespace = true;
+            _xml = new XmlDocument {PreserveWhitespace = true};
 
-			nsMgr = new XmlNamespaceManager(xml.NameTable);
-			nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
-			nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
+            _nsMgr = new XmlNamespaceManager(_xml.NameTable);
+            _nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
+            _nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
 
-			var rawXml = new StringBuilder();
-			rawXml.Append("<samlp:LogoutResponse xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\" ");
+            var rawXml = new StringBuilder();
+            rawXml.Append("<samlp:LogoutResponse xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\" ");
             rawXml.Append(" ID=\"" + saml2Utils.GenerateId() + "\" Version=\"2.0\" ");
             rawXml.Append(" IssueInstant=\"" + saml2Utils.GenerateIssueInstant() + "\" ");
 
-			if (idpSvcResponseLocation != null)
-			{
-				rawXml.Append(" Destination=\"" + idpSvcResponseLocation + "\" ");
-			}
+            if (idpSvcResponseLocation != null)
+            {
+                rawXml.Append(" Destination=\"" + idpSvcResponseLocation + "\" ");
+            }
 
-			rawXml.Append(" InResponseTo=\"" + inResponseToValue + "\">");
-			rawXml.Append(" <saml:Issuer xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">" + issuerValue + "</saml:Issuer>");
-			rawXml.Append(" <samlp:Status xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\">");
-			rawXml.Append("   <samlp:StatusCode ");
-			rawXml.Append("     xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\" ");
-			rawXml.Append("     Value=\"" + Saml2Constants.Success + "\">");
-			rawXml.Append("   </samlp:StatusCode>");
-			rawXml.Append(" </samlp:Status>");
-			rawXml.Append("</samlp:LogoutResponse>");
+            rawXml.Append(" InResponseTo=\"" + inResponseToValue + "\">");
+            rawXml.Append(" <saml:Issuer xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\">" + issuerValue +
+                          "</saml:Issuer>");
+            rawXml.Append(" <samlp:Status xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\">");
+            rawXml.Append("   <samlp:StatusCode ");
+            rawXml.Append("     xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\" ");
+            rawXml.Append("     Value=\"" + Saml2Constants.Success + "\">");
+            rawXml.Append("   </samlp:StatusCode>");
+            rawXml.Append(" </samlp:Status>");
+            rawXml.Append("</samlp:LogoutResponse>");
 
-			xml.LoadXml(rawXml.ToString());
-		}
+            _xml.LoadXml(rawXml.ToString());
+        }
 
-		#endregion
+        #endregion
 
-		#region Properties
+        #region Properties
 
-		/// <summary>
-		/// Gets the InResponseTo attribute value of the logout response, 
-		/// null if not present.
-		/// </summary>
-		public string InResponseTo
-		{
-			get
-			{
-				string xpath = "/samlp:LogoutResponse";
-				XmlNode root = xml.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
+        /// <summary>
+        ///     Gets the InResponseTo attribute value of the logout response,
+        ///     null if not present.
+        /// </summary>
+        public string InResponseTo
+        {
+            get
+            {
+                const string xpath = "/samlp:LogoutResponse";
+                var root = _xml.DocumentElement;
+                var node = root.SelectSingleNode(xpath, _nsMgr);
 
-				if (node.Attributes["InResponseTo"] == null)
-				{
-					return null;
-				}
+                return node.Attributes["InResponseTo"]?.Value.Trim();
+            }
+        }
 
-				return node.Attributes["InResponseTo"].Value.Trim();
-			}
-		}
+        /// <summary>
+        ///     Gets the ID attribute value of the response.
+        /// </summary>
+        public string Id
+        {
+            get
+            {
+                const string xpath = "/samlp:LogoutResponse";
+                var root = _xml.DocumentElement;
+                var node = root.SelectSingleNode(xpath, _nsMgr);
+                return node.Attributes["ID"].Value.Trim();
+            }
+        }
 
-		/// <summary>
-		/// Gets the ID attribute value of the response.
-		/// </summary>
-		public string Id
-		{
-			get
-			{
-				string xpath = "/samlp:LogoutResponse";
-				XmlNode root = xml.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
-				return node.Attributes["ID"].Value.Trim();
-			}
-		}
+        /// <summary>
+        ///     Gets the name of the issuer of the logout response.
+        /// </summary>
+        public string Issuer
+        {
+            get
+            {
+                const string xpath = "/samlp:LogoutResponse/saml:Issuer";
+                var root = _xml.DocumentElement;
+                var node = root.SelectSingleNode(xpath, _nsMgr);
+                return node.InnerText.Trim();
+            }
+        }
 
-		/// <summary>
-		/// Gets the name of the issuer of the logout response.
-		/// </summary>
-		public string Issuer
-		{
-			get
-			{
-				string xpath = "/samlp:LogoutResponse/saml:Issuer";
-				XmlNode root = xml.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
-				return node.InnerText.Trim();
-			}
-		}
+        /// <summary>
+        ///     Gets the status code of the logout response within the status element.
+        /// </summary>
+        public string StatusCode
+        {
+            get
+            {
+                const string xpath = "/samlp:LogoutResponse/samlp:Status/samlp:StatusCode";
+                var root = _xml.DocumentElement;
+                var node = root.SelectSingleNode(xpath, _nsMgr);
+                return node.Attributes["Value"].Value.Trim();
+            }
+        }
 
-		/// <summary>
-		/// Gets the status code of the logout response within the status element.
-		/// </summary>
-		public string StatusCode
-		{
-			get
-			{
-				string xpath = "/samlp:LogoutResponse/samlp:Status/samlp:StatusCode";
-				XmlNode root = xml.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
-				return node.Attributes["Value"].Value.Trim();
-			}
-		}
+        /// <summary>
+        ///     Gets the status message of the logout response within the status
+        ///     element, null if none provided.
+        /// </summary>
+        public string StatusMessage
+        {
+            get
+            {
+                const string xpath = "/samlp:LogoutResponse/samlp:Status/samlp:StatusMessage";
+                var root = _xml.DocumentElement;
+                var node = root.SelectSingleNode(xpath, _nsMgr);
 
-		/// <summary>
-		/// Gets the status message of the logout response within the status
-		/// element, null if none provided.
-		/// </summary>
-		public string StatusMessage
-		{
-			get
-			{
-				string xpath = "/samlp:LogoutResponse/samlp:Status/samlp:StatusMessage";
-				XmlNode root = xml.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, nsMgr);
+                return node?.InnerText.Trim();
+            }
+        }
 
-				if (node != null)
-				{
-					return node.InnerText.Trim();
-				}
+        /// <summary>
+        ///     Gets the XML representation of the received logout response.
+        /// </summary>
+        public IXPathNavigable XmlDom => _xml;
 
-				return null;
-			}
-		}
+        /// <summary>
+        ///     Gets the signature of the logout response attached to the
+        ///     response as an XML element.
+        /// </summary>
+        public IXPathNavigable XmlSignature
+        {
+            get
+            {
+                var xpath = "/samlp:LogoutResponse/ds:Signature";
+                XmlNode root = _xml.DocumentElement;
+                var signatureElement = root.SelectSingleNode(xpath, _nsMgr);
+                return signatureElement;
+            }
+        }
 
-		/// <summary>
-		/// Gets the XML representation of the received logout response.
-		/// </summary>
-		public IXPathNavigable XmlDom
-		{
-			get { return xml; }
-		}
+        #endregion
 
-		/// <summary>
-		/// Gets the signature of the logout response attached to the 
-		/// response as an XML element.
-		/// </summary>
-		public IXPathNavigable XmlSignature
-		{
-			get
-			{
-				string xpath = "/samlp:LogoutResponse/ds:Signature";
-				XmlNode root = xml.DocumentElement;
-				XmlNode signatureElement = root.SelectSingleNode(xpath, nsMgr);
-				return signatureElement;
-			}
-		}
+        #region Methods
 
-		#endregion
-
-		#region Methods
-
-		#endregion
-	}
+        #endregion
+    }
 }

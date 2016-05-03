@@ -34,7 +34,7 @@ namespace Sun.Identity.Saml2.Exceptions
 	/// Exception class specific for IdentityProvider business logic.
 	/// </summary>
 	[SerializableAttribute]
-	public class IdentityProviderException : Exception, ISerializable
+	public class IdentityProviderException : Exception
 	{
 		/// <summary>
 		/// Initializes a new instance of the IdentityProviderException class.

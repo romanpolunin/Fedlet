@@ -34,7 +34,7 @@ namespace Sun.Identity.Saml2.Exceptions
 	/// Exception class specific for Saml2 business logic.
 	/// </summary>
 	[SerializableAttribute]
-	public class Saml2Exception : Exception, ISerializable
+	public class Saml2Exception : Exception
 	{
 		/// <summary>
 		/// Initializes a new instance of the Saml2Exception class.

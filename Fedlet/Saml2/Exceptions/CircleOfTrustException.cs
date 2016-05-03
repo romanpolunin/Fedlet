@@ -34,7 +34,7 @@ namespace Sun.Identity.Saml2.Exceptions
 	/// Exception class specific for CircleOfTrust business logic.
 	/// </summary>
 	[SerializableAttribute]
-	public class CircleOfTrustException : Exception, ISerializable
+	public class CircleOfTrustException : Exception
 	{
 		/// <summary>
 		/// Initializes a new instance of the CircleOfTrustException class.

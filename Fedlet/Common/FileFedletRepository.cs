@@ -175,7 +175,6 @@ namespace Sun.Identity.Common
 				fileIndex ?? string.Empty);
 
 			var extendedFile = new FileInfo(Path.Combine(_homeFolder.FullName, extendedFileName));
-			
 			if (!extendedFile.Exists)
 			{
 				return null;
@@ -185,7 +184,7 @@ namespace Sun.Identity.Common
 			metadata.Load(metadataFile.FullName);
 
 			var extendedMetadata = new XmlDocument();
-			extendedMetadata.Load(metadataFile.FullName);
+			extendedMetadata.Load(extendedFile.FullName);
 
             return new IdentityProvider(metadata, extendedMetadata, _saml2Utils);
 		}
