@@ -26,7 +26,6 @@
  */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Globalization;
@@ -61,7 +60,6 @@ namespace Sun.Identity.Saml2
         ///     using the App_Data folder for the application as the default home
         ///     folder for configuration and metadata.
         /// </summary>
-        /// <param name="context">HttpContext used for reading application data.</param>
         public ServiceProviderUtility(HttpContextBase context)
             : this(context.Server.MapPath(@"App_Data"))
         {
@@ -120,8 +118,6 @@ namespace Sun.Identity.Saml2
         ///     Retrieve the ArtifactResponse object with the given SAMLv2
         ///     artifact.
         /// </summary>
-        /// <param name="artifact">SAMLv2 artifact</param>
-        /// <returns>ArtifactResponse object</returns>
         public ArtifactResponse GetArtifactResponse(Artifact artifact)
         {
             var artifactResolve = new ArtifactResolve(ServiceProvider, artifact, _saml2Utils);
@@ -175,19 +171,24 @@ namespace Sun.Identity.Saml2
                 requestStream.Write(byteArray, 0, byteArray.Length);
                 requestStream.Close();
 
-                _logger.Info("ArtifactResolve:\r\n{0}", artifactResolveXml.OuterXml);
+                if (_logger.IsInfoEnabled)
+                {
+                    _logger.Info("ArtifactResolve:\r\n{0}", artifactResolveXml.OuterXml);
+                }
 
                 response = (HttpWebResponse) request.GetResponse();
 
-                string responseContent = null;
+                string responseContent;
                 using (var responseStream = response.GetResponseStream())
                 {
-                    if (responseStream != null)
+                    if (responseStream == null)
                     {
-                        var streamReader = new StreamReader(responseStream);
-                        responseContent = streamReader.ReadToEnd();
-                        streamReader.Close();
+                        throw new Saml2Exception(Resources.ArtifactResponseMissingResponse);
                     }
+
+                    var streamReader = new StreamReader(responseStream);
+                    responseContent = streamReader.ReadToEnd();
+                    streamReader.Close();
                 }
 
                 var soapResponse = new XmlDocument {PreserveWhitespace = true};
@@ -199,10 +200,7 @@ namespace Sun.Identity.Saml2
                 soapNsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
                 soapNsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
 
-                var root = soapResponse.DocumentElement;
-                var responseXml = root.SelectSingleNode("/soap:Envelope/soap:Body/samlp:ArtifactResponse", soapNsMgr);
-                var artifactResponseXml = responseXml.OuterXml;
-
+                var artifactResponseXml = Saml2Utils.RequireNode(soapResponse, soapNsMgr, "/soap:Envelope/soap:Body/samlp:ArtifactResponse").OuterXml;
                 artifactResponse = new ArtifactResponse(artifactResponseXml);
 
                 if (artifactResolve.Id != artifactResponse.InResponseTo)
@@ -227,15 +225,10 @@ namespace Sun.Identity.Saml2
         ///     in the context of the HttpContext, performing validation of
         ///     the AuthnResponse prior to returning to the user.
         /// </summary>
-        /// <param name="context">
-        ///     HttpContext containing session, request, and response objects.
-        /// </param>
-        /// <returns>AuthnResponse object</returns>
         public AuthnResponse GetAuthnResponse(HttpContextBase context)
         {
             ArtifactResponse artifactResponse = null;
             AuthnResponse authnResponse;
-            ICollection authnRequests = AuthnRequestCache.GetSentAuthnRequests(context);
             var request = context.Request;
 
             // Obtain AuthnResponse object from either HTTP-POST or HTTP-Artifact
@@ -244,8 +237,11 @@ namespace Sun.Identity.Saml2
                 var samlResponse = _saml2Utils.ConvertFromBase64(request[Saml2Constants.ResponseParameter]);
                 authnResponse = new AuthnResponse(samlResponse);
 
-                var xmlDoc = (XmlDocument) authnResponse.XmlDom;
-                _logger.Info("AuthnResponse:\r\n{0}", xmlDoc.OuterXml);
+                if (_logger.IsInfoEnabled)
+                {
+                    var xmlDoc = (XmlDocument) authnResponse.XmlDom;
+                    _logger.Info("AuthnResponse:\r\n{0}", xmlDoc.OuterXml);
+                }
             }
             else if (!string.IsNullOrWhiteSpace(request[Saml2Constants.ArtifactParameter]))
             {
@@ -253,8 +249,11 @@ namespace Sun.Identity.Saml2
                 artifactResponse = GetArtifactResponse(artifact);
                 authnResponse = artifactResponse.AuthnResponse;
 
-                var xmlDoc = (XmlDocument) artifactResponse.XmlDom;
-                _logger.Info("ArtifactResponse:\r\n{0}", xmlDoc.OuterXml);
+                if (_logger.IsInfoEnabled)
+                {
+                    var xmlDoc = (XmlDocument) artifactResponse.XmlDom;
+                    _logger.Info("ArtifactResponse:\r\n{0}", xmlDoc.OuterXml);
+                }
             }
             else
             {
@@ -266,11 +265,11 @@ namespace Sun.Identity.Saml2
             {
                 if (artifactResponse != null)
                 {
-                    ValidateForArtifact(artifactResponse, authnRequests);
+                    ValidateForArtifact(artifactResponse);
                 }
                 else
                 {
-                    ValidateForPost(authnResponse, authnRequests);
+                    ValidateForPost(authnResponse);
                 }
             }
             catch (Saml2Exception se)
@@ -293,10 +292,6 @@ namespace Sun.Identity.Saml2
         ///     in the context of the HttpContext, performing validation of
         ///     the LogoutRequest prior to returning to the user.
         /// </summary>
-        /// <param name="context">
-        ///     HttpContext containing session, request, and response objects.
-        /// </param>
-        /// <returns>LogoutRequest object</returns>
         public LogoutRequest GetLogoutRequest(HttpContextBase context)
         {
             var request = context.Request;
@@ -328,8 +323,7 @@ namespace Sun.Identity.Saml2
                     soapNsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
                     soapNsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
 
-                    var root = soapRequest.DocumentElement;
-                    var requestXml = root.SelectSingleNode("/soap:Envelope/soap:Body/samlp:LogoutRequest", soapNsMgr);
+                    var requestXml = Saml2Utils.RequireNode(soapRequest, soapNsMgr, "/soap:Envelope/soap:Body/samlp:LogoutRequest");
                     samlRequest = requestXml.OuterXml;
                 }
             }
@@ -343,7 +337,10 @@ namespace Sun.Identity.Saml2
             var logoutRequest = new LogoutRequest(samlRequest);
 
             var xmlDoc = (XmlDocument) logoutRequest.XmlDom;
-            _logger.Info("LogoutRequest:\r\n{0}", xmlDoc.OuterXml);
+            if (_logger.IsInfoEnabled)
+            {
+                _logger.Info("LogoutRequest:\r\n{0}", xmlDoc.OuterXml);
+            }
 
             try
             {
@@ -351,7 +348,10 @@ namespace Sun.Identity.Saml2
                 {
                     var queryString
                         = request.RawUrl.Substring(request.RawUrl.IndexOf("?", StringComparison.Ordinal) + 1);
-                    _logger.Info("LogoutRequest query string:\r\n{0}", queryString);
+                    if (_logger.IsInfoEnabled)
+                    {
+                        _logger.Info("LogoutRequest query string:\r\n{0}", queryString);
+                    }
                     ValidateForRedirect(logoutRequest, queryString);
                 }
                 else
@@ -374,10 +374,6 @@ namespace Sun.Identity.Saml2
         ///     in the context of the HttpContext, performing validation of
         ///     the LogoutResponse prior to returning to the user.
         /// </summary>
-        /// <param name="context">
-        ///     HttpContext containing session, request, and response objects.
-        /// </param>
-        /// <returns>LogoutResponse object</returns>
         public LogoutResponse GetLogoutResponse(HttpContextBase context)
         {
             LogoutResponse logoutResponse;
@@ -402,7 +398,10 @@ namespace Sun.Identity.Saml2
             }
 
             var xmlDoc = (XmlDocument) logoutResponse.XmlDom;
-            _logger.Info("LogoutResponse:\r\n{0}", xmlDoc.OuterXml);
+            if (_logger.IsInfoEnabled)
+            {
+                _logger.Info("LogoutResponse:\r\n{0}", xmlDoc.OuterXml);
+            }
 
             var prevLogoutRequestId = logoutResponse.InResponseTo;
             try
@@ -411,12 +410,15 @@ namespace Sun.Identity.Saml2
                 {
                     var queryString
                         = request.RawUrl.Substring(request.RawUrl.IndexOf("?", StringComparison.Ordinal) + 1);
-                    _logger.Info("LogoutResponse query string:\r\n{0}", queryString);
-                    ValidateForRedirect(logoutResponse, LogoutRequestCache.GetSentLogoutRequests(context), queryString);
+                    if (_logger.IsInfoEnabled)
+                    {
+                        _logger.Info("LogoutResponse query string:\r\n{0}", queryString);
+                    }
+                    ValidateForRedirect(logoutResponse, queryString);
                 }
                 else
                 {
-                    ValidateForPost(logoutResponse, LogoutRequestCache.GetSentLogoutRequests(context));
+                    ValidateForPost(logoutResponse);
                 }
             }
             catch (Saml2Exception se)
@@ -436,13 +438,6 @@ namespace Sun.Identity.Saml2
         /// <summary>
         ///     Gets the HTML for use of submitting the AuthnRequest with POST.
         /// </summary>
-        /// <param name="authnRequest">
-        ///     AuthnRequest to packaged for a POST.
-        /// </param>
-        /// <param name="idpEntityId">Entity ID of the IDP.</param>
-        /// <param name="parameters">
-        ///     NameVallueCollection of additional parameters.
-        /// </param>
         /// <returns>
         ///     HTML with auto-form submission with POST of the AuthnRequest
         /// </returns>
@@ -488,11 +483,15 @@ namespace Sun.Identity.Saml2
                     authnRequestXml,
                     authnRequest.Id,
                     true);
-                _logger.Info("Signed AuthnRequest:\r\n{0}", authnRequestXml.InnerXml);
+
+                if (_logger.IsInfoEnabled)
+                {
+                    _logger.Info("Signed AuthnRequest:\r\n{0}", authnRequestXml.InnerXml);
+                }
             }
 
             var packagedAuthnRequest = _saml2Utils.ConvertToBase64(authnRequestXml.InnerXml);
-            var inputFieldFormat = "<input type=\"hidden\" name=\"{0}\" value=\"{1}\" />";
+            const string inputFieldFormat = "<input type=\"hidden\" name=\"{0}\" value=\"{1}\" />";
 
             var html = new StringBuilder();
             html.Append("<html><head><title>OpenSSO - SP initiated SSO</title></head>");
@@ -526,13 +525,6 @@ namespace Sun.Identity.Saml2
         ///     Gets the AuthnRequest location along with querystring parameters
         ///     to be used for actual browser requests.
         /// </summary>
-        /// <param name="authnRequest">
-        ///     AuthnRequest to packaged for a redirect.
-        /// </param>
-        /// <param name="idpEntityId">Entity ID of the IDP.</param>
-        /// <param name="parameters">
-        ///     NameVallueCollection of additional parameters.
-        /// </param>
         /// <returns>
         ///     URL with query string parameter for the specified IDP.
         /// </returns>
@@ -585,7 +577,10 @@ namespace Sun.Identity.Saml2
             redirectUrl.Append(Saml2Utils.GetQueryStringDelimiter(ssoRedirectLocation));
             redirectUrl.Append(queryString);
 
-            _logger.Info("AuthnRequest via Redirect:\r\n{0}", redirectUrl);
+            if (_logger.IsInfoEnabled)
+            {
+                _logger.Info("AuthnRequest via Redirect:\r\n{0}", redirectUrl);
+            }
 
             return redirectUrl.ToString();
         }
@@ -593,13 +588,6 @@ namespace Sun.Identity.Saml2
         /// <summary>
         ///     Gets the HTML for use of submitting the LogoutRequest with POST.
         /// </summary>
-        /// <param name="logoutRequest">
-        ///     LogoutRequest to packaged for a POST.
-        /// </param>
-        /// <param name="idpEntityId">Entity ID of the IDP.</param>
-        /// <param name="parameters">
-        ///     NameVallueCollection of additional parameters.
-        /// </param>
         /// <returns>
         ///     HTML with auto-form submission with POST of the LogoutRequest
         /// </returns>
@@ -682,13 +670,6 @@ namespace Sun.Identity.Saml2
         ///     Gets the LogoutRequest location along with querystring parameters
         ///     to be used for actual browser requests.
         /// </summary>
-        /// <param name="logoutRequest">
-        ///     LogoutRequest to packaged for a redirect.
-        /// </param>
-        /// <param name="idpEntityId">Entity ID of the IDP.</param>
-        /// <param name="parameters">
-        ///     NameVallueCollection of additional parameters.
-        /// </param>
         /// <returns>
         ///     URL with query string parameter for the specified IDP.
         /// </returns>
@@ -741,7 +722,10 @@ namespace Sun.Identity.Saml2
             redirectUrl.Append(Saml2Utils.GetQueryStringDelimiter(sloRedirectLocation));
             redirectUrl.Append(queryString);
 
-            _logger.Info("LogoutRequest via Redirect:\r\n{0}", redirectUrl);
+            if (_logger.IsInfoEnabled)
+            {
+                _logger.Info("LogoutRequest via Redirect:\r\n{0}", redirectUrl);
+            }
 
             return redirectUrl.ToString();
         }
@@ -749,13 +733,6 @@ namespace Sun.Identity.Saml2
         /// <summary>
         ///     Gets the HTML for use of submitting the LogoutResponse with POST.
         /// </summary>
-        /// <param name="logoutResponse">
-        ///     LogoutResponse to packaged for a POST.
-        /// </param>
-        /// <param name="idpEntityId">Entity ID of the IDP.</param>
-        /// <param name="parameters">
-        ///     NameVallueCollection of additional parameters.
-        /// </param>
         /// <returns>
         ///     HTML with auto-form submission with POST of the LogoutRequest
         /// </returns>
@@ -839,13 +816,6 @@ namespace Sun.Identity.Saml2
         ///     Gets the LogoutResponse location along with querystring parameters
         ///     to be used for actual browser requests.
         /// </summary>
-        /// <param name="logoutResponse">
-        ///     LogoutResponse to packaged for a redirect.
-        /// </param>
-        /// <param name="idpEntityId">Entity ID of the IDP.</param>
-        /// <param name="parameters">
-        ///     NameVallueCollection of additional parameters.
-        /// </param>
         /// <returns>
         ///     URL with query string parameter for the specified IDP.
         /// </returns>
@@ -899,7 +869,10 @@ namespace Sun.Identity.Saml2
             redirectUrl.Append(Saml2Utils.GetQueryStringDelimiter(sloRedirectResponseLocation));
             redirectUrl.Append(queryString);
 
-            _logger.Info("LogoutResponse via Redirect:\r\n{0}", redirectUrl);
+            if (_logger.IsInfoEnabled)
+            {
+                _logger.Info("LogoutResponse via Redirect:\r\n{0}", redirectUrl);
+            }
 
             return redirectUrl.ToString();
         }
@@ -912,14 +885,6 @@ namespace Sun.Identity.Saml2
         ///     Sends an AuthnRequest to the specified IDP with the given
         ///     parameters.
         /// </summary>
-        /// <param name="context">
-        ///     HttpContext containing session, request, and response objects.
-        /// </param>
-        /// <param name="idpEntityId">Entity ID of the IDP.</param>
-        /// <param name="parameters">
-        ///     NameValueCollection of varying parameters for use in the
-        ///     construction of the AuthnRequest.
-        /// </param>
         public void SendAuthnRequest(HttpContextBase context, string idpEntityId, NameValueCollection parameters)
         {
             IIdentityProvider idp;
@@ -935,10 +900,14 @@ namespace Sun.Identity.Saml2
 
             var authnRequest = new AuthnRequest(idp, ServiceProvider, parameters, _saml2Utils);
             var xmlDoc = (XmlDocument) authnRequest.XmlDom;
-            _logger.Info("AuthnRequest:\r\n{0}", xmlDoc.OuterXml);
+
+            if (_logger.IsInfoEnabled)
+            {
+                _logger.Info("AuthnRequest:\r\n{0}", xmlDoc.OuterXml);
+            }
 
             // Add this AuthnRequest for this user for validation on AuthnResponse
-            //AuthnRequestCache.AddSentAuthnRequest(context, authnRequest);
+            AuthnRequestCache.AddSentAuthnRequest(context, authnRequest);
 
             // Send with Redirect or Post based on the 'reqBinding' parameter.
             if (parameters[Saml2Constants.RequestBinding] == Saml2Constants.HttpPostProtocolBinding)
@@ -958,14 +927,6 @@ namespace Sun.Identity.Saml2
         ///     Sends a LogoutRequest to the specified IDP with the given
         ///     parameters.
         /// </summary>
-        /// <param name="context">
-        ///     HttpContext containing session, request, and response objects.
-        /// </param>
-        /// <param name="idpEntityId">Entity ID of the IDP.</param>
-        /// <param name="parameters">
-        ///     NameValueCollection of varying parameters for use in the
-        ///     construction of the LogoutRequest.
-        /// </param>
         public void SendLogoutRequest(HttpContextBase context, string idpEntityId, NameValueCollection parameters)
         {
             IIdentityProvider idp;
@@ -981,7 +942,11 @@ namespace Sun.Identity.Saml2
 
             var logoutRequest = new LogoutRequest(idp, ServiceProvider, parameters, _saml2Utils);
             var logoutRequestXml = (XmlDocument) logoutRequest.XmlDom;
-            _logger.Info("LogoutRequest:\r\n{0}", logoutRequestXml.OuterXml);
+
+            if (_logger.IsInfoEnabled)
+            {
+                _logger.Info("LogoutRequest:\r\n{0}", logoutRequestXml.OuterXml);
+            }
 
             // Send with Redirect, POST, or SOAP based on the 'Binding' parameter.
             if (parameters[Saml2Constants.Binding] == Saml2Constants.HttpPostProtocolBinding)
@@ -1010,10 +975,6 @@ namespace Sun.Identity.Saml2
         /// <summary>
         ///     Sends a SOAP LogoutRequest to the specified IDP.
         /// </summary>
-        /// <param name="logoutRequest">
-        ///     LogoutRequest object.
-        /// </param>
-        /// <param name="idpEntityId">Entity ID of the IDP.</param>
         public void SendSoapLogoutRequest(LogoutRequest logoutRequest, string idpEntityId)
         {
             HttpWebResponse response = null;
@@ -1095,15 +1056,16 @@ namespace Sun.Identity.Saml2
                 soapNsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
                 soapNsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
 
-                var root = soapResponse.DocumentElement;
-                var responseXml = root.SelectSingleNode("/soap:Envelope/soap:Body/samlp:LogoutResponse", soapNsMgr);
-                var logoutResponseXml = responseXml.OuterXml;
-
+                var logoutResponseXml = Saml2Utils.RequireNode(soapResponse, soapNsMgr, "/soap:Envelope/soap:Body/samlp:LogoutResponse").OuterXml;
                 var logoutResponse = new LogoutResponse(logoutResponseXml);
-                _logger.Info("LogoutResponse:\r\n{0}", logoutResponseXml);
 
-                var logoutRequests = new ArrayList {logoutRequest};
-                Validate(logoutResponse, logoutRequests);
+                if (_logger.IsInfoEnabled)
+                {
+                    _logger.Info("LogoutResponse:\r\n{0}", logoutResponseXml);
+                }
+
+                // var logoutRequests = new ArrayList {logoutRequest};
+                Validate(logoutResponse);
             }
             catch (WebException we)
             {
@@ -1119,12 +1081,6 @@ namespace Sun.Identity.Saml2
         ///     Send the SAML LogoutResponse message based on the received
         ///     LogoutRequest.  POST (default) or Redirect is supported.
         /// </summary>
-        /// <param name="context">
-        ///     HttpContext containing session, request, and response objects.
-        /// </param>
-        /// <param name="logoutRequest">
-        ///     LogoutRequest corresponding to the ensuing LogoutResponse to send.
-        /// </param>
         public void SendLogoutResponse(HttpContextBase context, LogoutRequest logoutRequest)
         {
             if (logoutRequest == null)
@@ -1149,7 +1105,10 @@ namespace Sun.Identity.Saml2
                 var logoutResponse = new LogoutResponse(idp, ServiceProvider, logoutRequest, parameters, _saml2Utils);
 
                 var xmlDoc = (XmlDocument) logoutResponse.XmlDom;
-                _logger.Info("LogoutResponse:\r\n{0}", xmlDoc.OuterXml);
+                if (_logger.IsInfoEnabled)
+                {
+                    _logger.Info("LogoutResponse:\r\n{0}", xmlDoc.OuterXml);
+                }
 
                 parameters = _saml2Utils.GetRequestParameters(context.Request);
                 var redirectUrl = GetLogoutResponseRedirectLocation(logoutResponse, idp.EntityId, parameters);
@@ -1164,7 +1123,10 @@ namespace Sun.Identity.Saml2
                 var logoutResponse = new LogoutResponse(idp, ServiceProvider, logoutRequest, parameters, _saml2Utils);
 
                 var xmlDoc = (XmlDocument) logoutResponse.XmlDom;
-                _logger.Info("LogoutResponse:\r\n{0}", xmlDoc.OuterXml);
+                if (_logger.IsInfoEnabled)
+                {
+                    _logger.Info("LogoutResponse:\r\n{0}", xmlDoc.OuterXml);
+                }
 
                 parameters = _saml2Utils.GetRequestParameters(context.Request);
                 var postHtml = GetLogoutResponsePostHtml(logoutResponse, idp.EntityId, parameters);
@@ -1177,12 +1139,6 @@ namespace Sun.Identity.Saml2
         ///     Writes a SOAP LogoutResponse to the Response object found within
         ///     the given HttpContext based on the given logout request.
         /// </summary>
-        /// <param name="context">
-        ///     HttpContext containing session, request, and response objects.
-        /// </param>
-        /// <param name="logoutRequest">
-        ///     LogoutRequest object.
-        /// </param>
         public void SendSoapLogoutResponse(HttpContextBase context, LogoutRequest logoutRequest)
         {
             IIdentityProvider idp;
@@ -1213,7 +1169,10 @@ namespace Sun.Identity.Saml2
                     true);
             }
 
-            _logger.Info("LogoutResponse:\r\n{0}", logoutResponseXml.OuterXml);
+            if (_logger.IsInfoEnabled)
+            {
+                _logger.Info("LogoutResponse:\r\n{0}", logoutResponseXml.OuterXml);
+            }
 
             var soapMessage = _saml2Utils.CreateSoapMessage(logoutResponseXml.OuterXml);
 
@@ -1228,38 +1187,26 @@ namespace Sun.Identity.Saml2
         /// <summary>
         ///     Validates the given ArtifactResponse object.
         /// </summary>
-        /// <param name="artifactResponse">ArtifactResponse object.</param>
-        /// <param name="authnRequests">
-        ///     Collection of previously sent authnRequests used to compare with
-        ///     the InResponseTo attribute (if present) of the embedded
-        ///     AuthnResponse within the ArtifactResponse.
-        /// </param>
-        /// <see cref="ServiceProviderUtility.Validate(AuthnResponse, ICollection)" />
-        public void ValidateForArtifact(ArtifactResponse artifactResponse, ICollection authnRequests)
+        /// <see cref="Validate(AuthnResponse)" />
+        public void ValidateForArtifact(ArtifactResponse artifactResponse)
         {
             CheckSignature(artifactResponse);
-            Validate(artifactResponse.AuthnResponse, authnRequests);
+            Validate(artifactResponse.AuthnResponse);
         }
 
         /// <summary>
         ///     Validates the given AuthnResponse object.
         /// </summary>
-        /// <param name="authnResponse">AuthnResponse object.</param>
-        /// <param name="authnRequests">
-        ///     Collection of previously sent authnRequests used to compare with
-        ///     the InResponseTo attribute (if present) of the AuthnResponse.
-        /// </param>
-        /// <see cref="ServiceProviderUtility.Validate(AuthnResponse, ICollection)" />
-        public void ValidateForPost(AuthnResponse authnResponse, ICollection authnRequests)
+        /// <see cref="Validate(AuthnResponse)" />
+        public void ValidateForPost(AuthnResponse authnResponse)
         {
             CheckSignature(authnResponse);
-            Validate(authnResponse, authnRequests);
+            Validate(authnResponse);
         }
 
         /// <summary>
         ///     Validates the given LogoutRequest.
         /// </summary>
-        /// <param name="logoutRequest">LogoutRequest object.</param>
         public void ValidateForPost(LogoutRequest logoutRequest)
         {
             CheckIssuer(logoutRequest.Issuer);
@@ -1273,10 +1220,6 @@ namespace Sun.Identity.Saml2
         /// <summary>
         ///     Validates the given LogoutRequest.
         /// </summary>
-        /// <param name="logoutRequest">LogoutRequest object.</param>
-        /// <param name="queryString">
-        ///     Raw query string that contains the request and possible signature
-        /// </param>
         public void ValidateForRedirect(LogoutRequest logoutRequest, string queryString)
         {
             CheckIssuer(logoutRequest.Issuer);
@@ -1292,12 +1235,7 @@ namespace Sun.Identity.Saml2
         ///     this service provider desires the logout respone to be signed, XML
         ///     signature checking will be performed.
         /// </summary>
-        /// <param name="logoutResponse">LogoutResponse object.</param>
-        /// <param name="logoutRequests">
-        ///     Collection of previously sent logoutRequests used to compare with
-        ///     the InResponseTo attribute of the LogoutResponse (if present).
-        /// </param>
-        public void ValidateForPost(LogoutResponse logoutResponse, ICollection logoutRequests)
+        public void ValidateForPost(LogoutResponse logoutResponse)
         {
             if (logoutResponse == null)
             {
@@ -1309,7 +1247,7 @@ namespace Sun.Identity.Saml2
                 CheckSignature(logoutResponse);
             }
 
-            Validate(logoutResponse, logoutRequests);
+            Validate(logoutResponse);
         }
 
         /// <summary>
@@ -1318,14 +1256,10 @@ namespace Sun.Identity.Saml2
         ///     be signed, XML signature checking will be performed.
         /// </summary>
         /// <param name="logoutResponse">LogoutResponse object.</param>
-        /// <param name="logoutRequests">
-        ///     Collection of previously sent logoutRequests used to compare with
-        ///     the InResponseTo attribute of the LogoutResponse (if present).
-        /// </param>
         /// <param name="queryString">
         ///     Raw query string that contains the request and possible signature
         /// </param>
-        public void ValidateForRedirect(LogoutResponse logoutResponse, ICollection logoutRequests, string queryString)
+        public void ValidateForRedirect(LogoutResponse logoutResponse, string queryString)
         {
             if (logoutResponse == null)
             {
@@ -1337,7 +1271,7 @@ namespace Sun.Identity.Saml2
                 CheckSignature(logoutResponse, queryString);
             }
 
-            Validate(logoutResponse, logoutRequests);
+            Validate(logoutResponse);
         }
 
         #endregion
@@ -1365,27 +1299,9 @@ namespace Sun.Identity.Saml2
         ///     see if it is one of the managed authn requests.
         /// </summary>
         /// <param name="authnResponse">SAMLv2 AuthnResponse.</param>
-        /// <param name="authnRequests">
-        ///     Collection of previously sent AuthnRequests.
-        /// </param>
-        private static void CheckInResponseTo(AuthnResponse authnResponse, ICollection authnRequests)
+        private static void CheckInResponseTo(AuthnResponse authnResponse)
         {
-            if (authnRequests != null && authnResponse.InResponseTo != null)
-            {
-                var i = authnRequests.GetEnumerator();
-                while (i.MoveNext())
-                {
-                    var authnRequest = (AuthnRequest) i.Current;
-                    if (authnRequest.Id == authnResponse.InResponseTo)
-                    {
-                        // Found one, return quietly.
-                        return;
-                    }
-                }
-            }
-
-            // Didn't find one, complain loudly.
-            throw new Saml2Exception(Resources.AuthnResponseInvalidInResponseTo);
+            // removed Session-based implementation, as we can't use Session to cache requests        
         }
 
         /// <summary>
@@ -1393,27 +1309,9 @@ namespace Sun.Identity.Saml2
         ///     see if it is one of the managed logout requests.
         /// </summary>
         /// <param name="logoutResponse">SAMLv2 LogoutResponse.</param>
-        /// <param name="logoutRequests">
-        ///     Collection of previously sent LogoutRequests.
-        /// </param>
-        private static void CheckInResponseTo(LogoutResponse logoutResponse, ICollection logoutRequests)
+        private static void CheckInResponseTo(LogoutResponse logoutResponse)
         {
-            if (logoutRequests != null && logoutResponse.InResponseTo != null)
-            {
-                var i = logoutRequests.GetEnumerator();
-                while (i.MoveNext())
-                {
-                    var logoutRequest = (LogoutRequest) i.Current;
-                    if (logoutRequest.Id == logoutResponse.InResponseTo)
-                    {
-                        // Found one, return quietly.
-                        return;
-                    }
-                }
-            }
-
-            // Didn't find one, complain loudly.
-            throw new Saml2Exception(Resources.LogoutResponseInvalidInResponseTo);
+            // removed Session-based implementation, as we can't use Session to cache requests
         }
 
         /// <summary>
@@ -1542,7 +1440,7 @@ namespace Sun.Identity.Saml2
         ///     profile.
         /// </summary>
         /// <param name="authnResponse">AuthnResponse object.</param>
-        /// <seealso cref="ServiceProviderUtility.ValidateForPost(AuthnResponse, ICollection)" />
+        /// <seealso cref="ServiceProviderUtility.ValidateForPost(AuthnResponse)" />
         private void CheckSignature(AuthnResponse authnResponse)
         {
             IIdentityProvider identityProvider;
@@ -1705,22 +1603,19 @@ namespace Sun.Identity.Saml2
         private IIdentityProvider GetIdpFromArtifact(Artifact artifact)
         {
             SHA1 sha1 = new SHA1CryptoServiceProvider();
-            IIdentityProvider idp = null;
-            string idpEntityIdHashed;
 
             foreach (var idpEntityId in IdentityProviders.Keys)
             {
-                idpEntityIdHashed = BitConverter.ToString(sha1.ComputeHash(Encoding.UTF8.GetBytes(idpEntityId)));
+                var idpEntityIdHashed = BitConverter.ToString(sha1.ComputeHash(Encoding.UTF8.GetBytes(idpEntityId)));
                 idpEntityIdHashed = idpEntityIdHashed.Replace("-", string.Empty);
 
                 if (idpEntityIdHashed == artifact.SourceId)
                 {
-                    idp = IdentityProviders[idpEntityId];
-                    break;
+                    return IdentityProviders[idpEntityId];
                 }
             }
 
-            return idp;
+            return null;
         }
 
         /// <summary>
@@ -1729,20 +1624,14 @@ namespace Sun.Identity.Saml2
         ///     this method based on the appropriate profile.
         /// </summary>
         /// <param name="authnResponse">AuthnResponse object.</param>
-        /// <param name="authnRequests">
-        ///     Collection of previously sent authnRequests used to compare with
-        ///     the InResponseTo attribute of the AuthnResponse (if present).
-        /// </param>
         /// <see cref="ServiceProviderUtility.ValidateForArtifact" />
-        /// <see cref="ServiceProviderUtility.ValidateForPost(AuthnResponse, ICollection)" />
-        private void Validate(AuthnResponse authnResponse, ICollection authnRequests)
+        /// <see cref="ServiceProviderUtility.ValidateForPost(AuthnResponse)" />
+        private void Validate(AuthnResponse authnResponse)
         {
-            /* Commenting this section out since we had to remove the Session caching of Authnresponses due
-             * to some session sharing issues
             if (authnResponse.InResponseTo != null)
 			{
-				CheckInResponseTo(authnResponse, authnRequests);
-			}*/
+				CheckInResponseTo(authnResponse);
+			}
 
             CheckIssuer(authnResponse.Issuer);
             CheckStatusCode(authnResponse.StatusCode);
@@ -1757,18 +1646,14 @@ namespace Sun.Identity.Saml2
         ///     this method based on the appropriate profile.
         /// </summary>
         /// <param name="logoutResponse">LogoutResponse object.</param>
-        /// <param name="logoutRequests">
-        ///     Collection of previously sent logoutRequests used to compare with
-        ///     the InResponseTo attribute of the LogoutResponse (if present).
-        /// </param>
-        private void Validate(LogoutResponse logoutResponse, ICollection logoutRequests)
+        private void Validate(LogoutResponse logoutResponse)
         {
             if (logoutResponse == null)
             {
                 throw new Saml2Exception(Resources.ServiceProviderUtilityLogoutResponseIsNull);
             }
 
-            //CheckInResponseTo(logoutResponse, logoutRequests);
+            CheckInResponseTo(logoutResponse);
             CheckIssuer(logoutResponse.Issuer);
             CheckCircleOfTrust(logoutResponse.Issuer);
             CheckStatusCode(logoutResponse.StatusCode);

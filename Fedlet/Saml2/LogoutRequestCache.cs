@@ -25,10 +25,7 @@
  * $Id: LogoutRequestCache.cs,v 1.1 2009/11/11 18:13:39 ggennaro Exp $
  */
 
-using System.Collections;
-using System.Text;
 using System.Web;
-using Sun.Identity.Common;
 
 namespace Sun.Identity.Saml2
 {
@@ -48,17 +45,6 @@ namespace Sun.Identity.Saml2
 	{
 		#region Members
 
-		/// <summary>
-		/// Name of session attribute for tracking user's LogoutRequests.
-		/// </summary>
-		private const string LogoutRequestSessionAttribute = "_logoutRequests";
-
-		/// <summary>
-		/// Constant to define the maximum number of LogoutRequests to be
-		/// stored in the user's session.
-		/// </summary>
-		private const int MaximumRequestsStored = 5;
-
 		#endregion
 
 		#region Constructor
@@ -70,22 +56,6 @@ namespace Sun.Identity.Saml2
 		#endregion
 
 		#region Methods
-
-		/// <summary>
-		/// Retrieves the queue containing the collection of stored previously
-		/// sent LogoutRequests. This collection is represented as a queue and 
-		/// is attached to the user's session.
-		/// </summary>
-		/// <param name="context">
-		/// HttpContext containing session, request, and response objects.
-		/// </param>
-		/// <returns>
-		/// Queue of previously sent LogoutRequests, null otherwise.
-		/// </returns>
-        internal static Queue GetSentLogoutRequests(HttpContextBase context)
-		{
-			return (Queue) context.Session[LogoutRequestSessionAttribute];
-		}
 
 		/// <summary>
 		/// Adds the specified LogoutRequest to the collection of previously 
@@ -101,67 +71,26 @@ namespace Sun.Identity.Saml2
 		/// </param>
         internal static void AddSentLogoutRequest(HttpContextBase context, LogoutRequest logoutRequest)
 		{
-			Queue logoutRequests = GetSentLogoutRequests(context);
+            // removed Session-based implementation, as we can't use Session to cache requests
+        }
 
-			if (logoutRequests == null)
-			{
-				logoutRequests = new Queue(MaximumRequestsStored);
-			}
-
-			if (logoutRequests.Count == MaximumRequestsStored)
-			{
-				logoutRequests.Dequeue();
-			}
-
-			logoutRequests.Enqueue(logoutRequest);
-			context.Session[LogoutRequestSessionAttribute] = logoutRequests;
-
-            ILogger logger = LoggerFactory.GetLogger(typeof(LogoutRequestCache));
-
-            if (logger.IsInfoEnabled)
-            {
-                var message = new StringBuilder();
-                message.AppendLine("LogoutRequestCache:");
-                foreach (AuthnRequest a in logoutRequests)
-                {
-                    message.AppendLine(a.Id);
-                }
-                logger.Info(message.ToString());
-            }
-		}
-
-		/// <summary>
-		/// Removes the LogoutRequest from the collection of previously 
-		/// sent requests based on the provided LogoutRequest.Id value.
-		/// This collection is represented as a queue and is attached to 
-		/// the user's session.
-		/// </summary>
-		/// <param name="context">
-		/// HttpContext containing session, request, and response objects.
-		/// </param>
-		/// <param name="logoutRequestId">
-		/// ID of the LogoutRequest to be removed from the cache.
-		/// </param>
+        /// <summary>
+        /// Removes the LogoutRequest from the collection of previously 
+        /// sent requests based on the provided LogoutRequest.Id value.
+        /// This collection is represented as a queue and is attached to 
+        /// the user's session.
+        /// </summary>
+        /// <param name="context">
+        /// HttpContext containing session, request, and response objects.
+        /// </param>
+        /// <param name="logoutRequestId">
+        /// ID of the LogoutRequest to be removed from the cache.
+        /// </param>
         internal static void RemoveSentLogoutRequest(HttpContextBase context, string logoutRequestId)
 		{
-			Queue originalCache = GetSentLogoutRequests(context);
+            // removed Session-based implementation, as we can't use Session to cache requests
+        }
 
-			if (originalCache != null)
-			{
-				var revisedCache = new Queue();
-				while (originalCache.Count > 0)
-				{
-					var temp = (LogoutRequest) originalCache.Dequeue();
-					if (temp.Id != logoutRequestId)
-					{
-						revisedCache.Enqueue(temp);
-					}
-				}
-
-				context.Session[LogoutRequestSessionAttribute] = revisedCache;
-			}
-		}
-
-		#endregion
-	}
+        #endregion
+    }
 }

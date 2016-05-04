@@ -91,93 +91,86 @@ namespace Sun.Identity.Saml2
 			}
 		}
 
-		#endregion
+        #endregion
 
-		#region Properties
+        #region Properties
 
-		/// <summary>
-		/// Gets the AuthnResponse object enclosed in the artifact response.
-		/// </summary>
-		public AuthnResponse AuthnResponse { get; }
+        /// <summary>
+        /// Gets the AuthnResponse object enclosed in the artifact response.
+        /// <c>null</c> if none provided.
+        /// </summary>
+        public AuthnResponse AuthnResponse { get; }
 
-	    /// <summary>
-		/// Gets the ID attribute value of the artifact response.
-		/// </summary>
-		public string Id
+        /// <summary>
+        /// Gets the ID attribute value of the artifact response.
+        /// Throws if none provided.
+        /// </summary>
+        public string Id
 		{
 			get
 			{
 				const string xpath = "/samlp:ArtifactResponse";
-                var root = _xml.DocumentElement;
-                var node = root.SelectSingleNode(xpath, _nsMgr);
-                return node.Attributes["ID"].Value.Trim();
+                return Saml2Utils.RequireAttributeValue(_xml, _nsMgr, xpath, "ID");
 			}
 		}
 
-		/// <summary>
-		/// Gets the InResponseTo attribute value of the artifact response, 
-		/// null if not present.
-		/// </summary>
-		public string InResponseTo
+        /// <summary>
+        /// Gets the InResponseTo attribute value of the artifact response, 
+        /// <c>null</c> if none provided.
+        /// </summary>
+        public string InResponseTo
 		{
 			get
 			{
 				const string xpath = "/samlp:ArtifactResponse";
-				var root = _xml.DocumentElement;
-				var node = root.SelectSingleNode(xpath, _nsMgr);
-			    return node.Attributes["InResponseTo"]?.Value.Trim();
-			}
+                return Saml2Utils.TryGetAttributeValue(_xml, _nsMgr, xpath, "InResponseTo");
+            }
 		}
 
 		/// <summary>
 		/// Gets the name of the issuer of the artifact response.
+		/// Throws if none provided.
 		/// </summary>
 		public string Issuer
 		{
 			get
 			{
-				string xpath = "/samlp:ArtifactResponse/saml:Issuer";
-				XmlNode root = _xml.DocumentElement;
-				XmlNode node = root.SelectSingleNode(xpath, _nsMgr);
-				return node.InnerText.Trim();
+			    const string xpath = "/samlp:ArtifactResponse/saml:Issuer";
+			    return Saml2Utils.RequireNodeText(_xml, _nsMgr, xpath);
 			}
 		}
 
 		/// <summary>
 		/// Gets the X509 signature certificate of the artifact response,
-		/// null if none provided.
+		/// <c>null</c> if none provided.
 		/// </summary>
 		public string SignatureCertificate
 		{
 			get
 			{
 				const string xpath = "/samlp:ArtifactResponse/ds:Signature/ds:KeyInfo/ds:X509Data/ds:X509Certificate";
-				var root = _xml.DocumentElement;
-				var node = root?.SelectSingleNode(xpath, _nsMgr);
-
-			    var value = node?.InnerText.Trim();
-				return value;
+			    return Saml2Utils.TryGetNodeText(_xml, _nsMgr, xpath);
 			}
 		}
 
-		/// <summary>
-		/// Gets the signature of the artifact response as an XML element.
-		/// </summary>
-		public IXPathNavigable XmlSignature
+        /// <summary>
+        /// Gets the signature of the artifact response as an XML element.
+        /// <c>null</c> if none provided.
+        /// </summary>
+        public IXPathNavigable XmlSignature
 		{
 			get
 			{
 				const string xpath = "/samlp:ArtifactResponse/ds:Signature";
-				var root = _xml.DocumentElement;
-				var signatureElement = root?.SelectSingleNode(xpath, _nsMgr);
-				return signatureElement;
+			    return Saml2Utils.TryGetNode(_xml, _nsMgr, xpath);
 			}
 		}
 
-		/// <summary>
-		/// Gets the XML representation of the received artifact response.
-		/// </summary>
-		public IXPathNavigable XmlDom => _xml;
+        /// <summary>
+        /// Gets the XML representation of the received artifact response.
+        /// <c>null</c> if none provided.
+        /// </summary>
+        public IXPathNavigable XmlDom => _xml;
 
 	    #endregion
 

@@ -196,8 +196,7 @@ namespace Sun.Identity.Saml2
 
 		/// <summary>
 		/// Gets the extracted "NotOnOrAfter" from the logout request,
-		/// otherwise return DateTime.MinValue since this is an optional
-		/// attribute.
+		/// otherwise DateTime.MinValue since this is an optional attribute.
 		/// </summary>
 		public DateTime NotOnOrAfter
 		{
@@ -211,10 +210,11 @@ namespace Sun.Identity.Saml2
 			}
 		}
 
-		/// <summary>
-		/// Gets the ID attribute value of the logout request.
-		/// </summary>
-		public string Id
+        /// <summary>
+        /// Gets the ID attribute value of the logout request.
+		/// Throws if none provided.
+        /// </summary>
+        public string Id
 		{
 			get
 			{
@@ -223,10 +223,11 @@ namespace Sun.Identity.Saml2
 			}
 		}
 
-		/// <summary>
-		/// Gets the name of the issuer of the logout request.
-		/// </summary>
-		public string Issuer
+        /// <summary>
+        /// Gets the name of the issuer of the logout request.
+        /// Throws if none provided.
+        /// </summary>
+        public string Issuer
 		{
 			get
 			{
@@ -235,21 +236,23 @@ namespace Sun.Identity.Saml2
 			}
 		}
 
-		/// <summary>
-		/// Gets the XML representation of the received logout request.
-		/// </summary>
-		public IXPathNavigable XmlDom => _xml;
+        /// <summary>
+        /// Gets the XML representation of the received logout request.
+        /// <c>null</c> if none provided.
+        /// </summary>
+        public IXPathNavigable XmlDom => _xml;
 
-	    /// <summary>
-		/// Gets the signature of the logout request as an XML element.
-		/// </summary>
-		public IXPathNavigable XmlSignature
+        /// <summary>
+        /// Gets the signature of the logout request as an XML element.
+        /// <c>null</c> if none provided.
+        /// </summary>
+        public IXPathNavigable XmlSignature
 		{
 			get
 			{
 				const string xpath = "/samlp:LogoutRequest/ds:Signature";
-				return Saml2Utils.RequireRootElement(_xml).SelectSingleNode(xpath, _nsMgr);
-			}
+                return Saml2Utils.TryGetNode(_xml, _nsMgr, xpath);
+            }
 		}
 
 		#endregion

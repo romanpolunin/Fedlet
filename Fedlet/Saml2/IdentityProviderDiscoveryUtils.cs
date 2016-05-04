@@ -112,7 +112,7 @@ namespace Sun.Identity.Saml2
 			var session = context.Session;
 			Uri readerSvcUrl = null;
 
-			var cotList = (ArrayList) session[CommonDomainDiscoverySessionAttribute];
+			var cotList = (ArrayList) session?[CommonDomainDiscoverySessionAttribute];
 			if (cotList == null)
 			{
 				// Obtain the list of currently tracked circle-of-trusts with 
@@ -128,13 +128,16 @@ namespace Sun.Identity.Saml2
 				}
 			}
 
-			var enumerator = cotList.GetEnumerator();
+            var enumerator = cotList.GetEnumerator();
 			if (enumerator.MoveNext())
 			{
 				// Try the first service in the list
 				var cotName = (string) enumerator.Current;
-				cotList.Remove(cotName);
-				session[CommonDomainDiscoverySessionAttribute] = cotList;
+                if (session != null)
+                {
+                    cotList.Remove(cotName);
+			        session[CommonDomainDiscoverySessionAttribute] = cotList;
+			    }
 				var cot = serviceProviderUtility.CircleOfTrusts[cotName];
 				readerSvcUrl = new Uri(cot.ReaderServiceUrl.AbsoluteUri);
 			}
@@ -154,8 +157,8 @@ namespace Sun.Identity.Saml2
 
 			// Set the RelayState for the reader service to the requestede without
 			// the query information already saved to the session.
-			var relayStateForReaderSvc = request.Url.AbsoluteUri;
-			if (!string.IsNullOrEmpty(request.Url.Query))
+			var relayStateForReaderSvc = request.Url?.AbsoluteUri ?? string.Empty;
+			if (!string.IsNullOrEmpty(request.Url?.Query))
 			{
 				relayStateForReaderSvc = relayStateForReaderSvc.Replace(request.Url.Query, string.Empty);
 			}
@@ -176,9 +179,11 @@ namespace Sun.Identity.Saml2
 		public static void ResetDiscovery(HttpContextBase context)
 		{
             var session = context.Session;
-
-			session[CommonDomainDiscoverySessionAttribute] = null;
-			session[OriginalParametersSessionAttribute] = null;
+		    if (session != null)
+		    {
+		        session[CommonDomainDiscoverySessionAttribute] = null;
+		        session[OriginalParametersSessionAttribute] = null;
+		    }
 		}
 
 		/// <summary>
@@ -194,7 +199,7 @@ namespace Sun.Identity.Saml2
         public static NameValueCollection RetrieveRequestParameters(HttpContextBase context)
 		{
             var session = context.Session;
-			return (NameValueCollection) session[OriginalParametersSessionAttribute];
+			return (NameValueCollection) session?[OriginalParametersSessionAttribute];
 		}
 
 		/// <summary>
@@ -206,14 +211,17 @@ namespace Sun.Identity.Saml2
 		{
             var session = context.Session;
             var request = context.Request;
-			var parameters = (NameValueCollection) session[OriginalParametersSessionAttribute] ?? new NameValueCollection();
+			var parameters = (NameValueCollection) session?[OriginalParametersSessionAttribute] ?? new NameValueCollection();
 
 		    foreach (string name in request.QueryString.Keys)
 			{
 				parameters[name] = request.QueryString[name];
 			}
 
-			session[OriginalParametersSessionAttribute] = parameters;
+		    if (session != null)
+		    {
+		        session[OriginalParametersSessionAttribute] = parameters;
+		    }
 		}
 
 		#endregion

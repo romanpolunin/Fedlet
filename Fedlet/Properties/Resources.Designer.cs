@@ -466,7 +466,7 @@ namespace Sun.Identity.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to LogoutResponse failed validatione due to invalid Issuer..
+        ///   Looks up a localized string similar to LogoutResponse failed validation due to invalid Issuer..
         /// </summary>
         public static string LogoutResponseInvalidIssuer {
             get {
@@ -516,15 +516,6 @@ namespace Sun.Identity.Properties {
         public static string LogoutResponseXmlException {
             get {
                 return ResourceManager.GetString("LogoutResponseXmlException", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to RelayState is not a valid URI..
-        /// </summary>
-        public static string MalformedRelayState {
-            get {
-                return ResourceManager.GetString("MalformedRelayState", resourceCulture);
             }
         }
         
@@ -763,7 +754,7 @@ namespace Sun.Identity.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Certifcate not provided for checking query string signature..
+        ///   Looks up a localized string similar to Certificate not provided for checking query string signature..
         /// </summary>
         public static string SignedQueryStringCertIsNull {
             get {

@@ -405,7 +405,7 @@ namespace Sun.Identity.Saml2
 			signedXml.AddReference(reference);
 			signedXml.ComputeSignature();
 
-			XmlElement xmlSignature = signedXml.GetXml();
+			var xmlSignature = signedXml.GetXml();
 
 			var nsMgr = new XmlNamespaceManager(xml.NameTable);
 			nsMgr.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
@@ -446,15 +446,6 @@ namespace Sun.Identity.Saml2
 				// If none specified, default to valid for backwards compatability
 				return;
 			}
-
-            //try
-            //{
-            //    var relayStateUrl = new Uri(relayState);
-            //}
-            //catch (UriFormatException)
-            //{
-            //    throw new Saml2Exception(Resources.MalformedRelayState);
-            //}
 
 			var valid = false;
 			foreach (string pattern in allowedRelayStates)
@@ -672,6 +663,28 @@ namespace Sun.Identity.Saml2
                 return text.Trim();
             }
             throw new Saml2Exception("Could not resolve node text at " + xpath);
+        }
+
+        /// <summary>
+        /// Xml utility.
+        /// </summary>
+        public static XmlNode TryGetNode(XmlDocument document, XmlNamespaceManager nsmgr, string xpath)
+        {
+            var root = RequireRootElement(document);
+            return root.SelectSingleNode(xpath, nsmgr);
+        }
+
+        /// <summary>
+        /// Xml utility.
+        /// </summary>
+        public static XmlNode RequireNode(XmlDocument document, XmlNamespaceManager nsmgr, string xpath)
+        {
+            var node = TryGetNode(document, nsmgr, xpath);
+            if (node != null)
+            {
+                return node;
+            }
+            throw new Saml2Exception("Could not resolve node at " + xpath);
         }
 
         /// <summary>

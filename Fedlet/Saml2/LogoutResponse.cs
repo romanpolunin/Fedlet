@@ -185,10 +185,7 @@ namespace Sun.Identity.Saml2
             get
             {
                 const string xpath = "/samlp:LogoutResponse";
-                var root = _xml.DocumentElement;
-                var node = root.SelectSingleNode(xpath, _nsMgr);
-
-                return node.Attributes["InResponseTo"]?.Value.Trim();
+                return Saml2Utils.TryGetAttributeValue(_xml, _nsMgr, xpath, "InResponseTo");
             }
         }
 
@@ -200,9 +197,7 @@ namespace Sun.Identity.Saml2
             get
             {
                 const string xpath = "/samlp:LogoutResponse";
-                var root = _xml.DocumentElement;
-                var node = root.SelectSingleNode(xpath, _nsMgr);
-                return node.Attributes["ID"].Value.Trim();
+                return Saml2Utils.RequireAttributeValue(_xml, _nsMgr, xpath, "InResponseTo");
             }
         }
 
@@ -214,9 +209,7 @@ namespace Sun.Identity.Saml2
             get
             {
                 const string xpath = "/samlp:LogoutResponse/saml:Issuer";
-                var root = _xml.DocumentElement;
-                var node = root.SelectSingleNode(xpath, _nsMgr);
-                return node.InnerText.Trim();
+                return Saml2Utils.RequireNodeText(_xml, _nsMgr, xpath);
             }
         }
 
@@ -228,9 +221,7 @@ namespace Sun.Identity.Saml2
             get
             {
                 const string xpath = "/samlp:LogoutResponse/samlp:Status/samlp:StatusCode";
-                var root = _xml.DocumentElement;
-                var node = root.SelectSingleNode(xpath, _nsMgr);
-                return node.Attributes["Value"].Value.Trim();
+                return Saml2Utils.RequireAttributeValue(_xml, _nsMgr, xpath, "Value");
             }
         }
 
@@ -243,10 +234,7 @@ namespace Sun.Identity.Saml2
             get
             {
                 const string xpath = "/samlp:LogoutResponse/samlp:Status/samlp:StatusMessage";
-                var root = _xml.DocumentElement;
-                var node = root.SelectSingleNode(xpath, _nsMgr);
-
-                return node?.InnerText.Trim();
+                return Saml2Utils.TryGetNodeText(_xml, _nsMgr, xpath);
             }
         }
 
@@ -264,9 +252,7 @@ namespace Sun.Identity.Saml2
             get
             {
                 var xpath = "/samlp:LogoutResponse/ds:Signature";
-                XmlNode root = _xml.DocumentElement;
-                var signatureElement = root.SelectSingleNode(xpath, _nsMgr);
-                return signatureElement;
+                return Saml2Utils.TryGetNode(_xml, _nsMgr, xpath);
             }
         }
 

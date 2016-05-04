@@ -100,7 +100,7 @@ namespace Sun.Identity.Saml2
             get
             {
                 const string xpath = "/samlp:Response/saml:Assertion/ds:Signature";
-                return Saml2Utils.RequireRootElement(_xml).SelectSingleNode(xpath, _nsMgr);
+                return Saml2Utils.TryGetNode(_xml, _nsMgr, xpath);
             }
         }
 
@@ -113,7 +113,7 @@ namespace Sun.Identity.Saml2
             get
             {
                 const string xpath = "/samlp:Response/ds:Signature";
-                return Saml2Utils.RequireRootElement(_xml).SelectSingleNode(xpath, _nsMgr);
+                return Saml2Utils.TryGetNode(_xml, _nsMgr, xpath);
             }
         }
 

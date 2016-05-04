@@ -25,10 +25,7 @@
  * $Id: AuthnRequestCache.cs,v 1.1 2009/06/11 18:37:58 ggennaro Exp $
  */
 
-using System.Collections;
-using System.Text;
 using System.Web;
-using Sun.Identity.Common;
 
 namespace Sun.Identity.Saml2
 {
@@ -48,17 +45,6 @@ namespace Sun.Identity.Saml2
 	{
 		#region Members
 
-		/// <summary>
-		/// Name of session attribute for tracking user's AuthnRequests.
-		/// </summary>
-		private const string AuthnRequestSessionAttribute = "_authnRequests";
-
-		/// <summary>
-		/// Constant to define the maximum number of AuthnRequests to be
-		/// stored in the user's session.
-		/// </summary>
-		private const int MaximumRequestsStored = 5;
-
 		#endregion
 
 		#region Constructor
@@ -72,20 +58,6 @@ namespace Sun.Identity.Saml2
 		#region Methods
 
 		/// <summary>
-		/// Retrieves the queue containing the collection of stored previously
-		/// sent AuthnRequests. This collection is represented as a queue and 
-		/// is attached to the user's session.
-		/// </summary>
-		/// <param name="context">
-		/// HttpContext containing session, request, and response objects.
-		/// </param>
-		/// <returns>Queue of previously sent AuthnRequests, null otherwise.</returns>
-		internal static Queue GetSentAuthnRequests(HttpContextBase context)
-		{
-			return (Queue) context.Session[AuthnRequestSessionAttribute];
-		}
-
-		/// <summary>
 		/// Adds the specified AuthnRequest to the collection of previously 
 		/// sent requests, maintaining the imposed limit as defined by 
 		/// MaximumRequestsStored.  This collection is represented as a
@@ -97,33 +69,7 @@ namespace Sun.Identity.Saml2
 		/// <param name="authnRequest">AuthnRequest to add to the collection.</param>
 		internal static void AddSentAuthnRequest(HttpContextBase context, AuthnRequest authnRequest)
 		{
-			Queue authnRequests = GetSentAuthnRequests(context);
-
-			if (authnRequests == null)
-			{
-				authnRequests = new Queue(MaximumRequestsStored);
-			}
-
-			if (authnRequests.Count == MaximumRequestsStored)
-			{
-				authnRequests.Dequeue();
-			}
-
-			authnRequests.Enqueue(authnRequest);
-			context.Session[AuthnRequestSessionAttribute] = authnRequests;
-
-            ILogger logger = LoggerFactory.GetLogger(typeof(AuthnRequestCache));
-
-            if (logger.IsInfoEnabled)
-            {
-                var message = new StringBuilder();
-                message.AppendLine("AuthnRequestsCache:");
-                foreach (AuthnRequest a in authnRequests)
-                {
-                    message.AppendLine(a.Id);
-                }
-                logger.Info(message.ToString());
-            }
+            // removed Session-based implementation, as we can't use Session to cache requests
 		}
 
 		/// <summary>
@@ -140,24 +86,9 @@ namespace Sun.Identity.Saml2
 		/// </param>
 		internal static void RemoveSentAuthnRequest(HttpContextBase context, string authnRequestId)
 		{
-			Queue originalCache = GetSentAuthnRequests(context);
+            // removed Session-based implementation, as we can't use Session to cache requests
+        }
 
-			if (originalCache != null)
-			{
-				var revisedCache = new Queue();
-				while (originalCache.Count > 0)
-				{
-					var temp = (AuthnRequest) originalCache.Dequeue();
-					if (temp.Id != authnRequestId)
-					{
-						revisedCache.Enqueue(temp);
-					}
-				}
-
-				context.Session[AuthnRequestSessionAttribute] = revisedCache;
-			}
-		}
-
-		#endregion
-	}
+        #endregion
+    }
 }

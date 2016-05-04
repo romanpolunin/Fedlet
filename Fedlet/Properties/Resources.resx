@@ -316,13 +316,13 @@
     <value>Validation failed due to an invalid StatusCode.</value>
   </data>
   <data name="LogoutResponseInvalidIssuer" xml:space="preserve">
-    <value>LogoutResponse failed validatione due to invalid Issuer.</value>
+    <value>LogoutResponse failed validation due to invalid Issuer.</value>
   </data>
   <data name="LogoutRequestInvalidSignatureMissing" xml:space="preserve">
     <value>LogoutRequest failed validation due to missing signature.</value>
   </data>
   <data name="SignedQueryStringCertIsNull" xml:space="preserve">
-    <value>Certifcate not provided for checking query string signature.</value>
+    <value>Certificate not provided for checking query string signature.</value>
   </data>
   <data name="SignedQueryStringIsNull" xml:space="preserve">
     <value>Query string not provided for checking signature.</value>
@@ -395,9 +395,6 @@
   </data>
   <data name="InvalidRelayState" xml:space="preserve">
     <value>Invalid relay state specified.</value>
-  </data>
-  <data name="MalformedRelayState" xml:space="preserve">
-    <value>RelayState is not a valid URI.</value>
   </data>
   <data name="CircleOfTrustNameNotFound" xml:space="preserve">
     <value>The name for the circle of trust file could not be found.</value>

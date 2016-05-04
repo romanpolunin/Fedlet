@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Web;
 
@@ -233,24 +232,15 @@ namespace Sun.Identity.Saml2
         /// Validates the given ArtifactResponse object.
         /// </summary>
         /// <param name="artifactResponse">ArtifactResponse object.</param>
-        /// <param name="authnRequests">
-        /// Collection of previously sent authnRequests used to compare with
-        /// the InResponseTo attribute (if present) of the embedded 
-        /// AuthnResponse within the ArtifactResponse.
-        /// </param>
-        /// <see cref="ServiceProviderUtility.Validate(AuthnResponse, ICollection)"/>
-        void ValidateForArtifact(ArtifactResponse artifactResponse, ICollection authnRequests);
+        /// <see cref="ServiceProviderUtility.Validate(AuthnResponse)"/>
+        void ValidateForArtifact(ArtifactResponse artifactResponse);
 
         /// <summary>
         /// Validates the given AuthnResponse object.
         /// </summary>
         /// <param name="authnResponse">AuthnResponse object.</param>
-        /// <param name="authnRequests">
-        /// Collection of previously sent authnRequests used to compare with
-        /// the InResponseTo attribute (if present) of the AuthnResponse.
-        /// </param>
-        /// <see cref="ServiceProviderUtility.Validate(AuthnResponse, ICollection)"/>
-        void ValidateForPost(AuthnResponse authnResponse, ICollection authnRequests);
+        /// <see cref="ServiceProviderUtility.Validate(AuthnResponse)"/>
+        void ValidateForPost(AuthnResponse authnResponse);
 
         /// <summary>
         /// Validates the given LogoutRequest.
@@ -273,11 +263,7 @@ namespace Sun.Identity.Saml2
         /// signature checking will be performed.
         /// </summary>
         /// <param name="logoutResponse">LogoutResponse object.</param>
-        /// <param name="logoutRequests">
-        /// Collection of previously sent logoutRequests used to compare with
-        /// the InResponseTo attribute of the LogoutResponse (if present).
-        /// </param>
-        void ValidateForPost(LogoutResponse logoutResponse, ICollection logoutRequests);
+        void ValidateForPost(LogoutResponse logoutResponse);
 
         /// <summary>
         /// Validates the given LogoutResponse object obtained from a
@@ -285,13 +271,9 @@ namespace Sun.Identity.Saml2
         /// be signed, XML signature checking will be performed.
         /// </summary>
         /// <param name="logoutResponse">LogoutResponse object.</param>
-        /// <param name="logoutRequests">
-        /// Collection of previously sent logoutRequests used to compare with
-        /// the InResponseTo attribute of the LogoutResponse (if present).
-        /// </param>
         /// <param name="queryString">
         /// Raw query string that contains the request and possible signature
         /// </param>
-        void ValidateForRedirect(LogoutResponse logoutResponse, ICollection logoutRequests, string queryString);
+        void ValidateForRedirect(LogoutResponse logoutResponse, string queryString);
     }
 }
