@@ -1,0 +1,3 @@
+Fedlet 1.0.1.0 is based on a version of OpenAM (OpenSSO) Fedlet
+published on GitHub by Daptiv at https://github.com/daptiv/Fedlet, 
+with Copyright (c) 2009-2010 Sun Microsystems

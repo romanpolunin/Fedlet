@@ -25,13 +25,8 @@
  * $Id: AssemblyInfo.cs,v 1.12 2010/01/26 01:20:15 ggennaro Exp $
  */
 
-using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
-
-// General Information about an assembly is controlled through the following 
-// set of attributes. Change these attribute values to modify the information
-// associated with an assembly.
 
 [assembly: AssemblyTitle("OpenSSO Fedlet")]
 [assembly: AssemblyDescription("SAML SSO toolkit for SAML 2.0 service provider applications in .NET")]

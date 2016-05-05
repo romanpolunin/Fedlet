@@ -1,0 +1,9 @@
+﻿Fedlet 1.0.1.0 - May 2016
+
+Initial release, re-forked from @Daptiv/Fedlet 
+and applied a number of changes accumulated over time.
+
+Added support for AssertionTimeSkew, some bugfixes and code cleanup.
+Removed Session-based implementation of caching for requests.
+Improved handling of error conditions.
+Configured to build with .NET 4.6.1 and packaged for NuGet.

@@ -2,7 +2,10 @@
 
 namespace Sun.Identity.Saml2
 {
-	public interface ICircleOfTrust
+    /// <summary>
+    /// Data contract for a circle of trust (COT) descriptor.  
+    /// </summary>
+    public interface ICircleOfTrust
 	{
 		/// <summary>
 		/// Gets the name of the circle of trust
@@ -25,9 +28,6 @@ namespace Sun.Identity.Saml2
 		/// Checks service provider and identity provider Entity ID's to
 		/// ensure they are found in the Trusted Providers property.
 		/// </summary>
-		/// <param name="serviceProviderEntityId">Service Provider EntityID</param>
-		/// <param name="identityProviderEntityId">Identity Provider EntityID</param>
-		/// <returns>True if providers are trusted, false otherwise.</returns>
 		bool AreProvidersTrusted(string serviceProviderEntityId, string identityProviderEntityId);
 	}
 }

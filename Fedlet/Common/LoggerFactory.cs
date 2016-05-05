@@ -2,6 +2,9 @@
 
 namespace Sun.Identity.Common
 {
+    /// <summary>
+    /// Logger object provider.
+    /// </summary>
     public static class LoggerFactory
     {
         private static Func<Type, ILogger> _getLoggerCallback = type => new EventLogLogger();
