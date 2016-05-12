@@ -155,7 +155,9 @@ namespace Sun.Identity.Saml2
                             ServiceProvider.SigningCertificateAlias,
                             artifactResolveXml,
                             artifactResolve.Id,
-                            true);
+                            true,
+                            ServiceProvider.SignatureMethod,
+                            ServiceProvider.DigestMethod);
                     }
                 }
 
@@ -231,10 +233,12 @@ namespace Sun.Identity.Saml2
             AuthnResponse authnResponse;
             var request = context.Request;
 
-            // Obtain AuthnResponse object from either HTTP-POST or HTTP-Artifact
+            // Obtain AuthnResponse object from either HTTP-POST, HTTP-Redirect or HTTP-Artifact
             if (!string.IsNullOrWhiteSpace(request[Saml2Constants.ResponseParameter]))
             {
-                var samlResponse = _saml2Utils.ConvertFromBase64(request[Saml2Constants.ResponseParameter]);
+                var samlResponse = context.Request.HttpMethod == "GET"
+                    ? _saml2Utils.ConvertFromBase64Decompress(request[Saml2Constants.ResponseParameter])
+                    : _saml2Utils.ConvertFromBase64(request[Saml2Constants.ResponseParameter]);
                 authnResponse = new AuthnResponse(samlResponse);
 
                 if (_logger.IsInfoEnabled)
@@ -266,6 +270,12 @@ namespace Sun.Identity.Saml2
                 if (artifactResponse != null)
                 {
                     ValidateForArtifact(artifactResponse);
+                }
+                else if (context.Request.HttpMethod == "GET")
+                {
+                    var queryString
+                        = request.RawUrl.Substring(request.RawUrl.IndexOf("?", StringComparison.Ordinal) + 1);
+                    ValidateForRedirect(authnResponse, queryString);
                 }
                 else
                 {
@@ -482,7 +492,9 @@ namespace Sun.Identity.Saml2
                     ServiceProvider.SigningCertificateAlias,
                     authnRequestXml,
                     authnRequest.Id,
-                    true);
+                    true,
+                    ServiceProvider.SignatureMethod,
+                    ServiceProvider.DigestMethod);
 
                 if (_logger.IsInfoEnabled)
                 {
@@ -568,7 +580,7 @@ namespace Sun.Identity.Saml2
                 }
 
                 queryString += "&" + Saml2Constants.SignatureAlgorithm;
-                queryString += "=" + HttpUtility.UrlEncode(Saml2Constants.SignatureAlgorithmRsa);
+                queryString += "=" + HttpUtility.UrlEncode(ServiceProvider.SignatureMethod);
                 queryString = _saml2Utils.SignQueryString(ServiceProvider.SigningCertificateAlias, queryString);
             }
 
@@ -632,7 +644,9 @@ namespace Sun.Identity.Saml2
                     ServiceProvider.SigningCertificateAlias,
                     logoutRequestXml,
                     logoutRequest.Id,
-                    true);
+                    true,
+                    ServiceProvider.SignatureMethod,
+                    ServiceProvider.DigestMethod);
             }
 
             var packagedLogoutRequest = _saml2Utils.ConvertToBase64(logoutRequestXml.InnerXml);
@@ -713,7 +727,7 @@ namespace Sun.Identity.Saml2
                 }
 
                 queryString += "&" + Saml2Constants.SignatureAlgorithm;
-                queryString += "=" + HttpUtility.UrlEncode(Saml2Constants.SignatureAlgorithmRsa);
+                queryString += "=" + HttpUtility.UrlEncode(ServiceProvider.SignatureMethod);
                 queryString = _saml2Utils.SignQueryString(ServiceProvider.SigningCertificateAlias, queryString);
             }
 
@@ -778,7 +792,9 @@ namespace Sun.Identity.Saml2
                     ServiceProvider.SigningCertificateAlias,
                     logoutResponseXml,
                     logoutResponse.Id,
-                    true);
+                    true,
+                    ServiceProvider.SignatureMethod,
+                    ServiceProvider.DigestMethod);
             }
 
             var packagedLogoutResponse = _saml2Utils.ConvertToBase64(logoutResponseXml.InnerXml);
@@ -860,7 +876,7 @@ namespace Sun.Identity.Saml2
                 }
 
                 queryString += "&" + Saml2Constants.SignatureAlgorithm;
-                queryString += "=" + HttpUtility.UrlEncode(Saml2Constants.SignatureAlgorithmRsa);
+                queryString += "=" + HttpUtility.UrlEncode(ServiceProvider.SignatureMethod);
                 queryString = _saml2Utils.SignQueryString(ServiceProvider.SigningCertificateAlias, queryString);
             }
 
@@ -1014,7 +1030,9 @@ namespace Sun.Identity.Saml2
                             ServiceProvider.SigningCertificateAlias,
                             logoutRequestXml,
                             logoutRequest.Id,
-                            true);
+                            true,
+                            ServiceProvider.SignatureMethod,
+                            ServiceProvider.DigestMethod);
                     }
                 }
 
@@ -1166,7 +1184,9 @@ namespace Sun.Identity.Saml2
                     ServiceProvider.SigningCertificateAlias,
                     logoutResponseXml,
                     logoutResponse.Id,
-                    true);
+                    true,
+                    ServiceProvider.SignatureMethod,
+                    ServiceProvider.DigestMethod);
             }
 
             if (_logger.IsInfoEnabled)
@@ -1214,6 +1234,19 @@ namespace Sun.Identity.Saml2
             if (ServiceProvider.WantLogoutRequestSigned)
             {
                 CheckSignature(logoutRequest);
+            }
+        }
+
+        /// <summary>
+        ///     Validates the given LogoutRequest.
+        /// </summary>
+        public void ValidateForRedirect(AuthnResponse authnResponse, string queryString)
+        {
+            CheckIssuer(authnResponse.Issuer);
+
+            if (ServiceProvider.WantLogoutRequestSigned)
+            {
+                CheckSignature(authnResponse, queryString);
             }
         }
 
@@ -1323,7 +1356,7 @@ namespace Sun.Identity.Saml2
         {
             if (string.IsNullOrEmpty(statusCode) || statusCode != Saml2Constants.Success)
             {
-                throw new Saml2Exception(Resources.InvalidStatusCode);
+                throw new Saml2Exception(Resources.InvalidStatusCode + " " + statusCode);
             }
         }
 
@@ -1441,6 +1474,7 @@ namespace Sun.Identity.Saml2
         /// </summary>
         /// <param name="authnResponse">AuthnResponse object.</param>
         /// <seealso cref="ServiceProviderUtility.ValidateForPost(AuthnResponse)" />
+        /// <seealso cref="ServiceProviderUtility.ValidateForRedirect(AuthnResponse,string)" />
         private void CheckSignature(AuthnResponse authnResponse)
         {
             IIdentityProvider identityProvider;
@@ -1530,6 +1564,26 @@ namespace Sun.Identity.Saml2
             IIdentityProvider idp;
 
             if (!IdentityProviders.TryGetValue(logoutRequest.Issuer, out idp))
+            {
+                throw new Saml2Exception(Resources.InvalidIssuer);
+            }
+
+            _saml2Utils.ValidateSignedQueryString(idp.SigningCertificate, queryString);
+        }
+
+        /// <summary>
+        ///     Checks the signature of the given LogoutRequest with
+        ///     the raw query string.
+        /// </summary>
+        /// <param name="authnResponse">SAMLv2 AuthnRequest object.</param>
+        /// <param name="queryString">
+        ///     Raw query string that contains the request and possible signature.
+        /// </param>
+        private void CheckSignature(AuthnResponse authnResponse, string queryString)
+        {
+            IIdentityProvider idp;
+
+            if (!IdentityProviders.TryGetValue(authnResponse.Issuer, out idp))
             {
                 throw new Saml2Exception(Resources.InvalidIssuer);
             }

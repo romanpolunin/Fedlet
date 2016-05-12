@@ -5,6 +5,13 @@ README by @romanpolunin
 This is a modified version of Fedlet C# implementation, based on https://github.com/daptiv/Fedlet.git
 Source code is subject to COMMON DEVELOPMENT AND DISTRIBUTION LICENSE Version 1.0 (CDDL-1.0) license, found at https://solaris.java.net/license.html
 
+SAML SSO toolkit for SAML 2.0 service provider applications in .NET. 
+Supports SAML v2.0 SSO and SLO.
+Supports SAML v2.0 POST, Redirect and Artifact bindings. 
+Directly uses entity descriptor XML files.
+Simple and flexible configuration using text and XML files, minimal code.
+See a sample application in the source code (current version unchanged from @daptiv/Fedlet).
+
 ********************************
 ORIGINAL README by @daptiv
 ********************************

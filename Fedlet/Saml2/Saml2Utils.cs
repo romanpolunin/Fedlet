@@ -281,68 +281,73 @@ namespace Sun.Identity.Saml2
 		/// </returns>
 		public string SignQueryString(string certFriendlyName, string queryString)
 		{
-			if (string.IsNullOrEmpty(certFriendlyName))
-			{
-				throw new Saml2Exception(Resources.SignedQueryStringInvalidCertFriendlyName);
-			}
+		    if (string.IsNullOrEmpty(certFriendlyName))
+		    {
+		        throw new Saml2Exception(Resources.SignedQueryStringInvalidCertFriendlyName);
+		    }
 
-			if (string.IsNullOrEmpty(queryString))
-			{
-				throw new Saml2Exception(Resources.SignedQueryStringInvalidQueryString);
-			}
+		    if (string.IsNullOrEmpty(queryString))
+		    {
+		        throw new Saml2Exception(Resources.SignedQueryStringInvalidQueryString);
+		    }
 
-			char[] queryStringSep = {'&'};
-			var queryParams = new NameValueCollection();
-			foreach (string pairs in queryString.Split(queryStringSep))
-			{
-				string key = pairs.Substring(0, pairs.IndexOf("=", StringComparison.Ordinal));
-				string value = pairs.Substring(pairs.IndexOf("=", StringComparison.Ordinal) + 1);
+		    char[] queryStringSep = {'&'};
+		    var queryParams = new NameValueCollection();
+		    foreach (string pairs in queryString.Split(queryStringSep))
+		    {
+		        string key = pairs.Substring(0, pairs.IndexOf("=", StringComparison.Ordinal));
+		        string value = pairs.Substring(pairs.IndexOf("=", StringComparison.Ordinal) + 1);
 
-				queryParams[key] = value;
-			}
+		        queryParams[key] = value;
+		    }
 
-			if (string.IsNullOrEmpty(queryParams[Saml2Constants.SignatureAlgorithm]))
-			{
-				throw new Saml2Exception(Resources.SignedQueryStringSigAlgMissing);
-			}
+		    if (string.IsNullOrEmpty(queryParams[Saml2Constants.SignatureAlgorithm]))
+		    {
+		        throw new Saml2Exception(Resources.SignedQueryStringSigAlgMissing);
+		    }
 
-			X509Certificate2 cert = _certificateFactory.GetCertificateByFriendlyName(certFriendlyName);
-			if (cert == null)
-			{
-				throw new Saml2Exception(Resources.SignedQueryStringCertNotFound);
-			}
+		    X509Certificate2 cert = _certificateFactory.GetCertificateByFriendlyName(certFriendlyName);
+		    if (cert == null)
+		    {
+		        throw new Saml2Exception(Resources.SignedQueryStringCertNotFound);
+		    }
 
-			if (!cert.HasPrivateKey)
-			{
-				throw new Saml2Exception(Resources.SignedQueryStringCertHasNoPrivateKey);
-			}
+		    if (!cert.HasPrivateKey)
+		    {
+		        throw new Saml2Exception(Resources.SignedQueryStringCertHasNoPrivateKey);
+		    }
 
-			string encodedSignature;
-			string signatureAlgorithm = HttpUtility.UrlDecode(queryParams[Saml2Constants.SignatureAlgorithm]);
+		    string signatureAlgorithm = HttpUtility.UrlDecode(queryParams[Saml2Constants.SignatureAlgorithm]);
 
-			if (signatureAlgorithm == Saml2Constants.SignatureAlgorithmRsa)
-			{
-				var privateKey = (RSACryptoServiceProvider) cert.PrivateKey;
-				byte[] signature = privateKey.SignData(
-					Encoding.UTF8.GetBytes(queryString),
-					new SHA1CryptoServiceProvider());
+		    if (string.IsNullOrEmpty(signatureAlgorithm))
+		    {
+		        signatureAlgorithm = Saml2Constants.SignatureAlgorithmRsaSha1;
+		    }
 
-				encodedSignature = Convert.ToBase64String(signature);
-			}
-			else
-			{
-				throw new Saml2Exception(Resources.SignedQueryStringSigAlgNotSupported);
-			}
+            object csp;
+            switch (signatureAlgorithm)
+		    {
+                case Saml2Constants.SignatureAlgorithmRsaSha1: csp = new SHA1CryptoServiceProvider(); break;
+                case Saml2Constants.SignatureAlgorithmRsaSha256: csp = new SHA256CryptoServiceProvider(); break;
+                default: throw new Saml2Exception(Resources.SignedQueryStringSigAlgNotSupported);
+            }
 
-			string signedQueryString
-				= queryString
-				  + "&" + Saml2Constants.Signature
-				  + "=" + HttpUtility.UrlEncode(encodedSignature);
+            var privateKey = GetSigningKey((RSACryptoServiceProvider)cert.PrivateKey, signatureAlgorithm);
+            byte[] signature = privateKey.SignData(
+		        Encoding.UTF8.GetBytes(queryString),
+		        csp);
 
-			return signedQueryString;
+		    var encodedSignature = Convert.ToBase64String(signature);
+
+		    string signedQueryString
+		        = queryString
+		          + "&" + Saml2Constants.Signature
+		          + "=" + HttpUtility.UrlEncode(encodedSignature);
+
+		    return signedQueryString;
 		}
 
-		/// <summary>
+	    /// <summary>
 		/// Signs the specified xml document with the certificate found in
 		/// the local machine matching the provided friendly name and 
 		/// referring to the specified target reference ID.
@@ -352,7 +357,7 @@ namespace Sun.Identity.Saml2
 		/// from the LocalMachine keystore and used to sign the xml document.
 		/// Be sure to have appropriate permissions set on the keystore.
 		/// </param>
-		/// <param name="xmlDoc">
+		/// <param name="xml">
 		/// XML document to be signed.
 		/// </param>
 		/// <param name="targetReferenceId">
@@ -362,15 +367,17 @@ namespace Sun.Identity.Saml2
 		/// Flag to determine whether to include the public key in the 
 		/// signed xml.
 		/// </param>
-		public void SignXml(string certFriendlyName, IXPathNavigable xmlDoc, string targetReferenceId,
-		                           bool includePublicKey)
+		/// <param name="signatureMethod">Identifier of the signature method.</param>
+		/// <param name="digestMethod">Identifier of the digest method.</param>
+		public void SignXml(string certFriendlyName, XmlDocument xml, string targetReferenceId,
+		                           bool includePublicKey, string signatureMethod, string digestMethod)
 		{
 			if (string.IsNullOrEmpty(certFriendlyName))
 			{
 				throw new Saml2Exception(Resources.SignedXmlInvalidCertFriendlyName);
 			}
 
-			if (xmlDoc == null)
+			if (xml == null)
 			{
 				throw new Saml2Exception(Resources.SignedXmlInvalidXml);
 			}
@@ -380,17 +387,20 @@ namespace Sun.Identity.Saml2
 				throw new Saml2Exception(Resources.SignedXmlInvalidTargetRefId);
 			}
 
-			X509Certificate2 cert = _certificateFactory.GetCertificateByFriendlyName(certFriendlyName);
+			var cert = _certificateFactory.GetCertificateByFriendlyName(certFriendlyName);
 			if (cert == null)
 			{
 				throw new Saml2Exception(Resources.SignedXmlCertNotFound);
 			}
 
-			var xml = (XmlDocument) xmlDoc;
-		    var signedXml = new SignedXml(xml) {SigningKey = cert.PrivateKey};
-		    signedXml.SignedInfo.CanonicalizationMethod = SignedXml.XmlDsigExcC14NTransformUrl;
+	        var signedXml = new SignedXml(xml) {SigningKey = GetSigningKey((RSACryptoServiceProvider)cert.PrivateKey, signatureMethod)};
+	        signedXml.SignedInfo.CanonicalizationMethod = SignedXml.XmlDsigExcC14NTransformUrl;
+            if (signatureMethod != null)
+            {
+                signedXml.SignedInfo.SignatureMethod = signatureMethod;
+            }
 
-			if (includePublicKey)
+            if (includePublicKey)
 			{
 				var keyInfo = new KeyInfo();
 				keyInfo.AddClause(new KeyInfoX509Data(cert));
@@ -401,9 +411,13 @@ namespace Sun.Identity.Saml2
 
 		    reference.AddTransform(new XmlDsigEnvelopedSignatureTransform());
 		    reference.AddTransform(new XmlDsigExcC14NTransform());
+		    if (digestMethod != null)
+		    {
+		        reference.DigestMethod = digestMethod;
+		    }
 
 			signedXml.AddReference(reference);
-			signedXml.ComputeSignature();
+            signedXml.ComputeSignature();
 
 			var xmlSignature = signedXml.GetXml();
 
@@ -412,21 +426,37 @@ namespace Sun.Identity.Saml2
 			nsMgr.AddNamespace("saml", Saml2Constants.NamespaceSamlAssertion);
 			nsMgr.AddNamespace("samlp", Saml2Constants.NamespaceSamlProtocol);
 
-		    var root = RequireRootElement(xml);
-            var issuerNode = root.SelectSingleNode("saml:Issuer", nsMgr);
+            var issuerNode = TryGetNode(xml, nsMgr, "saml:Issuer");
 			if (issuerNode != null)
 			{
-				root.InsertAfter(xmlSignature, issuerNode);
+                RequireRootElement(xml).InsertAfter(xmlSignature, issuerNode);
 			}
 			else
 			{
 				// Insert as a child to the target reference id
-                var targetNode = root.SelectSingleNode("//*[@ID='" + targetReferenceId + "']", nsMgr);
+                var targetNode = RequireNode(xml, nsMgr, "//*[@ID='" + targetReferenceId + "']");
 				targetNode.PrependChild(xmlSignature);
 			}
 		}
 
-		/// <summary>
+	    private static RSACryptoServiceProvider GetSigningKey(RSACryptoServiceProvider algorithm, string signatureMethod)
+	    {
+	        if (algorithm.CspKeyContainerInfo.ProviderType == 1
+	            && signatureMethod != Saml2Constants.SignatureAlgorithmRsaSha1)
+	        {
+                // TODO: review after .NET 4.6.2 comes out - they promise out-of-the-box support for SHA256.
+                // Up to and including .NET 4.6.1, X509Store will return certificates with keys wrapped into CSPs of type 1, aka "Microsoft Enhanced Cryptographic Provider v1.0".
+                // However, that CSP does not support SHA2 (SHA256 and others), 
+                // which is why we have to re-create the key so it reincarnates in a CSP of type 24, aka "Microsoft Enhanced RSA and AES Cryptographic Provider".
+                var newalgorithm = new RSACryptoServiceProvider();
+                newalgorithm.ImportParameters(algorithm.ExportParameters(true));
+                return newalgorithm;
+	        }
+
+	        return algorithm;
+	    }
+
+	    /// <summary>
 		/// Validates a relay state URL with a list of allowed relay states,
 		/// each expected to be written as a regular expression pattern. If
 		/// the list is empty, then by default all are allowed.
@@ -517,88 +547,78 @@ namespace Sun.Identity.Saml2
 		/// </param>
 		public void ValidateSignedQueryString(X509Certificate2 cert, string queryString)
 		{
-			if (cert == null)
-			{
-				throw new Saml2Exception(Resources.SignedQueryStringCertIsNull);
-			}
+		    if (cert == null)
+		    {
+		        throw new Saml2Exception(Resources.SignedQueryStringCertIsNull);
+		    }
 
-			if (string.IsNullOrEmpty(queryString))
-			{
-				throw new Saml2Exception(Resources.SignedQueryStringIsNull);
-			}
+		    if (string.IsNullOrEmpty(queryString))
+		    {
+		        throw new Saml2Exception(Resources.SignedQueryStringIsNull);
+		    }
 
-			char[] queryStringSep = {'&'};
-			var queryParams = new NameValueCollection();
-			foreach (string pairs in queryString.Split(queryStringSep))
-			{
-				string key = pairs.Substring(0, pairs.IndexOf("=", StringComparison.Ordinal));
-				string value = pairs.Substring(pairs.IndexOf("=", StringComparison.Ordinal) + 1);
+		    char[] queryStringSep = {'&'};
+		    var queryParams = new NameValueCollection();
+		    foreach (string pairs in queryString.Split(queryStringSep))
+		    {
+		        string key = pairs.Substring(0, pairs.IndexOf("=", StringComparison.Ordinal));
+		        string value = pairs.Substring(pairs.IndexOf("=", StringComparison.Ordinal) + 1);
 
-				queryParams[key] = value;
-			}
+		        queryParams[key] = value;
+		    }
 
-			if (string.IsNullOrEmpty(queryParams[Saml2Constants.SignatureAlgorithm]))
-			{
-				throw new Saml2Exception(Resources.SignedQueryStringMissingSigAlg);
-			}
+		    if (string.IsNullOrEmpty(queryParams[Saml2Constants.SignatureAlgorithm]))
+		    {
+		        throw new Saml2Exception(Resources.SignedQueryStringMissingSigAlg);
+		    }
 
-			if (string.IsNullOrEmpty(queryParams[Saml2Constants.Signature]))
-			{
-				throw new Saml2Exception(Resources.SignedQueryStringMissingSignature);
-			}
+		    if (string.IsNullOrEmpty(queryParams[Saml2Constants.Signature]))
+		    {
+		        throw new Saml2Exception(Resources.SignedQueryStringMissingSignature);
+		    }
 
-			var sigAlg = HttpUtility.UrlDecode(queryParams[Saml2Constants.SignatureAlgorithm]);
-			var signature = HttpUtility.UrlDecode(queryParams[Saml2Constants.Signature]);
+		    var signatureAlgorithm = HttpUtility.UrlDecode(queryParams[Saml2Constants.SignatureAlgorithm]);
+		    var signature = HttpUtility.UrlDecode(queryParams[Saml2Constants.Signature]);
 
-			// construct a new query string with specific sequence and no signature param
-			var newQueryString = string.Empty;
-			if (!string.IsNullOrEmpty(queryParams[Saml2Constants.RequestParameter]))
-			{
-				newQueryString = Saml2Constants.RequestParameter + "=" + queryParams[Saml2Constants.RequestParameter];
-			}
-			else if (!string.IsNullOrEmpty(queryParams[Saml2Constants.ResponseParameter]))
-			{
-				newQueryString = Saml2Constants.ResponseParameter + "=" + queryParams[Saml2Constants.ResponseParameter];
-			}
+		    // construct a new query string with specific sequence and no signature param
+		    var newQueryString = string.Empty;
+		    if (!string.IsNullOrEmpty(queryParams[Saml2Constants.RequestParameter]))
+		    {
+		        newQueryString = Saml2Constants.RequestParameter + "=" + queryParams[Saml2Constants.RequestParameter];
+		    }
+		    else if (!string.IsNullOrEmpty(queryParams[Saml2Constants.ResponseParameter]))
+		    {
+		        newQueryString = Saml2Constants.ResponseParameter + "=" + queryParams[Saml2Constants.ResponseParameter];
+		    }
 
-			if (!string.IsNullOrEmpty(queryParams[Saml2Constants.RelayState]))
-			{
-				newQueryString += "&" + Saml2Constants.RelayState + "=" + queryParams[Saml2Constants.RelayState];
-			}
+		    if (!string.IsNullOrEmpty(queryParams[Saml2Constants.RelayState]))
+		    {
+		        newQueryString += "&" + Saml2Constants.RelayState + "=" + queryParams[Saml2Constants.RelayState];
+		    }
 
-			newQueryString += "&" + Saml2Constants.SignatureAlgorithm + "=" + queryParams[Saml2Constants.SignatureAlgorithm];
+		    newQueryString += "&" + Saml2Constants.SignatureAlgorithm + "=" + queryParams[Saml2Constants.SignatureAlgorithm];
 
-			byte[] dataBuffer = Encoding.UTF8.GetBytes(newQueryString);
-			byte[] sigBuffer = Convert.FromBase64String(signature);
+		    byte[] dataBuffer = Encoding.UTF8.GetBytes(newQueryString);
+		    byte[] sigBuffer = Convert.FromBase64String(signature);
 
-			if (sigAlg == Saml2Constants.SignatureAlgorithmDsa)
-			{
-				/*
-                 * Issues with the way the signature is created in 
-                 * Java (DER Encoding) versus what is used in the 
-                 * .NET framework (IEEE P1363 standard).
-                 * 
-                 * TODO: Will need to create the DSA signature converter
-                 * DSACryptoServiceProvider publicKey = (DSACryptoServiceProvider)cert.PublicKey.Key;
-                 * if(!publicKey.VerifyData(dataBuffer, sigBuffer)) {
-                 *      throw new Saml2Exception(Resources.SignedQueryStringVerifyDataFailed);
-                 * }
-                 */
-				throw new Saml2Exception(Resources.SignedQueryStringUnsupportedSigAlg);
-			}
+		    if (string.IsNullOrEmpty(signatureAlgorithm))
+		    {
+		        signatureAlgorithm = Saml2Constants.SignatureAlgorithmRsaSha1;
+		    }
 
-            if (sigAlg == Saml2Constants.SignatureAlgorithmRsa)
-			{
-				var publicKey = (RSACryptoServiceProvider) cert.PublicKey.Key;
-				if (!publicKey.VerifyData(dataBuffer, new SHA1CryptoServiceProvider(), sigBuffer))
-				{
-					throw new Saml2Exception(Resources.SignedQueryStringVerifyDataFailed);
-				}
-			}
-			else
-			{
-				throw new Saml2Exception(Resources.SignedQueryStringUnsupportedSigAlg);
-			}
+            object csp;
+            switch (signatureAlgorithm)
+            {
+                case Saml2Constants.SignatureAlgorithmRsaSha1: csp = new SHA1CryptoServiceProvider(); break;
+                case Saml2Constants.SignatureAlgorithmRsaSha256: csp = new SHA256CryptoServiceProvider(); break;
+                default: throw new Saml2Exception(Resources.SignedQueryStringSigAlgNotSupported);
+            }
+
+            var publicKey = GetSigningKey((RSACryptoServiceProvider)cert.PublicKey.Key, signatureAlgorithm);
+            if (!publicKey.VerifyData(dataBuffer, csp, sigBuffer))
+		    {
+		        throw new Saml2Exception(Resources.SignedQueryStringVerifyDataFailed);
+		    }
 		}
 
 	    /// <summary>

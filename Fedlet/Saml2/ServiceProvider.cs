@@ -166,6 +166,32 @@ namespace Sun.Identity.Saml2
 		}
 
 		/// <summary>
+		/// Gets the identifier of the signature method.
+		/// </summary>
+		public string SignatureMethod
+		{
+			get
+			{
+			    const string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='signatureMethod']/mdx:Value";
+			    var method = Saml2Utils.TryGetNodeText(_extendedMetadata, _extendedMetadataNsMgr, xpath);
+			    return string.IsNullOrEmpty(method) ? Saml2Constants.SignatureAlgorithmRsaSha1 : method;
+			}
+		}
+
+		/// <summary>
+		/// Gets the identifier of the digest method.
+		/// </summary>
+		public string DigestMethod
+		{
+			get
+			{
+			    const string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='digestMethod']/mdx:Value";
+                var method = Saml2Utils.TryGetNodeText(_extendedMetadata, _extendedMetadataNsMgr, xpath);
+                return string.IsNullOrEmpty(method) ? null : method;
+            }
+		}
+
+		/// <summary>
 		/// Gets a list of relay state URLs that are considered acceptable
 		/// as a parameter in the various SAMLv2 profiles.
 		/// </summary>
@@ -411,7 +437,7 @@ namespace Sun.Identity.Saml2
                 descriptorId.Value = _saml2Utils.GenerateId();
 				entityDescriptorNode.Attributes.Append(descriptorId);
 
-                _saml2Utils.SignXml(SigningCertificateAlias, exportableXml, descriptorId.Value, true);
+                _saml2Utils.SignXml(SigningCertificateAlias, exportableXml, descriptorId.Value, true, SignatureMethod, DigestMethod);
 			}
 
 			return exportableXml.InnerXml;

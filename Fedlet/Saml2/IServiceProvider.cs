@@ -48,11 +48,21 @@ namespace Sun.Identity.Saml2
 		/// </summary>
 		string SigningCertificateAlias { get; }
 
-		/// <summary>
-		/// Gets a value indicating whether the extended metadata value for 
-		/// wantArtifactResponseSigned is true or false.
-		/// </summary>
-		bool WantArtifactResponseSigned { get; }
+        /// <summary>
+        /// Gets the identifier of the signature method.
+        /// </summary>
+        string SignatureMethod { get; }
+
+        /// <summary>
+        /// Gets the identifier of the digest method.
+        /// </summary>
+        string DigestMethod { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether the extended metadata value for 
+        /// wantArtifactResponseSigned is true or false.
+        /// </summary>
+        bool WantArtifactResponseSigned { get; }
 
 		/// <summary>
 		/// Gets a value indicating whether the standard metadata value for 

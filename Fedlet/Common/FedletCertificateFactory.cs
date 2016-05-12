@@ -48,21 +48,20 @@ namespace Sun.Identity.Common
 		/// </returns>
 		public X509Certificate2 GetCertificateByFriendlyName(string friendlyName)
 		{
-			var cert = new X509Certificate2();
-			var store = new X509Store(StoreLocation.LocalMachine);
+	        var store = new X509Store(StoreLocation.LocalMachine);
 			string errorMessage = null;
 
 			try
 			{
 				store.Open(OpenFlags.ReadOnly);
 
-				X509Certificate2Enumerator certEnum = store.Certificates.GetEnumerator();
+				var certEnum = store.Certificates.GetEnumerator();
 				while (certEnum.MoveNext())
 				{
 					if (certEnum.Current?.FriendlyName == friendlyName)
 					{
-						cert = certEnum.Current;
-						break;
+					    var cert = certEnum.Current;
+					    return cert;
 					}
 				}
 			}
@@ -84,7 +83,7 @@ namespace Sun.Identity.Common
                 LoggerFactory.GetLogger(typeof(FedletCertificateFactory)).Warning("{0} {1}", Resources.FedletCertificateFactoryGetByFriendlyNameFailed, errorMessage);
 			}
 
-			return cert;
+	        return null;
 		}
 	}
 }

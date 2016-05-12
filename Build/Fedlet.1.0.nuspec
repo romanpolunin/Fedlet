@@ -2,14 +2,15 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>RomanPolunin.SamlFedlet</id>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <authors>Roman Polunin</authors>
     <owners>Roman Polunin</owners>
     <title>Fedlet, a SAML SSO Toolkit</title>
     <summary>Ultra-lightweight SAML SSO toolkit for SAML 2.0 service provider applications</summary>
     <description>
 SAML SSO toolkit for SAML 2.0 service provider applications in .NET. 
-Supports SAML v2.0 SSO, SLO, POST and Redirect bindings and more. 
+Supports SAML v2.0 SSO and SLO.
+Supports SAML v2.0 POST, Redirect and Artifact bindings. 
 Directly uses entity descriptor XML files.
 Simple and flexible configuration using text and XML files, minimal code.
 See a sample application in the source code (current version unchanged from @daptiv/Fedlet).

@@ -201,9 +201,14 @@ namespace Sun.Identity.Saml2
 		public const string SignatureAlgorithmDsa = "http://www.w3.org/2000/09/xmldsig#dsa-sha1";
 
 		/// <summary>
-		/// Constant for the RSA type of signature algorithm. 
+		/// Constant for the RSA type of signature algorithm, SHA1. 
 		/// </summary>
-		public const string SignatureAlgorithmRsa = "http://www.w3.org/2000/09/xmldsig#rsa-sha1";
+		public const string SignatureAlgorithmRsaSha1 = "http://www.w3.org/2000/09/xmldsig#rsa-sha1";
+
+		/// <summary>
+		/// Constant for the RSA type of signature algorithm, SHA256. 
+		/// </summary>
+		public const string SignatureAlgorithmRsaSha256 = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256";
 
 		/// <summary>
 		/// Constant for the Signature parameter.
