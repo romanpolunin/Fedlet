@@ -1,4 +1,11 @@
-﻿Fedlet 1.0.1.0 - May 2016
+﻿Fedlet 1.0.2.0 - May 2016
+
+Added support for Artifact binding and for SHA256 signing algorithm. 
+Two new attributes in the sp.xml: signatureMethod and digestMethod. 
+Fixed some bugs.
+
+
+Fedlet 1.0.1.0 - May 2016
 
 Initial release, re-forked from @Daptiv/Fedlet 
 and applied a number of changes accumulated over time.
