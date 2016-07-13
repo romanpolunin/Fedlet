@@ -46,7 +46,7 @@ namespace Sun.Identity.Saml2
 	    /// <summary>
 		/// Namespace Manager for this authn request.
 		/// </summary>
-		private readonly XmlNamespaceManager nsMgr;
+		private readonly XmlNamespaceManager _nsMgr;
 
 		/// <summary>
 		/// XML representation of the authn request.
@@ -69,12 +69,11 @@ namespace Sun.Identity.Saml2
 	    /// <param name="saml2Utils">Utilities class</param>
 	    public AuthnRequest(IIdentityProvider identityProvider, IServiceProvider serviceProvider, NameValueCollection parameters, Saml2Utils saml2Utils)
 		{
-			_xml = new XmlDocument();
-			_xml.PreserveWhitespace = true;
+	        _xml = new XmlDocument {PreserveWhitespace = true};
 
-			nsMgr = new XmlNamespaceManager(_xml.NameTable);
-			nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
-			nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
+	        _nsMgr = new XmlNamespaceManager(_xml.NameTable);
+			_nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
+			_nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
 
             Id = saml2Utils.GenerateId();
             IssueInstant = saml2Utils.GenerateIssueInstant();
@@ -92,10 +91,15 @@ namespace Sun.Identity.Saml2
 			    NameIDPolicyFormat = parameters[Saml2Constants.NameIDPolicyFormat];
 			}
 
-			string assertionConsumerSvcUrl = null;
-			if (!String.IsNullOrEmpty(Binding))
+            if (string.IsNullOrEmpty(NameIDPolicyFormat))
+            {
+                NameIDPolicyFormat = Saml2Constants.NameIDPolicyFormatUnspecified;
+            }
+
+            string assertionConsumerSvcUrl = null;
+			if (!string.IsNullOrEmpty(Binding))
 			{
-				if (!String.IsNullOrEmpty(AssertionConsumerServiceIndex))
+				if (!string.IsNullOrEmpty(AssertionConsumerServiceIndex))
 				{
 					// find assertion consumer service location by binding and index.
 					assertionConsumerSvcUrl = serviceProvider.GetAssertionConsumerServiceLocation(Binding,
@@ -109,7 +113,7 @@ namespace Sun.Identity.Saml2
 			}
 
 			// neither index nor binding, throw exception
-			if (String.IsNullOrEmpty(AssertionConsumerServiceIndex) && String.IsNullOrEmpty(assertionConsumerSvcUrl))
+			if (string.IsNullOrEmpty(AssertionConsumerServiceIndex) && string.IsNullOrEmpty(assertionConsumerSvcUrl))
 			{
 				throw new Saml2Exception(Resources.AuthnRequestAssertionConsumerServiceNotDefined);
 			}
@@ -157,7 +161,7 @@ namespace Sun.Identity.Saml2
 			}
 			else
 			{
-				rawXml.Append(" AssertionConsumerIndex=\"" + AssertionConsumerServiceIndex + "\"");
+				rawXml.Append(" AssertionConsumerServiceIndex=\"" + AssertionConsumerServiceIndex + "\"");
 			}
 
 			rawXml.Append(">");
@@ -179,47 +183,47 @@ namespace Sun.Identity.Saml2
 	    /// <summary>
 		/// Gets a value indicating whether AllowCreate is true or false.
 		/// </summary>
-		public bool AllowCreate { get; private set; }
+		public bool AllowCreate { get; }
 
         /// <summary>
         /// The NameIDPolicy Format requested by the IdP 
         /// </summary>
-        public string NameIDPolicyFormat { get; private set; }
+        public string NameIDPolicyFormat { get; }
 
 		/// <summary>
 		/// Gets the AssertionConsumerServiceIndex.
 		/// </summary>
-		public string AssertionConsumerServiceIndex { get; private set; }
+		public string AssertionConsumerServiceIndex { get; }
 
 		/// <summary>
 		/// Gets the Binding.
 		/// </summary>
-		public string Binding { get; private set; }
+		public string Binding { get; }
 
 		/// <summary>
 		/// Gets the Consent.
 		/// </summary>
-		public string Consent { get; private set; }
+		public string Consent { get; }
 
 		/// <summary>
 		/// Gets the Destination.
 		/// </summary>
-		public string Destination { get; private set; }
+		public string Destination { get; }
 
 		/// <summary>
 		/// Gets a value indicating whether ForceAuthn is true or false.
 		/// </summary>
-		public bool ForceAuthn { get; private set; }
+		public bool ForceAuthn { get; }
 
 		/// <summary>
 		/// Gets the ID.
 		/// </summary>
-		public string Id { get; private set; }
+		public string Id { get; }
 
 		/// <summary>
 		/// Gets a value indicating whether IsPassive is true or false.
 		/// </summary>
-		public bool IsPassive { get; private set; }
+		public bool IsPassive { get; }
 
 		/// <summary>
 		/// Gets the Issuer.
@@ -229,15 +233,12 @@ namespace Sun.Identity.Saml2
 		/// <summary>
 		/// Gets the IssueInstant.
 		/// </summary>
-		public string IssueInstant { get; private set; }
+		public string IssueInstant { get; }
 
 		/// <summary>
 		/// Gets the XML representation of the received authn response.
 		/// </summary>
-		public IXPathNavigable XmlDom
-		{
-			get { return _xml; }
-		}
+		public IXPathNavigable XmlDom => _xml;
 
 	    /// <summary>
 		/// Getst the RequestedAuthnContext element based on supplied 

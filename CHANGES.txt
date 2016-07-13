@@ -1,7 +1,13 @@
-﻿Fedlet 1.0.2.0 - May 2016
+﻿Fedlet 1.0.5.0 - July 2016
 
-Added support for Artifact binding and for SHA256 signing algorithm. 
-Two new attributes in the sp.xml: signatureMethod and digestMethod. 
+Fixed wrong attribute name for AssertionConsumerServiceIndex in the outgoing SAMLRequest.
+Added default value for NameIDPolicyFormat ("unspecified") if not supplied by client code.
+
+
+Fedlet 1.0.2.0 - May 2016
+
+Added support for Artifact binding and for SHA2 family of algorithms, tested with SHA256 and ADFS.
+Two new attributes in the sp.xml: signatureMethod and digestMethod.
 Fixed some bugs.
 
 
