@@ -26,6 +26,7 @@
  */
 
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Xml;
 using Sun.Identity.Properties;
@@ -78,7 +79,7 @@ namespace Sun.Identity.Saml2
 				_metadata = metadata;
 				_metadataNsMgr = new XmlNamespaceManager(_metadata.NameTable);
 				_metadataNsMgr.AddNamespace("md", "urn:oasis:names:tc:SAML:2.0:metadata");
-				_metadataNsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
+				_metadataNsMgr.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
 
 				_extendedMetadata = extendedMetadata;
 				_extendedMetadataNsMgr = new XmlNamespaceManager(_extendedMetadata.NameTable);

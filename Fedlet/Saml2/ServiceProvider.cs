@@ -28,6 +28,7 @@
 using System;
 using System.Collections;
 using System.Globalization;
+using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Xml;
 using Sun.Identity.Properties;
@@ -174,7 +175,7 @@ namespace Sun.Identity.Saml2
 			{
 			    const string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='signatureMethod']/mdx:Value";
 			    var method = Saml2Utils.TryGetNodeText(_extendedMetadata, _extendedMetadataNsMgr, xpath);
-			    return string.IsNullOrEmpty(method) ? Saml2Constants.SignatureAlgorithmRsaSha1 : method;
+			    return string.IsNullOrEmpty(method) ? SignedXml.XmlDsigRSASHA256Url : method;
 			}
 		}
 

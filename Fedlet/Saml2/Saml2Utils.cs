@@ -67,7 +67,7 @@ namespace Sun.Identity.Saml2
 		/// <returns>String contained within the base64 encoded string.</returns>
 		public string ConvertFromBase64(string value)
 		{
-			byte[] byteArray = Convert.FromBase64String(value);
+			var byteArray = Convert.FromBase64String(value);
 			return Encoding.UTF8.GetString(byteArray);
 		}
 
@@ -80,13 +80,13 @@ namespace Sun.Identity.Saml2
 		public string ConvertFromBase64Decompress(string message)
 		{
 			// convert from base 64
-			byte[] byteArray = Convert.FromBase64String(message);
+			var byteArray = Convert.FromBase64String(message);
 
 			// inflate the gzip deflated message
 			var streamReader = new StreamReader(new DeflateStream(new MemoryStream(byteArray), CompressionMode.Decompress));
 
 			// put in a string
-			string decompressedMessage = streamReader.ReadToEnd();
+			var decompressedMessage = streamReader.ReadToEnd();
 			streamReader.Close();
 
 			return decompressedMessage;
@@ -131,7 +131,7 @@ namespace Sun.Identity.Saml2
 			var random = new Random();
 			var byteArray = new byte[Saml2Constants.IdLength - 1];
 			random.NextBytes(byteArray);
-			string id = "A" + BitConverter.ToString(byteArray).Replace("-", string.Empty);
+			var id = "A" + BitConverter.ToString(byteArray).Replace("-", string.Empty);
 
 			return id;
 		}
@@ -144,7 +144,7 @@ namespace Sun.Identity.Saml2
 		/// <returns>Current time in UTC, invariant culture format.</returns>
 		public string GenerateIssueInstant()
 		{
-			string issueInstant = DateTime.UtcNow.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'", DateTimeFormatInfo.InvariantInfo);
+			var issueInstant = DateTime.UtcNow.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'", DateTimeFormatInfo.InvariantInfo);
 
 			return issueInstant;
 		}
@@ -219,7 +219,7 @@ namespace Sun.Identity.Saml2
 		{
 			var xmlDoc = (XmlDocument) xml;
 
-			byte[] buffer = Encoding.UTF8.GetBytes(xmlDoc.OuterXml);
+			var buffer = Encoding.UTF8.GetBytes(xmlDoc.OuterXml);
 			var memoryStream = new MemoryStream();
 			var compressedStream = new DeflateStream(memoryStream, CompressionMode.Compress, true);
 			compressedStream.Write(buffer, 0, buffer.Length);
@@ -230,8 +230,8 @@ namespace Sun.Identity.Saml2
 			memoryStream.Read(compressedBuffer, 0, compressedBuffer.Length);
 			memoryStream.Close();
 
-			string compressedBase64String = Convert.ToBase64String(compressedBuffer);
-			string compressedBase64UrlEncodedString = HttpUtility.UrlEncode(compressedBase64String);
+			var compressedBase64String = Convert.ToBase64String(compressedBuffer);
+			var compressedBase64UrlEncodedString = HttpUtility.UrlEncode(compressedBase64String);
 
 			return compressedBase64UrlEncodedString;
 		}
@@ -245,7 +245,7 @@ namespace Sun.Identity.Saml2
 		public string UrlDecodeConvertFromBase64Decompress(string message)
 		{
             // url decode it
-			string decodedMessage = HttpUtility.UrlDecode(message);
+			var decodedMessage = HttpUtility.UrlDecode(message);
 
             if (string.IsNullOrEmpty(decodedMessage))
             {
@@ -253,13 +253,13 @@ namespace Sun.Identity.Saml2
             }
 
             // convert from base 64
-			byte[] byteArray = Convert.FromBase64String(decodedMessage);
+			var byteArray = Convert.FromBase64String(decodedMessage);
 
 			// inflate the gzip deflated message
 			var streamReader = new StreamReader(new DeflateStream(new MemoryStream(byteArray), CompressionMode.Decompress));
 
 			// put in a string
-			string decompressedMessage = streamReader.ReadToEnd();
+			var decompressedMessage = streamReader.ReadToEnd();
 			streamReader.Close();
 
 			return decompressedMessage;
@@ -293,10 +293,10 @@ namespace Sun.Identity.Saml2
 
 		    char[] queryStringSep = {'&'};
 		    var queryParams = new NameValueCollection();
-		    foreach (string pairs in queryString.Split(queryStringSep))
+		    foreach (var pairs in queryString.Split(queryStringSep))
 		    {
-		        string key = pairs.Substring(0, pairs.IndexOf("=", StringComparison.Ordinal));
-		        string value = pairs.Substring(pairs.IndexOf("=", StringComparison.Ordinal) + 1);
+		        var key = pairs.Substring(0, pairs.IndexOf("=", StringComparison.Ordinal));
+		        var value = pairs.Substring(pairs.IndexOf("=", StringComparison.Ordinal) + 1);
 
 		        queryParams[key] = value;
 		    }
@@ -306,7 +306,7 @@ namespace Sun.Identity.Saml2
 		        throw new Saml2Exception(Resources.SignedQueryStringSigAlgMissing);
 		    }
 
-		    X509Certificate2 cert = _certificateFactory.GetCertificateByFriendlyName(certFriendlyName);
+		    var cert = _certificateFactory.GetCertificateByFriendlyName(certFriendlyName);
 		    if (cert == null)
 		    {
 		        throw new Saml2Exception(Resources.SignedQueryStringCertNotFound);
@@ -317,59 +317,68 @@ namespace Sun.Identity.Saml2
 		        throw new Saml2Exception(Resources.SignedQueryStringCertHasNoPrivateKey);
 		    }
 
-		    string signatureAlgorithm = HttpUtility.UrlDecode(queryParams[Saml2Constants.SignatureAlgorithm]);
+		    var signatureAlgorithmUrl = HttpUtility.UrlDecode(queryParams[Saml2Constants.SignatureAlgorithm]);
+		    var hashAlgorithmName = GetHashAlgorithmNameFromSignatureAlgorithmUrl(signatureAlgorithmUrl);
 
-		    if (string.IsNullOrEmpty(signatureAlgorithm))
+		    using (var signingKey = cert.GetRSAPrivateKey())
 		    {
-		        signatureAlgorithm = Saml2Constants.SignatureAlgorithmRsaSha1;
+		        var privateKey = signingKey;
+		        var signature = privateKey.SignData(Encoding.UTF8.GetBytes(queryString), hashAlgorithmName, RSASignaturePadding.Pkcs1);
+
+		        var encodedSignature = Convert.ToBase64String(signature);
+
+		        var signedQueryString
+		            = queryString
+		              + "&" + Saml2Constants.Signature
+		              + "=" + HttpUtility.UrlEncode(encodedSignature);
+
+		        return signedQueryString;
 		    }
-
-            object csp;
-            switch (signatureAlgorithm)
-		    {
-                case Saml2Constants.SignatureAlgorithmRsaSha1: csp = new SHA1CryptoServiceProvider(); break;
-                case Saml2Constants.SignatureAlgorithmRsaSha256: csp = new SHA256CryptoServiceProvider(); break;
-                default: throw new Saml2Exception(Resources.SignedQueryStringSigAlgNotSupported);
-            }
-
-            var privateKey = GetSigningKey((RSACryptoServiceProvider)cert.PrivateKey, signatureAlgorithm);
-            byte[] signature = privateKey.SignData(
-		        Encoding.UTF8.GetBytes(queryString),
-		        csp);
-
-		    var encodedSignature = Convert.ToBase64String(signature);
-
-		    string signedQueryString
-		        = queryString
-		          + "&" + Saml2Constants.Signature
-		          + "=" + HttpUtility.UrlEncode(encodedSignature);
-
-		    return signedQueryString;
 		}
 
-	    /// <summary>
-		/// Signs the specified xml document with the certificate found in
-		/// the local machine matching the provided friendly name and 
-		/// referring to the specified target reference ID.
-		/// </summary>
-		/// <param name="certFriendlyName">
-		/// Friendly Name of the X509Certificate to be retrieved
-		/// from the LocalMachine keystore and used to sign the xml document.
-		/// Be sure to have appropriate permissions set on the keystore.
-		/// </param>
-		/// <param name="xml">
-		/// XML document to be signed.
-		/// </param>
-		/// <param name="targetReferenceId">
-		/// Reference element that will be specified as signed.
-		/// </param>
-		/// <param name="includePublicKey">
-		/// Flag to determine whether to include the public key in the 
-		/// signed xml.
-		/// </param>
-		/// <param name="signatureMethod">Identifier of the signature method.</param>
-		/// <param name="digestMethod">Identifier of the digest method.</param>
-		public void SignXml(string certFriendlyName, XmlDocument xml, string targetReferenceId,
+        /// <summary>
+        /// Determines hash algorithm name based on signature algorithm.
+        /// </summary>
+        /// <see cref="HashAlgorithmName.SHA1"/>
+        /// <see cref="HashAlgorithmName.SHA256"/>
+        /// <see cref="HashAlgorithmName.SHA384"/>
+        /// <see cref="HashAlgorithmName.SHA512"/>
+        public static HashAlgorithmName GetHashAlgorithmNameFromSignatureAlgorithmUrl(string signatureAlgorithmUrl)
+	    {
+            switch (signatureAlgorithmUrl)
+            {
+                case "http://www.w3.org/2000/09/xmldsig#dsa-sha1": return HashAlgorithmName.SHA1; 
+                case SignedXml.XmlDsigRSASHA1Url: return HashAlgorithmName.SHA1; 
+                case SignedXml.XmlDsigRSASHA256Url: return HashAlgorithmName.SHA256; 
+                case SignedXml.XmlDsigRSASHA384Url: return HashAlgorithmName.SHA384; 
+                case SignedXml.XmlDsigRSASHA512Url: return HashAlgorithmName.SHA512; 
+                default: throw new Saml2Exception(Resources.SignedQueryStringSigAlgNotSupported);
+            }
+        }
+
+        /// <summary>
+        /// Signs the specified xml document with the certificate found in
+        /// the local machine matching the provided friendly name and 
+        /// referring to the specified target reference ID.
+        /// </summary>
+        /// <param name="certFriendlyName">
+        /// Friendly Name of the X509Certificate to be retrieved
+        /// from the LocalMachine keystore and used to sign the xml document.
+        /// Be sure to have appropriate permissions set on the keystore.
+        /// </param>
+        /// <param name="xml">
+        /// XML document to be signed.
+        /// </param>
+        /// <param name="targetReferenceId">
+        /// Reference element that will be specified as signed.
+        /// </param>
+        /// <param name="includePublicKey">
+        /// Flag to determine whether to include the public key in the 
+        /// signed xml.
+        /// </param>
+        /// <param name="signatureMethod">Identifier of the signature method.</param>
+        /// <param name="digestMethod">Identifier of the digest method.</param>
+        public void SignXml(string certFriendlyName, XmlDocument xml, string targetReferenceId,
 		                           bool includePublicKey, string signatureMethod, string digestMethod)
 		{
 			if (string.IsNullOrEmpty(certFriendlyName))
@@ -393,68 +402,58 @@ namespace Sun.Identity.Saml2
 				throw new Saml2Exception(Resources.SignedXmlCertNotFound);
 			}
 
-	        var signedXml = new SignedXml(xml) {SigningKey = GetSigningKey((RSACryptoServiceProvider)cert.PrivateKey, signatureMethod)};
-	        signedXml.SignedInfo.CanonicalizationMethod = SignedXml.XmlDsigExcC14NTransformUrl;
-            if (signatureMethod != null)
-            {
-                signedXml.SignedInfo.SignatureMethod = signatureMethod;
-            }
-
-            if (includePublicKey)
-			{
-				var keyInfo = new KeyInfo();
-				keyInfo.AddClause(new KeyInfoX509Data(cert));
-				signedXml.KeyInfo = keyInfo;
-			}
-
-		    var reference = new Reference {Uri = "#" + targetReferenceId};
-
-		    reference.AddTransform(new XmlDsigEnvelopedSignatureTransform());
-		    reference.AddTransform(new XmlDsigExcC14NTransform());
-		    if (digestMethod != null)
+		    using (var signingKey = cert.GetRSAPrivateKey())
 		    {
-		        reference.DigestMethod = digestMethod;
+		        var signedXml = new SignedXml(xml)
+		        {
+		            SigningKey = signingKey
+		        };
+
+		        signedXml.SignedInfo.CanonicalizationMethod = SignedXml.XmlDsigExcC14NTransformUrl;
+		        if (signatureMethod != null)
+		        {
+		            signedXml.SignedInfo.SignatureMethod = signatureMethod;
+		        }
+
+		        if (includePublicKey)
+		        {
+		            var keyInfo = new KeyInfo();
+		            keyInfo.AddClause(new KeyInfoX509Data(cert));
+		            signedXml.KeyInfo = keyInfo;
+		        }
+
+		        var reference = new Reference {Uri = "#" + targetReferenceId};
+
+		        reference.AddTransform(new XmlDsigEnvelopedSignatureTransform());
+		        reference.AddTransform(new XmlDsigExcC14NTransform());
+		        if (digestMethod != null)
+		        {
+		            reference.DigestMethod = digestMethod;
+		        }
+
+		        signedXml.AddReference(reference);
+		        signedXml.ComputeSignature();
+
+		        var xmlSignature = signedXml.GetXml();
+
+		        var nsMgr = new XmlNamespaceManager(xml.NameTable);
+		        nsMgr.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
+		        nsMgr.AddNamespace("saml", Saml2Constants.NamespaceSamlAssertion);
+		        nsMgr.AddNamespace("samlp", Saml2Constants.NamespaceSamlProtocol);
+
+		        var issuerNode = TryGetNode(xml, nsMgr, "saml:Issuer");
+		        if (issuerNode != null)
+		        {
+		            RequireRootElement(xml).InsertAfter(xmlSignature, issuerNode);
+		        }
+		        else
+		        {
+		            // Insert as a child to the target reference id
+		            var targetNode = RequireNode(xml, nsMgr, "//*[@ID='" + targetReferenceId + "']");
+		            targetNode.PrependChild(xmlSignature);
+		        }
 		    }
-
-			signedXml.AddReference(reference);
-            signedXml.ComputeSignature();
-
-			var xmlSignature = signedXml.GetXml();
-
-			var nsMgr = new XmlNamespaceManager(xml.NameTable);
-			nsMgr.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
-			nsMgr.AddNamespace("saml", Saml2Constants.NamespaceSamlAssertion);
-			nsMgr.AddNamespace("samlp", Saml2Constants.NamespaceSamlProtocol);
-
-            var issuerNode = TryGetNode(xml, nsMgr, "saml:Issuer");
-			if (issuerNode != null)
-			{
-                RequireRootElement(xml).InsertAfter(xmlSignature, issuerNode);
-			}
-			else
-			{
-				// Insert as a child to the target reference id
-                var targetNode = RequireNode(xml, nsMgr, "//*[@ID='" + targetReferenceId + "']");
-				targetNode.PrependChild(xmlSignature);
-			}
 		}
-
-	    private static RSACryptoServiceProvider GetSigningKey(RSACryptoServiceProvider algorithm, string signatureMethod)
-	    {
-	        if (algorithm.CspKeyContainerInfo.ProviderType == 1
-	            && signatureMethod != Saml2Constants.SignatureAlgorithmRsaSha1)
-	        {
-                // TODO: review after .NET 4.6.2 comes out - they promise out-of-the-box support for SHA256.
-                // Up to and including .NET 4.6.1, X509Store will return certificates with keys wrapped into CSPs of type 1, aka "Microsoft Enhanced Cryptographic Provider v1.0".
-                // However, that CSP does not support SHA2 (SHA256 and others), 
-                // which is why we have to re-create the key so it reincarnates in a CSP of type 24, aka "Microsoft Enhanced RSA and AES Cryptographic Provider".
-                var newalgorithm = new RSACryptoServiceProvider();
-                newalgorithm.ImportParameters(algorithm.ExportParameters(true));
-                return newalgorithm;
-	        }
-
-	        return algorithm;
-	    }
 
 	    /// <summary>
 		/// Validates a relay state URL with a list of allowed relay states,
@@ -522,7 +521,7 @@ namespace Sun.Identity.Saml2
 			var foundValidSignedReference = false;
 			foreach (Reference r in signedXml.SignedInfo.References)
 			{
-				string referenceId = r.Uri.Substring(1);
+				var referenceId = r.Uri.Substring(1);
 				if (referenceId == targetReferenceId)
 				{
 					foundValidSignedReference = true;
@@ -559,10 +558,10 @@ namespace Sun.Identity.Saml2
 
 		    char[] queryStringSep = {'&'};
 		    var queryParams = new NameValueCollection();
-		    foreach (string pairs in queryString.Split(queryStringSep))
+		    foreach (var pairs in queryString.Split(queryStringSep))
 		    {
-		        string key = pairs.Substring(0, pairs.IndexOf("=", StringComparison.Ordinal));
-		        string value = pairs.Substring(pairs.IndexOf("=", StringComparison.Ordinal) + 1);
+		        var key = pairs.Substring(0, pairs.IndexOf("=", StringComparison.Ordinal));
+		        var value = pairs.Substring(pairs.IndexOf("=", StringComparison.Ordinal) + 1);
 
 		        queryParams[key] = value;
 		    }
@@ -577,7 +576,7 @@ namespace Sun.Identity.Saml2
 		        throw new Saml2Exception(Resources.SignedQueryStringMissingSignature);
 		    }
 
-		    var signatureAlgorithm = HttpUtility.UrlDecode(queryParams[Saml2Constants.SignatureAlgorithm]);
+		    var signatureAlgorithmUrl = HttpUtility.UrlDecode(queryParams[Saml2Constants.SignatureAlgorithm]);
 		    var signature = HttpUtility.UrlDecode(queryParams[Saml2Constants.Signature]);
 
 		    // construct a new query string with specific sequence and no signature param
@@ -598,26 +597,17 @@ namespace Sun.Identity.Saml2
 
 		    newQueryString += "&" + Saml2Constants.SignatureAlgorithm + "=" + queryParams[Saml2Constants.SignatureAlgorithm];
 
-		    byte[] dataBuffer = Encoding.UTF8.GetBytes(newQueryString);
-		    byte[] sigBuffer = Convert.FromBase64String(signature);
+		    var dataBuffer = Encoding.UTF8.GetBytes(newQueryString);
+		    var sigBuffer = Convert.FromBase64String(signature);
 
-		    if (string.IsNullOrEmpty(signatureAlgorithm))
+		    using (var signingKey = cert.GetRSAPublicKey())
 		    {
-		        signatureAlgorithm = Saml2Constants.SignatureAlgorithmRsaSha1;
-		    }
-
-            object csp;
-            switch (signatureAlgorithm)
-            {
-                case Saml2Constants.SignatureAlgorithmRsaSha1: csp = new SHA1CryptoServiceProvider(); break;
-                case Saml2Constants.SignatureAlgorithmRsaSha256: csp = new SHA256CryptoServiceProvider(); break;
-                default: throw new Saml2Exception(Resources.SignedQueryStringSigAlgNotSupported);
-            }
-
-            var publicKey = GetSigningKey((RSACryptoServiceProvider)cert.PublicKey.Key, signatureAlgorithm);
-            if (!publicKey.VerifyData(dataBuffer, csp, sigBuffer))
-		    {
-		        throw new Saml2Exception(Resources.SignedQueryStringVerifyDataFailed);
+		        var publicKey = signingKey;
+                var hashAlgorithmName = GetHashAlgorithmNameFromSignatureAlgorithmUrl(signatureAlgorithmUrl);
+                if (!publicKey.VerifyData(dataBuffer, sigBuffer, hashAlgorithmName, RSASignaturePadding.Pkcs1))
+		        {
+		            throw new Saml2Exception(Resources.SignedQueryStringVerifyDataFailed);
+		        }
 		    }
 		}
 

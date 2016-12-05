@@ -33,6 +33,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
+using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
@@ -200,7 +201,7 @@ namespace Sun.Identity.Saml2
                 soapNsMgr.AddNamespace("soap", "http://schemas.xmlsoap.org/soap/envelope/");
                 soapNsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
                 soapNsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
-                soapNsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
+                soapNsMgr.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
 
                 var artifactResponseXml = Saml2Utils.RequireNode(soapResponse, soapNsMgr, "/soap:Envelope/soap:Body/samlp:ArtifactResponse").OuterXml;
                 artifactResponse = new ArtifactResponse(artifactResponseXml);
@@ -331,7 +332,7 @@ namespace Sun.Identity.Saml2
                     soapNsMgr.AddNamespace("soap", "http://schemas.xmlsoap.org/soap/envelope/");
                     soapNsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
                     soapNsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
-                    soapNsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
+                    soapNsMgr.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
 
                     var requestXml = Saml2Utils.RequireNode(soapRequest, soapNsMgr, "/soap:Envelope/soap:Body/samlp:LogoutRequest");
                     samlRequest = requestXml.OuterXml;
@@ -1072,7 +1073,7 @@ namespace Sun.Identity.Saml2
                 soapNsMgr.AddNamespace("soap", "http://schemas.xmlsoap.org/soap/envelope/");
                 soapNsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
                 soapNsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
-                soapNsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
+                soapNsMgr.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
 
                 var logoutResponseXml = Saml2Utils.RequireNode(soapResponse, soapNsMgr, "/soap:Envelope/soap:Body/samlp:LogoutResponse").OuterXml;
                 var logoutResponse = new LogoutResponse(logoutResponseXml);
@@ -1656,11 +1657,12 @@ namespace Sun.Identity.Saml2
         /// </returns>
         private IIdentityProvider GetIdpFromArtifact(Artifact artifact)
         {
-            SHA1 sha1 = new SHA1CryptoServiceProvider();
+            // must use SHA1 here
+            SHA1 sha = new SHA1CryptoServiceProvider();
 
             foreach (var idpEntityId in IdentityProviders.Keys)
             {
-                var idpEntityIdHashed = BitConverter.ToString(sha1.ComputeHash(Encoding.UTF8.GetBytes(idpEntityId)));
+                var idpEntityIdHashed = BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(idpEntityId)));
                 idpEntityIdHashed = idpEntityIdHashed.Replace("-", string.Empty);
 
                 if (idpEntityIdHashed == artifact.SourceId)

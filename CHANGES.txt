@@ -1,4 +1,11 @@
-﻿Fedlet 1.0.5.0 - July 2016
+﻿Fedlet 1.0.6.0 - Dec 2016
+
+Switched targeting to .NET 462. 
+Expects .Net framework to be able to work with CNG certs and SHA256 without additional hacks.
+Some code cleanup.
+
+
+Fedlet 1.0.5.0 - July 2016
 
 Fixed wrong attribute name for AssertionConsumerServiceIndex in the outgoing SAMLRequest.
 Added default value for NameIDPolicyFormat ("unspecified") if not supplied by client code.

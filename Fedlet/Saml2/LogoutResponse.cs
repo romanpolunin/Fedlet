@@ -27,6 +27,7 @@
 
 using System;
 using System.Collections.Specialized;
+using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Xml;
 using System.Xml.XPath;
@@ -68,7 +69,7 @@ namespace Sun.Identity.Saml2
                 _xml = new XmlDocument {PreserveWhitespace = true};
 
                 _nsMgr = new XmlNamespaceManager(_xml.NameTable);
-                _nsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
+                _nsMgr.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
                 _nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
                 _nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
 
