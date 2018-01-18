@@ -1,19 +1,19 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
+ *
  * Copyright (c) 2009-2010 Sun Microsystems Inc. All Rights Reserved
- * 
+ *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
- * 
+ *
  * You can obtain a copy of the License at
  * https://opensso.dev.java.net/public/CDDLv1.0.html or
  * opensso/legal/CDDLv1.0.txt
  * See the License for the specific language governing
  * permission and limitations under the License.
- * 
+ *
  * When distributing Covered Code, include this CDDL
  * Header Notice in each file and include the License file
  * at opensso/legal/CDDLv1.0.txt.
@@ -21,16 +21,16 @@
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
- * 
+ *
  * $Id: ServiceProvider.cs,v 1.6 2010/01/26 01:20:14 ggennaro Exp $
  */
 
 using System;
 using System.Collections;
 using System.Globalization;
-using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Xml;
+using Sun.Identity.Common;
 using Sun.Identity.Properties;
 using Sun.Identity.Saml2.Exceptions;
 
@@ -46,7 +46,7 @@ namespace Sun.Identity.Saml2
 	    #region Members
 
 		/// <summary>
-		/// XML document representing the extended metadata for this Service 
+		/// XML document representing the extended metadata for this Service
 		/// Provider.
 		/// </summary>
 		private readonly XmlDocument _extendedMetadata;
@@ -71,7 +71,7 @@ namespace Sun.Identity.Saml2
 		#region Constructors
 
 		/// <summary>
-		/// Initializes a new instance of the ServiceProvider class. 
+		/// Initializes a new instance of the ServiceProvider class.
 		/// </summary>
 		public ServiceProvider(XmlDocument metadata, XmlDocument extendedMetadata, Saml2Utils saml2Utils)
 		{
@@ -116,7 +116,7 @@ namespace Sun.Identity.Saml2
         }
 
         /// <summary>
-		/// Gets a value indicating whether the standard metadata value for 
+		/// Gets a value indicating whether the standard metadata value for
 		/// AuthnRequestsSigned is true or false.
 		/// </summary>
 		public bool AuthnRequestsSigned
@@ -154,7 +154,7 @@ namespace Sun.Identity.Saml2
 		}
 
 		/// <summary>
-		/// Gets the certificate alias, installed on this service provider, 
+		/// Gets the certificate alias, installed on this service provider,
 		/// for encryption.
 		/// </summary>
 		public string EncryptionCertificateAlias
@@ -175,7 +175,7 @@ namespace Sun.Identity.Saml2
 			{
 			    const string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='signatureMethod']/mdx:Value";
 			    var method = Saml2Utils.TryGetNodeText(_extendedMetadata, _extendedMetadataNsMgr, xpath);
-			    return string.IsNullOrEmpty(method) ? SignedXml.XmlDsigRSASHA256Url : method;
+			    return string.IsNullOrEmpty(method) ? InternalSignedXml.XmlDsigRSASHA256Url : method;
 			}
 		}
 
@@ -218,7 +218,7 @@ namespace Sun.Identity.Saml2
 		}
 
 		/// <summary>
-		/// Gets the certificate alias, installed on this service provider, 
+		/// Gets the certificate alias, installed on this service provider,
 		/// for signing.
 		/// </summary>
 		public string SigningCertificateAlias
@@ -231,7 +231,7 @@ namespace Sun.Identity.Saml2
 		}
 
 		/// <summary>
-		/// Gets a value indicating whether the extended metadata value for 
+		/// Gets a value indicating whether the extended metadata value for
 		/// wantArtifactResponseSigned is true or false.
 		/// </summary>
 		public bool WantArtifactResponseSigned
@@ -245,7 +245,7 @@ namespace Sun.Identity.Saml2
 		}
 
 		/// <summary>
-		/// Gets a value indicating whether the standard metadata value for 
+		/// Gets a value indicating whether the standard metadata value for
 		/// WantAssertionsSigned is true or false.
 		/// </summary>
 		public bool WantAssertionsSigned
@@ -259,7 +259,7 @@ namespace Sun.Identity.Saml2
 		}
 
 		/// <summary>
-		/// Gets a value indicating whether the extended metadata value for 
+		/// Gets a value indicating whether the extended metadata value for
 		/// wantPOSTResponseSigned is true or false.
 		/// </summary>
 		public bool WantPostResponseSigned
@@ -273,7 +273,7 @@ namespace Sun.Identity.Saml2
 		}
 
 		/// <summary>
-		/// Gets a value indicating whether the extended metadata value for 
+		/// Gets a value indicating whether the extended metadata value for
 		/// wantLogoutRequestSigned is true or false.
 		/// </summary>
 		public bool WantLogoutRequestSigned
@@ -287,7 +287,7 @@ namespace Sun.Identity.Saml2
 		}
 
 		/// <summary>
-		/// Gets a value indicating whether the extended metadata value for 
+		/// Gets a value indicating whether the extended metadata value for
 		/// wantLogoutResponseSigned is true or false.
 		/// </summary>
 		public bool WantLogoutResponseSigned
