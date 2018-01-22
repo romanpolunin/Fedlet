@@ -29,6 +29,6 @@ Forked that to make functionality and stability improvements.
 Switched targeting to .net standard 2.0</releaseNotes>
   </metadata>
   <files>
-    <file src="**\*" target="" exclude="*.ps1" />
+    <file src="..\Fedlet\bin\Release\netstandard2.0\**\*" target="lib\netstandard2.0" exclude="*.ps1" />
   </files>
 </package>
