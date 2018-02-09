@@ -32,16 +32,7 @@ namespace Sun.Identity.Common
                 return result;
             }
 
-            result = request.Cookies[key];
-            if (result != null)
-            {
-                return result;
-            }
-
-            // There is no more ServerVariables property in the HttpRequest.
-            //So this part of old HttpContextBase logic is skipped
-
-            return null;
+            return request.Cookies[key];
         }
     }
 }
