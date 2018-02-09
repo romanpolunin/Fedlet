@@ -72,33 +72,33 @@ namespace Sun.Identity.Saml2
 			return Encoding.UTF8.GetString(byteArray);
 		}
 
-		/// <summary>
-		/// Converts from Base64, then decompresses the given
-		/// parameter and returns the ensuing string.
-		/// </summary>
-		/// <param name="message">message to undergo the process</param>
-		/// <returns>String output from the process.</returns>
-		public string ConvertFromBase64Decompress(string message)
-		{
-			// convert from base 64
-			var byteArray = Convert.FromBase64String(message);
+        /// <summary>
+        /// Converts from Base64, then decompresses the given
+        /// parameter and returns the ensuing string.
+        /// </summary>
+        /// <param name="message">message to undergo the process</param>
+        /// <returns>String output from the process.</returns>
+        public string ConvertFromBase64Decompress(string message)
+        {
+            // convert from base 64
+            var byteArray = Convert.FromBase64String(message);
 
-			// inflate the gzip deflated message
-			var streamReader = new StreamReader(new DeflateStream(new MemoryStream(byteArray), CompressionMode.Decompress));
+            // inflate the gzip deflated message
+            var streamReader = new StreamReader(new DeflateStream(new MemoryStream(byteArray), CompressionMode.Decompress));
 
-			// put in a string
-			var decompressedMessage = streamReader.ReadToEnd();
-			streamReader.Close();
+            // put in a string
+            var decompressedMessage = streamReader.ReadToEnd();
+            streamReader.Close();
 
-			return decompressedMessage;
-		}
+            return decompressedMessage;
+        }
 
-		/// <summary>
-		/// Converts the base64 encoded string of the given input string.
-		/// </summary>
-		/// <param name="value">String to be encoded.</param>
-		/// <returns>Base64 encoded output of the specified string.</returns>
-		public string ConvertToBase64(string value)
+        /// <summary>
+        /// Converts the base64 encoded string of the given input string.
+        /// </summary>
+        /// <param name="value">String to be encoded.</param>
+        /// <returns>Base64 encoded output of the specified string.</returns>
+        public string ConvertToBase64(string value)
 		{
 			return Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
 		}
@@ -185,12 +185,11 @@ namespace Sun.Identity.Saml2
 		/// </returns>
 		public static bool GetBoolean(string value)
 		{
-		    bool result;
-		    return Boolean.TryParse(value, out result) && result;
+		    return bool.TryParse(value, out var result) && result;
 		}
 
 		/// <summary>
-		/// Gets the delimeter in the context of a query string depending
+		/// Gets the delimiter in the context of a query string depending
 		/// on the existence of a question mark within the given URL.
 		/// </summary>
 		/// <param name="location">
@@ -484,7 +483,7 @@ namespace Sun.Identity.Saml2
 		{
 			if (string.IsNullOrEmpty(relayState) || allowedRelayStates == null || allowedRelayStates.Count == 0)
 			{
-				// If none specified, default to valid for backwards compatability
+				// If none specified, default to valid for backwards compatibility
 				return;
 			}
 
