@@ -26,10 +26,14 @@ namespace Sun.Identity.Common
                 return result;
             }
 
-            result = request.Form[key];
-            if (result != null)
+            // Without this check we will have exception when try to access request.Form
+            if (request.HasFormContentType)
             {
-                return result;
+                result = request.Form[key];
+                if (result != null)
+                {
+                    return result;
+                }
             }
 
             return request.Cookies[key];

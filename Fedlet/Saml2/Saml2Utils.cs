@@ -167,10 +167,13 @@ namespace Sun.Identity.Saml2
 				parameters[name] = request.Query[name];
 			}
 
-			foreach (string name in request.Form.Keys)
-			{
-				parameters[name] = request.Form[name];
-			}
+		    if (request.HasFormContentType)
+		    {
+		        foreach (string name in request.Form.Keys)
+		        {
+		            parameters[name] = request.Form[name];
+		        }
+		    }
 
 			return parameters;
 		}
