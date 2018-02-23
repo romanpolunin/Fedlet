@@ -1,19 +1,19 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
+ *
  * Copyright (c) 2009-2010 Sun Microsystems Inc. All Rights Reserved
- * 
+ *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
- * 
+ *
  * You can obtain a copy of the License at
  * https://opensso.dev.java.net/public/CDDLv1.0.html or
  * opensso/legal/CDDLv1.0.txt
  * See the License for the specific language governing
  * permission and limitations under the License.
- * 
+ *
  * When distributing Covered Code, include this CDDL
  * Header Notice in each file and include the License file
  * at opensso/legal/CDDLv1.0.txt.
@@ -21,7 +21,7 @@
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
- * 
+ *
  * $Id: ServiceProviderUtility.cs,v 1.9 2010/01/26 01:20:14 ggennaro Exp $
  */
 
@@ -36,8 +36,10 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Web;
 using System.Xml;
+using Microsoft.AspNetCore.Http;
 using Sun.Identity.Common;
 using Sun.Identity.Properties;
 using Sun.Identity.Saml2.Exceptions;
@@ -46,7 +48,7 @@ namespace Sun.Identity.Saml2
 {
     /// <summary>
     ///     Utility class to encapsulate configuration and metadata management
-    ///     along with convenience methods for retrieveing SAML2 objects.
+    ///     along with convenience methods for retrieving SAML2 objects.
     /// </summary>
     public class ServiceProviderUtility : IServiceProviderUtility
     {
@@ -55,16 +57,6 @@ namespace Sun.Identity.Saml2
         private readonly Saml2Utils _saml2Utils;
 
         #region Constructors
-
-        /// <summary>
-        ///     Initializes a new instance of the ServiceProviderUtility class
-        ///     using the App_Data folder for the application as the default home
-        ///     folder for configuration and metadata.
-        /// </summary>
-        public ServiceProviderUtility(HttpContextBase context)
-            : this(context.Server.MapPath(@"App_Data"))
-        {
-        }
 
         /// <summary>
         ///     Initializes a new instance of the ServiceProviderUtility class
@@ -119,7 +111,7 @@ namespace Sun.Identity.Saml2
         ///     Retrieve the ArtifactResponse object with the given SAMLv2
         ///     artifact.
         /// </summary>
-        public ArtifactResponse GetArtifactResponse(Artifact artifact)
+        public async Task<ArtifactResponse> GetArtifactResponseAsync(Artifact artifact)
         {
             var artifactResolve = new ArtifactResolve(ServiceProvider, artifact, _saml2Utils);
             ArtifactResponse artifactResponse;
@@ -141,7 +133,7 @@ namespace Sun.Identity.Saml2
             try
             {
                 var artifactResolutionSvcUri = new Uri(artifactResolutionSvcLoc);
-                var request = (HttpWebRequest) WebRequest.Create(artifactResolutionSvcUri);
+                var request = WebRequest.CreateHttp(artifactResolutionSvcUri);
                 var artifactResolveXml = (XmlDocument) artifactResolve.XmlDom;
 
                 if (idp.WantArtifactResolveSigned)
@@ -170,8 +162,8 @@ namespace Sun.Identity.Saml2
                 request.AllowAutoRedirect = false;
                 request.Method = "POST";
 
-                var requestStream = request.GetRequestStream();
-                requestStream.Write(byteArray, 0, byteArray.Length);
+                var requestStream = await request.GetRequestStreamAsync();
+                await requestStream.WriteAsync(byteArray, 0, byteArray.Length);
                 requestStream.Close();
 
                 if (_logger.IsInfoEnabled)
@@ -179,7 +171,7 @@ namespace Sun.Identity.Saml2
                     _logger.Info("ArtifactResolve:\r\n{0}", artifactResolveXml.OuterXml);
                 }
 
-                response = (HttpWebResponse) request.GetResponse();
+                response = (HttpWebResponse) await request.GetResponseAsync();
 
                 string responseContent;
                 using (var responseStream = response.GetResponseStream())
@@ -190,7 +182,7 @@ namespace Sun.Identity.Saml2
                     }
 
                     var streamReader = new StreamReader(responseStream);
-                    responseContent = streamReader.ReadToEnd();
+                    responseContent = await streamReader.ReadToEndAsync();
                     streamReader.Close();
                 }
 
@@ -228,18 +220,20 @@ namespace Sun.Identity.Saml2
         ///     in the context of the HttpContext, performing validation of
         ///     the AuthnResponse prior to returning to the user.
         /// </summary>
-        public AuthnResponse GetAuthnResponse(HttpContextBase context)
+        public async Task<AuthnResponse> GetAuthnResponseAsync(HttpContext context)
         {
             ArtifactResponse artifactResponse = null;
             AuthnResponse authnResponse;
             var request = context.Request;
 
+            string responseParameter = request.GetParameter(Saml2Constants.ResponseParameter);
+
             // Obtain AuthnResponse object from either HTTP-POST, HTTP-Redirect or HTTP-Artifact
-            if (!string.IsNullOrWhiteSpace(request[Saml2Constants.ResponseParameter]))
+            if (!string.IsNullOrWhiteSpace(responseParameter))
             {
-                var samlResponse = context.Request.HttpMethod == "GET"
-                    ? _saml2Utils.ConvertFromBase64Decompress(request[Saml2Constants.ResponseParameter])
-                    : _saml2Utils.ConvertFromBase64(request[Saml2Constants.ResponseParameter]);
+                var samlResponse = context.Request.Method == "GET"
+                    ? _saml2Utils.ConvertFromBase64Decompress(responseParameter)
+                    : _saml2Utils.ConvertFromBase64(responseParameter);
                 authnResponse = new AuthnResponse(samlResponse);
 
                 if (_logger.IsInfoEnabled)
@@ -248,21 +242,26 @@ namespace Sun.Identity.Saml2
                     _logger.Info("AuthnResponse:\r\n{0}", xmlDoc.OuterXml);
                 }
             }
-            else if (!string.IsNullOrWhiteSpace(request[Saml2Constants.ArtifactParameter]))
-            {
-                var artifact = new Artifact(request[Saml2Constants.ArtifactParameter]);
-                artifactResponse = GetArtifactResponse(artifact);
-                authnResponse = artifactResponse.AuthnResponse;
-
-                if (_logger.IsInfoEnabled)
-                {
-                    var xmlDoc = (XmlDocument) artifactResponse.XmlDom;
-                    _logger.Info("ArtifactResponse:\r\n{0}", xmlDoc.OuterXml);
-                }
-            }
             else
             {
-                throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityNoSamlResponseReceived);
+                string artifactParameter = request.GetParameter(Saml2Constants.ArtifactParameter);
+
+                if (!string.IsNullOrWhiteSpace(artifactParameter))
+                {
+                    var artifact = new Artifact(artifactParameter);
+                    artifactResponse = await GetArtifactResponseAsync(artifact);
+                    authnResponse = artifactResponse.AuthnResponse;
+
+                    if (_logger.IsInfoEnabled)
+                    {
+                        var xmlDoc = (XmlDocument)artifactResponse.XmlDom;
+                        _logger.Info("ArtifactResponse:\r\n{0}", xmlDoc.OuterXml);
+                    }
+                }
+                else
+                {
+                    throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityNoSamlResponseReceived);
+                }
             }
 
             var prevAuthnRequestId = authnResponse.InResponseTo;
@@ -272,10 +271,13 @@ namespace Sun.Identity.Saml2
                 {
                     ValidateForArtifact(artifactResponse);
                 }
-                else if (context.Request.HttpMethod == "GET")
+                else if (context.Request.Method == "GET")
                 {
-                    var queryString
-                        = request.RawUrl.Substring(request.RawUrl.IndexOf("?", StringComparison.Ordinal) + 1);
+                    var queryString = request.QueryString.ToString();
+                    if (!string.IsNullOrEmpty(queryString) && queryString[0] == '?')
+                    {
+                        queryString = queryString.Substring(1);
+                    }
                     ValidateForRedirect(authnResponse, queryString);
                 }
                 else
@@ -303,27 +305,29 @@ namespace Sun.Identity.Saml2
         ///     in the context of the HttpContext, performing validation of
         ///     the LogoutRequest prior to returning to the user.
         /// </summary>
-        public LogoutRequest GetLogoutRequest(HttpContextBase context)
+        public async Task<LogoutRequest> GetLogoutRequestAsync(HttpContext context)
         {
             var request = context.Request;
             string samlRequest = null;
 
             // Obtain the LogoutRequest object...
-            if (request.HttpMethod == "GET")
+            string requestParameter = request.GetParameter(Saml2Constants.RequestParameter);
+
+            if (request.Method == "GET")
             {
-                samlRequest = _saml2Utils.ConvertFromBase64Decompress(request[Saml2Constants.RequestParameter]);
+                samlRequest = _saml2Utils.ConvertFromBase64Decompress(requestParameter);
             }
-            else if (request.HttpMethod == "POST")
+            else if (request.Method == "POST")
             {
                 // something posted...check if soap vs form post
-                if (!string.IsNullOrEmpty(request[Saml2Constants.RequestParameter]))
+                if (!string.IsNullOrEmpty(requestParameter))
                 {
-                    samlRequest = _saml2Utils.ConvertFromBase64(request[Saml2Constants.RequestParameter]);
+                    samlRequest = _saml2Utils.ConvertFromBase64(requestParameter);
                 }
                 else
                 {
-                    var reader = new StreamReader(request.InputStream);
-                    var requestContent = reader.ReadToEnd();
+                    var reader = new StreamReader(request.Body);
+                    var requestContent = await reader.ReadToEndAsync();
 
                     var soapRequest = new XmlDocument {PreserveWhitespace = true};
                     soapRequest.LoadXml(requestContent);
@@ -355,10 +359,13 @@ namespace Sun.Identity.Saml2
 
             try
             {
-                if (request.HttpMethod == "GET")
+                if (request.Method == "GET")
                 {
-                    var queryString
-                        = request.RawUrl.Substring(request.RawUrl.IndexOf("?", StringComparison.Ordinal) + 1);
+                    var queryString = request.QueryString.ToString();
+                    if (!string.IsNullOrEmpty(queryString) && queryString[0] == '?')
+                    {
+                        queryString = queryString.Substring(1);
+                    }
                     if (_logger.IsInfoEnabled)
                     {
                         _logger.Info("LogoutRequest query string:\r\n{0}", queryString);
@@ -385,26 +392,28 @@ namespace Sun.Identity.Saml2
         ///     in the context of the HttpContext, performing validation of
         ///     the LogoutResponse prior to returning to the user.
         /// </summary>
-        public LogoutResponse GetLogoutResponse(HttpContextBase context)
+        public async Task<LogoutResponse> GetLogoutResponseAsync(HttpContext context)
         {
             LogoutResponse logoutResponse;
             var request = context.Request;
 
             // Check if a saml response was received...
-            if (string.IsNullOrEmpty(request[Saml2Constants.ResponseParameter]))
+            string responseParameter = request.GetParameter(Saml2Constants.ResponseParameter);
+
+            if (string.IsNullOrEmpty(responseParameter))
             {
                 throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityNoSamlResponseReceived);
             }
 
             // Obtain the LogoutRequest object...
-            if (request.HttpMethod == "GET")
+            if (request.Method == "GET")
             {
-                var samlResponse = _saml2Utils.ConvertFromBase64Decompress(request[Saml2Constants.ResponseParameter]);
+                var samlResponse = _saml2Utils.ConvertFromBase64Decompress(responseParameter);
                 logoutResponse = new LogoutResponse(samlResponse);
             }
             else
             {
-                var samlResponse = _saml2Utils.ConvertFromBase64(request[Saml2Constants.ResponseParameter]);
+                var samlResponse = _saml2Utils.ConvertFromBase64(responseParameter);
                 logoutResponse = new LogoutResponse(samlResponse);
             }
 
@@ -417,10 +426,13 @@ namespace Sun.Identity.Saml2
             var prevLogoutRequestId = logoutResponse.InResponseTo;
             try
             {
-                if (request.HttpMethod == "GET")
+                if (request.Method == "GET")
                 {
-                    var queryString
-                        = request.RawUrl.Substring(request.RawUrl.IndexOf("?", StringComparison.Ordinal) + 1);
+                    var queryString = request.QueryString.ToString();
+                    if (!string.IsNullOrEmpty(queryString) && queryString[0] == '?')
+                    {
+                        queryString = queryString.Substring(1);
+                    }
                     if (_logger.IsInfoEnabled)
                     {
                         _logger.Info("LogoutResponse query string:\r\n{0}", queryString);
@@ -460,8 +472,7 @@ namespace Sun.Identity.Saml2
                 throw new ServiceProviderUtilityException(Resources.AuthnRequestIsNull);
             }
 
-            IIdentityProvider idp;
-            if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
+            if (!IdentityProviders.TryGetValue(idpEntityId, out var idp))
             {
                 throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
             }
@@ -541,16 +552,14 @@ namespace Sun.Identity.Saml2
         /// <returns>
         ///     URL with query string parameter for the specified IDP.
         /// </returns>
-        public string GetAuthnRequestRedirectLocation(AuthnRequest authnRequest, string idpEntityId,
-            NameValueCollection parameters)
+        public string GetAuthnRequestRedirectLocation(AuthnRequest authnRequest, string idpEntityId, NameValueCollection parameters)
         {
             if (authnRequest == null)
             {
                 throw new ServiceProviderUtilityException(Resources.AuthnRequestIsNull);
             }
 
-            IIdentityProvider idp;
-            if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
+            if (!IdentityProviders.TryGetValue(idpEntityId, out var idp))
             {
                 throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
             }
@@ -612,8 +621,7 @@ namespace Sun.Identity.Saml2
                 throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityLogoutRequestIsNull);
             }
 
-            IIdentityProvider idp;
-            if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
+            if (!IdentityProviders.TryGetValue(idpEntityId, out var idp))
             {
                 throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
             }
@@ -688,16 +696,14 @@ namespace Sun.Identity.Saml2
         /// <returns>
         ///     URL with query string parameter for the specified IDP.
         /// </returns>
-        public string GetLogoutRequestRedirectLocation(LogoutRequest logoutRequest, string idpEntityId,
-            NameValueCollection parameters)
+        public string GetLogoutRequestRedirectLocation(LogoutRequest logoutRequest, string idpEntityId, NameValueCollection parameters)
         {
             if (logoutRequest == null)
             {
                 throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityLogoutRequestIsNull);
             }
 
-            IIdentityProvider idp;
-            if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
+            if (!IdentityProviders.TryGetValue(idpEntityId, out var idp))
             {
                 throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
             }
@@ -759,8 +765,7 @@ namespace Sun.Identity.Saml2
                 throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityLogoutResponseIsNull);
             }
 
-            IIdentityProvider idp;
-            if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
+            if (!IdentityProviders.TryGetValue(idpEntityId, out var idp))
             {
                 throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
             }
@@ -844,8 +849,7 @@ namespace Sun.Identity.Saml2
                 throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityLogoutResponseIsNull);
             }
 
-            IIdentityProvider idp;
-            if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
+            if (!IdentityProviders.TryGetValue(idpEntityId, out var idp))
             {
                 throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
             }
@@ -902,10 +906,9 @@ namespace Sun.Identity.Saml2
         ///     Sends an AuthnRequest to the specified IDP with the given
         ///     parameters.
         /// </summary>
-        public void SendAuthnRequest(HttpContextBase context, string idpEntityId, NameValueCollection parameters)
+        public async Task SendAuthnRequestAsync(HttpContext context, string idpEntityId, NameValueCollection parameters)
         {
-            IIdentityProvider idp;
-            if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
+            if (!IdentityProviders.TryGetValue(idpEntityId, out var idp))
             {
                 throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
             }
@@ -930,8 +933,8 @@ namespace Sun.Identity.Saml2
             if (parameters[Saml2Constants.RequestBinding] == Saml2Constants.HttpPostProtocolBinding)
             {
                 var postHtml = GetAuthnRequestPostHtml(authnRequest, idpEntityId, parameters);
-                context.Response.Write(postHtml);
-                context.Response.End();
+                byte[] bodyContent = Encoding.UTF8.GetBytes(postHtml);
+                await context.Response.Body.WriteAsync(bodyContent, 0, bodyContent.Length);
             }
             else
             {
@@ -944,10 +947,9 @@ namespace Sun.Identity.Saml2
         ///     Sends a LogoutRequest to the specified IDP with the given
         ///     parameters.
         /// </summary>
-        public void SendLogoutRequest(HttpContextBase context, string idpEntityId, NameValueCollection parameters)
+        public async Task SendLogoutRequestAsync(HttpContext context, string idpEntityId, NameValueCollection parameters)
         {
-            IIdentityProvider idp;
-            if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
+            if (!IdentityProviders.TryGetValue(idpEntityId, out var idp))
             {
                 throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
             }
@@ -970,8 +972,8 @@ namespace Sun.Identity.Saml2
             {
                 LogoutRequestCache.AddSentLogoutRequest(context, logoutRequest);
                 var postHtml = GetLogoutRequestPostHtml(logoutRequest, idpEntityId, parameters);
-                context.Response.Write(postHtml);
-                context.Response.End();
+                byte[] bodyContent = Encoding.UTF8.GetBytes(postHtml);
+                await context.Response.Body.WriteAsync(bodyContent, 0, bodyContent.Length);
             }
             else if (parameters[Saml2Constants.Binding] == Saml2Constants.HttpRedirectProtocolBinding)
             {
@@ -981,7 +983,7 @@ namespace Sun.Identity.Saml2
             }
             else if (parameters[Saml2Constants.Binding] == Saml2Constants.HttpSoapProtocolBinding)
             {
-                SendSoapLogoutRequest(logoutRequest, idpEntityId);
+                await SendSoapLogoutRequestAsync(logoutRequest, idpEntityId);
             }
             else
             {
@@ -992,7 +994,7 @@ namespace Sun.Identity.Saml2
         /// <summary>
         ///     Sends a SOAP LogoutRequest to the specified IDP.
         /// </summary>
-        public void SendSoapLogoutRequest(LogoutRequest logoutRequest, string idpEntityId)
+        public async Task SendSoapLogoutRequestAsync(LogoutRequest logoutRequest, string idpEntityId)
         {
             HttpWebResponse response = null;
 
@@ -1001,8 +1003,7 @@ namespace Sun.Identity.Saml2
                 throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityLogoutRequestIsNull);
             }
 
-            IIdentityProvider idp;
-            if (!IdentityProviders.TryGetValue(idpEntityId, out idp))
+            if (!IdentityProviders.TryGetValue(idpEntityId, out var idp))
             {
                 throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
             }
@@ -1016,7 +1017,7 @@ namespace Sun.Identity.Saml2
             {
                 var soapLogoutSvcUri =
                     new Uri(idp.GetSingleLogoutServiceLocation(Saml2Constants.HttpSoapProtocolBinding));
-                var request = (HttpWebRequest) WebRequest.Create(soapLogoutSvcUri);
+                var request = WebRequest.CreateHttp(soapLogoutSvcUri);
                 var logoutRequestXml = (XmlDocument) logoutRequest.XmlDom;
 
                 if (idp.WantLogoutRequestSigned)
@@ -1046,17 +1047,17 @@ namespace Sun.Identity.Saml2
                 request.Method = "POST";
 
                 var requestStream = request.GetRequestStream();
-                requestStream.Write(byteArray, 0, byteArray.Length);
+                await requestStream.WriteAsync(byteArray, 0, byteArray.Length);
                 requestStream.Close();
 
-                response = (HttpWebResponse) request.GetResponse();
+                response = (HttpWebResponse) await request.GetResponseAsync();
                 string responseContent = null;
                 using (var responseStream = response.GetResponseStream())
                 {
                     if (responseStream != null)
                     {
                         var streamReader = new StreamReader(responseStream);
-                        responseContent = streamReader.ReadToEnd();
+                        responseContent = await streamReader.ReadToEndAsync();
                         streamReader.Close();
                     }
                 }
@@ -1083,7 +1084,6 @@ namespace Sun.Identity.Saml2
                     _logger.Info("LogoutResponse:\r\n{0}", logoutResponseXml);
                 }
 
-                // var logoutRequests = new ArrayList {logoutRequest};
                 Validate(logoutResponse);
             }
             catch (WebException we)
@@ -1100,22 +1100,21 @@ namespace Sun.Identity.Saml2
         ///     Send the SAML LogoutResponse message based on the received
         ///     LogoutRequest.  POST (default) or Redirect is supported.
         /// </summary>
-        public void SendLogoutResponse(HttpContextBase context, LogoutRequest logoutRequest)
+        public async Task SendLogoutResponseAsync(HttpContext context, LogoutRequest logoutRequest)
         {
             if (logoutRequest == null)
             {
                 throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityLogoutRequestIsNull);
             }
 
-            IIdentityProvider idp;
-            if (!IdentityProviders.TryGetValue(logoutRequest.Issuer, out idp))
+            if (!IdentityProviders.TryGetValue(logoutRequest.Issuer, out var idp))
             {
                 throw new ServiceProviderUtilityException(
                     Resources.ServiceProviderUtilityIdpNotDeterminedFromLogoutRequest);
             }
 
             // send logout response based on how it was received
-            if (context.Request.HttpMethod == "GET")
+            if (context.Request.Method == "GET")
             {
                 var parameters = new NameValueCollection
                 {
@@ -1148,9 +1147,9 @@ namespace Sun.Identity.Saml2
                 }
 
                 parameters = _saml2Utils.GetRequestParameters(context.Request);
-                var postHtml = GetLogoutResponsePostHtml(logoutResponse, idp.EntityId, parameters);
-                context.Response.Write(postHtml);
-                context.Response.End();
+                string postHtml = GetLogoutResponsePostHtml(logoutResponse, idp.EntityId, parameters);
+                byte[] bodyContent = Encoding.UTF8.GetBytes(postHtml);
+                await context.Response.Body.WriteAsync(bodyContent, 0, bodyContent.Length);
             }
         }
 
@@ -1158,10 +1157,9 @@ namespace Sun.Identity.Saml2
         ///     Writes a SOAP LogoutResponse to the Response object found within
         ///     the given HttpContext based on the given logout request.
         /// </summary>
-        public void SendSoapLogoutResponse(HttpContextBase context, LogoutRequest logoutRequest)
+        public async Task SendSoapLogoutResponseAsync(HttpContext context, LogoutRequest logoutRequest)
         {
-            IIdentityProvider idp;
-            if (!IdentityProviders.TryGetValue(logoutRequest.Issuer, out idp))
+            if (!IdentityProviders.TryGetValue(logoutRequest.Issuer, out var idp))
             {
                 throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityIdentityProviderNotFound);
             }
@@ -1197,8 +1195,9 @@ namespace Sun.Identity.Saml2
 
             var soapMessage = _saml2Utils.CreateSoapMessage(logoutResponseXml.OuterXml);
 
-            context.Response.ContentType = "text/xml";
-            context.Response.Write(soapMessage);
+            context.Response.ContentType = "text/xml; charset=utf-8";
+            byte[] bodyContent = Encoding.UTF8.GetBytes(soapMessage);
+            await context.Response.Body.WriteAsync(bodyContent, 0, bodyContent.Length);
         }
 
         #endregion
@@ -1335,7 +1334,7 @@ namespace Sun.Identity.Saml2
         /// <param name="authnResponse">SAMLv2 AuthnResponse.</param>
         private static void CheckInResponseTo(AuthnResponse authnResponse)
         {
-            // removed Session-based implementation, as we can't use Session to cache requests        
+            // removed Session-based implementation, as we can't use Session to cache requests
         }
 
         /// <summary>
@@ -1400,8 +1399,7 @@ namespace Sun.Identity.Saml2
         {
             var authnResponse = artifactResponse.AuthnResponse;
 
-            IIdentityProvider identityProvider;
-            if (!IdentityProviders.TryGetValue(authnResponse.Issuer, out identityProvider))
+            if (!IdentityProviders.TryGetValue(authnResponse.Issuer, out var identityProvider))
             {
                 throw new Saml2Exception(Resources.InvalidIssuer);
             }
@@ -1474,12 +1472,11 @@ namespace Sun.Identity.Saml2
         ///     profile.
         /// </summary>
         /// <param name="authnResponse">AuthnResponse object.</param>
-        /// <seealso cref="ServiceProviderUtility.ValidateForPost(AuthnResponse)" />
-        /// <seealso cref="ServiceProviderUtility.ValidateForRedirect(AuthnResponse,string)" />
+        /// <seealso cref="ValidateForPost(AuthnResponse)" />
+        /// <seealso cref="ValidateForRedirect(AuthnResponse,string)" />
         private void CheckSignature(AuthnResponse authnResponse)
         {
-            IIdentityProvider identityProvider;
-            if (!IdentityProviders.TryGetValue(authnResponse.Issuer, out identityProvider))
+            if (!IdentityProviders.TryGetValue(authnResponse.Issuer, out var identityProvider))
             {
                 throw new Saml2Exception(Resources.InvalidIssuer);
             }
@@ -1538,9 +1535,7 @@ namespace Sun.Identity.Saml2
         /// <param name="logoutRequest">SAMLv2 LogoutRequest object.</param>
         private void CheckSignature(LogoutRequest logoutRequest)
         {
-            IIdentityProvider idp;
-
-            if (!IdentityProviders.TryGetValue(logoutRequest.Issuer, out idp))
+            if (!IdentityProviders.TryGetValue(logoutRequest.Issuer, out var idp))
             {
                 throw new Saml2Exception(Resources.InvalidIssuer);
             }
@@ -1562,9 +1557,7 @@ namespace Sun.Identity.Saml2
         /// </param>
         private void CheckSignature(LogoutRequest logoutRequest, string queryString)
         {
-            IIdentityProvider idp;
-
-            if (!IdentityProviders.TryGetValue(logoutRequest.Issuer, out idp))
+            if (!IdentityProviders.TryGetValue(logoutRequest.Issuer, out var idp))
             {
                 throw new Saml2Exception(Resources.InvalidIssuer);
             }
@@ -1582,9 +1575,7 @@ namespace Sun.Identity.Saml2
         /// </param>
         private void CheckSignature(AuthnResponse authnResponse, string queryString)
         {
-            IIdentityProvider idp;
-
-            if (!IdentityProviders.TryGetValue(authnResponse.Issuer, out idp))
+            if (!IdentityProviders.TryGetValue(authnResponse.Issuer, out var idp))
             {
                 throw new Saml2Exception(Resources.InvalidIssuer);
             }
@@ -1599,9 +1590,7 @@ namespace Sun.Identity.Saml2
         /// <param name="logoutResponse">SAMLv2 LogoutRequest object.</param>
         private void CheckSignature(LogoutResponse logoutResponse)
         {
-            IIdentityProvider idp;
-
-            if (!IdentityProviders.TryGetValue(logoutResponse.Issuer, out idp))
+            if (!IdentityProviders.TryGetValue(logoutResponse.Issuer, out var idp))
             {
                 throw new Saml2Exception(Resources.InvalidIssuer);
             }

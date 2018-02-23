@@ -2,34 +2,33 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>RomanPolunin.SamlFedlet</id>
-    <version>1.0.6</version>
+    <version>2.0.0</version>
     <authors>Roman Polunin</authors>
     <owners>Roman Polunin</owners>
     <title>Fedlet, a SAML SSO Toolkit</title>
     <summary>Ultra-lightweight SAML SSO toolkit for SAML 2.0 service provider applications</summary>
     <description>
-SAML SSO toolkit for SAML 2.0 service provider applications in .NET. 
+SAML SSO toolkit for SAML 2.0 service provider applications in .NET.
 Supports SAML v2.0 SSO and SLO.
-Supports SAML v2.0 POST, Redirect and Artifact bindings. 
+Supports SAML v2.0 POST, Redirect and Artifact bindings.
 Directly uses entity descriptor XML files.
 Simple and flexible configuration using text and XML files, minimal code.
 See a sample application in the source code (current version unchanged from @daptiv/Fedlet).
 
 Origins:
 Published by @daptiv/Fedlet on GitHub, based on some 2009-2010 open-source version of OpenAM(OpenSSO) Fedlet.
-Forked that to make functionality and stability improvements. 
+Forked that to make functionality and stability improvements.
 	</description>
 	<language>en-US</language>
     <licenseUrl>https://solaris.java.net/license.html</licenseUrl>
     <projectUrl>https://github.com/romanpolunin/Fedlet</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <tags>SAML SSO</tags>
-	<copyright>Portions copyright (c) Roman Polunin 2015-2016. Copyright (c) Sun Microsystems 2019-2010</copyright>
-	<releaseNotes>Fedlet 1.0.6.0 - Dec 2016
-Switched targeting to .NET 462. 
-Expects .Net framework to be able to work with CNG certs without additional hacks.</releaseNotes>
+	<copyright>Portions copyright (c) Roman Polunin 2015-2018. Copyright (c) Sun Microsystems 2019-2010</copyright>
+	<releaseNotes>Fedlet 2.0.0.0 - Jan 2018
+Switched targeting to .net standard 2.0</releaseNotes>
   </metadata>
   <files>
-    <file src="**\*" target="" exclude="*.ps1" /> 
+    <file src="..\Fedlet\bin\Release\netstandard2.0\**\*" target="lib\netstandard2.0" exclude="*.ps1" />
   </files>
 </package>

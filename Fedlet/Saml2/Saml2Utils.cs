@@ -1,19 +1,19 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
+ *
  * Copyright (c) 2009-2010 Sun Microsystems Inc. All Rights Reserved
- * 
+ *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
- * 
+ *
  * You can obtain a copy of the License at
  * https://opensso.dev.java.net/public/CDDLv1.0.html or
  * opensso/legal/CDDLv1.0.txt
  * See the License for the specific language governing
  * permission and limitations under the License.
- * 
+ *
  * When distributing Covered Code, include this CDDL
  * Header Notice in each file and include the License file
  * at opensso/legal/CDDLv1.0.txt.
@@ -21,7 +21,7 @@
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
- * 
+ *
  * $Id: Saml2Utils.cs,v 1.8 2010/01/26 01:20:14 ggennaro Exp $
  */
 
@@ -39,6 +39,7 @@ using System.Text.RegularExpressions;
 using System.Web;
 using System.Xml;
 using System.Xml.XPath;
+using Microsoft.AspNetCore.Http;
 using Sun.Identity.Common;
 using Sun.Identity.Properties;
 using Sun.Identity.Saml2.Exceptions;
@@ -71,33 +72,33 @@ namespace Sun.Identity.Saml2
 			return Encoding.UTF8.GetString(byteArray);
 		}
 
-		/// <summary>
-		/// Converts from Base64, then decompresses the given
-		/// parameter and returns the ensuing string.
-		/// </summary>
-		/// <param name="message">message to undergo the process</param>
-		/// <returns>String output from the process.</returns>
-		public string ConvertFromBase64Decompress(string message)
-		{
-			// convert from base 64
-			var byteArray = Convert.FromBase64String(message);
+        /// <summary>
+        /// Converts from Base64, then decompresses the given
+        /// parameter and returns the ensuing string.
+        /// </summary>
+        /// <param name="message">message to undergo the process</param>
+        /// <returns>String output from the process.</returns>
+        public string ConvertFromBase64Decompress(string message)
+        {
+            // convert from base 64
+            var byteArray = Convert.FromBase64String(message);
 
-			// inflate the gzip deflated message
-			var streamReader = new StreamReader(new DeflateStream(new MemoryStream(byteArray), CompressionMode.Decompress));
+            // inflate the gzip deflated message
+            var streamReader = new StreamReader(new DeflateStream(new MemoryStream(byteArray), CompressionMode.Decompress));
 
-			// put in a string
-			var decompressedMessage = streamReader.ReadToEnd();
-			streamReader.Close();
+            // put in a string
+            var decompressedMessage = streamReader.ReadToEnd();
+            streamReader.Close();
 
-			return decompressedMessage;
-		}
+            return decompressedMessage;
+        }
 
-		/// <summary>
-		/// Converts the base64 encoded string of the given input string.
-		/// </summary>
-		/// <param name="value">String to be encoded.</param>
-		/// <returns>Base64 encoded output of the specified string.</returns>
-		public string ConvertToBase64(string value)
+        /// <summary>
+        /// Converts the base64 encoded string of the given input string.
+        /// </summary>
+        /// <param name="value">String to be encoded.</param>
+        /// <returns>Base64 encoded output of the specified string.</returns>
+        public string ConvertToBase64(string value)
 		{
 			return Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
 		}
@@ -154,22 +155,25 @@ namespace Sun.Identity.Saml2
 		/// </summary>
 		/// <param name="request">HttpRequest containing desired parameters</param>
 		/// <returns>
-		/// NameValueCOllection of parameters found in QueryString and Form objects within 
+		/// NameValueCOllection of parameters found in QueryString and Form objects within
 		/// the given Request.
 		/// </returns>
-		public NameValueCollection GetRequestParameters(HttpRequestBase request)
+		public NameValueCollection GetRequestParameters(HttpRequest request)
 		{
 			var parameters = new NameValueCollection();
 
-			foreach (string name in request.QueryString.Keys)
+			foreach (string name in request.Query.Keys)
 			{
-				parameters[name] = request.QueryString[name];
+				parameters[name] = request.Query[name];
 			}
 
-			foreach (string name in request.Form.Keys)
-			{
-				parameters[name] = request.Form[name];
-			}
+		    if (request.HasFormContentType)
+		    {
+		        foreach (string name in request.Form.Keys)
+		        {
+		            parameters[name] = request.Form[name];
+		        }
+		    }
 
 			return parameters;
 		}
@@ -184,12 +188,11 @@ namespace Sun.Identity.Saml2
 		/// </returns>
 		public static bool GetBoolean(string value)
 		{
-		    bool result;
-		    return Boolean.TryParse(value, out result) && result;
+		    return bool.TryParse(value, out var result) && result;
 		}
 
 		/// <summary>
-		/// Gets the delimeter in the context of a query string depending
+		/// Gets the delimiter in the context of a query string depending
 		/// on the existence of a question mark within the given URL.
 		/// </summary>
 		/// <param name="location">
@@ -210,7 +213,7 @@ namespace Sun.Identity.Saml2
 		}
 
 	    /// <summary>
-		/// Compresses, converts to Base64, then URL encodes the given 
+		/// Compresses, converts to Base64, then URL encodes the given
 		/// parameter and returns the ensuing string.
 		/// </summary>
 		/// <param name="xml">XML to undergo the process</param>
@@ -347,18 +350,29 @@ namespace Sun.Identity.Saml2
 	    {
             switch (signatureAlgorithmUrl)
             {
-                case "http://www.w3.org/2000/09/xmldsig#dsa-sha1": return HashAlgorithmName.SHA1; 
-                case SignedXml.XmlDsigRSASHA1Url: return HashAlgorithmName.SHA1; 
-                case SignedXml.XmlDsigRSASHA256Url: return HashAlgorithmName.SHA256; 
-                case SignedXml.XmlDsigRSASHA384Url: return HashAlgorithmName.SHA384; 
-                case SignedXml.XmlDsigRSASHA512Url: return HashAlgorithmName.SHA512; 
-                default: throw new Saml2Exception(Resources.SignedQueryStringSigAlgNotSupported);
+                case SignedXml.XmlDsigDSAUrl:
+                    return HashAlgorithmName.SHA1;
+
+                case SignedXml.XmlDsigRSASHA1Url:
+                    return HashAlgorithmName.SHA1;
+
+                case InternalSignedXml.XmlDsigRSASHA256Url:
+                    return HashAlgorithmName.SHA256;
+
+                case InternalSignedXml.XmlDsigRSASHA384Url:
+                    return HashAlgorithmName.SHA384;
+
+                case InternalSignedXml.XmlDsigRSASHA512Url:
+                    return HashAlgorithmName.SHA512;
+
+                default:
+                    throw new Saml2Exception(Resources.SignedQueryStringSigAlgNotSupported);
             }
         }
 
         /// <summary>
         /// Signs the specified xml document with the certificate found in
-        /// the local machine matching the provided friendly name and 
+        /// the local machine matching the provided friendly name and
         /// referring to the specified target reference ID.
         /// </summary>
         /// <param name="certFriendlyName">
@@ -373,7 +387,7 @@ namespace Sun.Identity.Saml2
         /// Reference element that will be specified as signed.
         /// </param>
         /// <param name="includePublicKey">
-        /// Flag to determine whether to include the public key in the 
+        /// Flag to determine whether to include the public key in the
         /// signed xml.
         /// </param>
         /// <param name="signatureMethod">Identifier of the signature method.</param>
@@ -472,7 +486,7 @@ namespace Sun.Identity.Saml2
 		{
 			if (string.IsNullOrEmpty(relayState) || allowedRelayStates == null || allowedRelayStates.Count == 0)
 			{
-				// If none specified, default to valid for backwards compatability
+				// If none specified, default to valid for backwards compatibility
 				return;
 			}
 
@@ -622,7 +636,8 @@ namespace Sun.Identity.Saml2
         /// <summary>
         /// Xml utility.
         /// </summary>
-        public static string RequireAttributeValue(XmlDocument document, XmlNamespaceManager nsmgr, string xpath, string attribute)
+        public static string RequireAttributeValue(XmlDocument document, XmlNamespaceManager nsmgr, string xpath,
+            string attribute)
         {
             var root = RequireRootElement(document);
             var node = root.SelectSingleNode(xpath, nsmgr);
@@ -637,7 +652,8 @@ namespace Sun.Identity.Saml2
         /// <summary>
         /// Xml utility.
         /// </summary>
-        public static string TryGetAttributeValue(XmlDocument document, XmlNamespaceManager nsmgr, string xpath, string attribute)
+        public static string TryGetAttributeValue(XmlDocument document, XmlNamespaceManager nsmgr, string xpath,
+            string attribute)
         {
             var root = RequireRootElement(document);
             var node = root.SelectSingleNode(xpath, nsmgr);

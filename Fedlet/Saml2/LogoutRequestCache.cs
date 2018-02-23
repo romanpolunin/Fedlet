@@ -25,7 +25,7 @@
  * $Id: LogoutRequestCache.cs,v 1.1 2009/11/11 18:13:39 ggennaro Exp $
  */
 
-using System.Web;
+using Microsoft.AspNetCore.Http;
 
 namespace Sun.Identity.Saml2
 {
@@ -69,7 +69,7 @@ namespace Sun.Identity.Saml2
 		/// <param name="logoutRequest">
 		/// LogoutRequest to add to the collection.
 		/// </param>
-        internal static void AddSentLogoutRequest(HttpContextBase context, LogoutRequest logoutRequest)
+        internal static void AddSentLogoutRequest(HttpContext context, LogoutRequest logoutRequest)
 		{
             // removed Session-based implementation, as we can't use Session to cache requests
         }
@@ -86,7 +86,7 @@ namespace Sun.Identity.Saml2
         /// <param name="logoutRequestId">
         /// ID of the LogoutRequest to be removed from the cache.
         /// </param>
-        internal static void RemoveSentLogoutRequest(HttpContextBase context, string logoutRequestId)
+        internal static void RemoveSentLogoutRequest(HttpContext context, string logoutRequestId)
 		{
             // removed Session-based implementation, as we can't use Session to cache requests
         }

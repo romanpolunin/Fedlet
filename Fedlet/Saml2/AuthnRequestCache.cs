@@ -1,19 +1,19 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
+ *
  * Copyright (c) 2009 Sun Microsystems Inc. All Rights Reserved
- * 
+ *
  * The contents of this file are subject to the terms
  * of the Common Development and Distribution License
  * (the License). You may not use this file except in
  * compliance with the License.
- * 
+ *
  * You can obtain a copy of the License at
  * https://opensso.dev.java.net/public/CDDLv1.0.html or
  * opensso/legal/CDDLv1.0.txt
  * See the License for the specific language governing
  * permission and limitations under the License.
- * 
+ *
  * When distributing Covered Code, include this CDDL
  * Header Notice in each file and include the License file
  * at opensso/legal/CDDLv1.0.txt.
@@ -21,11 +21,11 @@
  * with the fields enclosed by brackets [] replaced by
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
- * 
+ *
  * $Id: AuthnRequestCache.cs,v 1.1 2009/06/11 18:37:58 ggennaro Exp $
  */
 
-using System.Web;
+using Microsoft.AspNetCore.Http;
 
 namespace Sun.Identity.Saml2
 {
@@ -58,8 +58,8 @@ namespace Sun.Identity.Saml2
 		#region Methods
 
 		/// <summary>
-		/// Adds the specified AuthnRequest to the collection of previously 
-		/// sent requests, maintaining the imposed limit as defined by 
+		/// Adds the specified AuthnRequest to the collection of previously
+		/// sent requests, maintaining the imposed limit as defined by
 		/// MaximumRequestsStored.  This collection is represented as a
 		/// queue and is attached to the user's session.
 		/// </summary>
@@ -67,15 +67,15 @@ namespace Sun.Identity.Saml2
 		/// HttpContext containing session, request, and response objects.
 		/// </param>
 		/// <param name="authnRequest">AuthnRequest to add to the collection.</param>
-		internal static void AddSentAuthnRequest(HttpContextBase context, AuthnRequest authnRequest)
+		internal static void AddSentAuthnRequest(HttpContext context, AuthnRequest authnRequest)
 		{
             // removed Session-based implementation, as we can't use Session to cache requests
 		}
 
 		/// <summary>
-		/// Removes the AuthnRequest from the collection of previously 
+		/// Removes the AuthnRequest from the collection of previously
 		/// sent requests based on the provided AuthnRequest.Id value.
-		/// This collection is represented as a queue and is attached to 
+		/// This collection is represented as a queue and is attached to
 		/// the user's session.
 		/// </summary>
 		/// <param name="context">
@@ -84,7 +84,7 @@ namespace Sun.Identity.Saml2
 		/// <param name="authnRequestId">
 		/// ID of the AuthnRequest to be removed from the cache.
 		/// </param>
-		internal static void RemoveSentAuthnRequest(HttpContextBase context, string authnRequestId)
+		internal static void RemoveSentAuthnRequest(HttpContext context, string authnRequestId)
 		{
             // removed Session-based implementation, as we can't use Session to cache requests
         }
