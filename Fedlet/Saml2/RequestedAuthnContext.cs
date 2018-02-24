@@ -37,16 +37,12 @@ namespace Sun.Identity.Saml2
 	/// </summary>
 	public class RequestedAuthnContext
 	{
-		#region Members
+        #region Constructors
 
-		#endregion
-
-		#region Constructors
-
-		/// <summary>
-		/// Initializes a new instance of the RequestedAuthnContext class.
-		/// </summary>
-		public RequestedAuthnContext()
+        /// <summary>
+        /// Initializes a new instance of the RequestedAuthnContext class.
+        /// </summary>
+        public RequestedAuthnContext()
 		{
 			Comparison = null;
 			AuthnContextClassRef = new ArrayList();

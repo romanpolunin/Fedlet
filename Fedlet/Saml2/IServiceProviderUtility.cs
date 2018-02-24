@@ -44,7 +44,7 @@ namespace Sun.Identity.Saml2
         /// the AuthnResponse prior to returning to the user.
         /// </summary>
         /// <param name="context">
-        ///     HttpContext containing session, request, and response objects.
+        /// HttpContext containing session, request, and response objects.
         /// </param>
         /// <returns>AuthnResponse object</returns>
         Task<AuthnResponse> GetAuthnResponseAsync(HttpContext context);
@@ -55,7 +55,7 @@ namespace Sun.Identity.Saml2
         /// the LogoutRequest prior to returning to the user.
         /// </summary>
         /// <param name="context">
-        ///     HttpContext containing session, request, and response objects.
+        /// HttpContext containing session, request, and response objects.
         /// </param>
         /// <returns>LogoutRequest object</returns>
         Task<LogoutRequest> GetLogoutRequestAsync(HttpContext context);
@@ -66,7 +66,7 @@ namespace Sun.Identity.Saml2
         /// the LogoutResponse prior to returning to the user.
         /// </summary>
         /// <param name="context">
-        ///     HttpContext containing session, request, and response objects.
+        /// HttpContext containing session, request, and response objects.
         /// </param>
         /// <returns>LogoutResponse object</returns>
         Task<LogoutResponse> GetLogoutResponseAsync(HttpContext context);
@@ -91,11 +91,11 @@ namespace Sun.Identity.Saml2
         /// to be used for actual browser requests.
         /// </summary>
         /// <param name="authnRequest">
-        ///     AuthnRequest to packaged for a redirect.
+        /// AuthnRequest to packaged for a redirect.
         /// </param>
         /// <param name="idpEntityId">Entity ID of the IDP.</param>
         /// <param name="parameters">
-        ///     NameVallueCollection of additional parameters.
+        /// NameVallueCollection of additional parameters.
         /// </param>
         /// <returns>
         /// URL with query string parameter for the specified IDP.
@@ -123,11 +123,11 @@ namespace Sun.Identity.Saml2
         /// to be used for actual browser requests.
         /// </summary>
         /// <param name="logoutRequest">
-        ///     LogoutRequest to packaged for a redirect.
+        /// LogoutRequest to packaged for a redirect.
         /// </param>
         /// <param name="idpEntityId">Entity ID of the IDP.</param>
         /// <param name="parameters">
-        ///     NameVallueCollection of additional parameters.
+        /// NameVallueCollection of additional parameters.
         /// </param>
         /// <returns>
         /// URL with query string parameter for the specified IDP.

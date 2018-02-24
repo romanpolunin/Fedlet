@@ -41,7 +41,7 @@ namespace Sun.Identity.Saml2
 	/// </summary>
 	public class ServiceProvider : IServiceProvider
 	{
-	    private readonly Saml2Utils _saml2Utils;
+	    private readonly Saml2Utils m_saml2Utils;
 
 	    #region Members
 
@@ -49,22 +49,22 @@ namespace Sun.Identity.Saml2
 		/// XML document representing the extended metadata for this Service
 		/// Provider.
 		/// </summary>
-		private readonly XmlDocument _extendedMetadata;
+		private readonly XmlDocument m_extendedMetadata;
 
 		/// <summary>
 		/// Namespace Manager for the extended metadata.
 		/// </summary>
-		private readonly XmlNamespaceManager _extendedMetadataNsMgr;
+		private readonly XmlNamespaceManager m_extendedMetadataNsMgr;
 
 		/// <summary>
 		/// XML document representing the metadata for this Service Provider.
 		/// </summary>
-		private readonly XmlDocument _metadata;
+		private readonly XmlDocument m_metadata;
 
 		/// <summary>
 		/// Namespace Manager for the metadata.
 		/// </summary>
-		private readonly XmlNamespaceManager _metadataNsMgr;
+		private readonly XmlNamespaceManager m_metadataNsMgr;
 
 		#endregion
 
@@ -75,16 +75,16 @@ namespace Sun.Identity.Saml2
 		/// </summary>
 		public ServiceProvider(XmlDocument metadata, XmlDocument extendedMetadata, Saml2Utils saml2Utils)
 		{
-		    _saml2Utils = saml2Utils;
+		    m_saml2Utils = saml2Utils ?? throw new ArgumentNullException(nameof(saml2Utils));
 		    try
 			{
-				_metadata = metadata;
-				_metadataNsMgr = new XmlNamespaceManager(metadata.NameTable);
-				_metadataNsMgr.AddNamespace("md", "urn:oasis:names:tc:SAML:2.0:metadata");
+				m_metadata = metadata;
+				m_metadataNsMgr = new XmlNamespaceManager(metadata.NameTable);
+				m_metadataNsMgr.AddNamespace("md", "urn:oasis:names:tc:SAML:2.0:metadata");
 
-				_extendedMetadata = extendedMetadata;
-				_extendedMetadataNsMgr = new XmlNamespaceManager(extendedMetadata.NameTable);
-				_extendedMetadataNsMgr.AddNamespace("mdx", "urn:sun:fm:SAML:2.0:entityconfig");
+				m_extendedMetadata = extendedMetadata;
+				m_extendedMetadataNsMgr = new XmlNamespaceManager(extendedMetadata.NameTable);
+				m_extendedMetadataNsMgr.AddNamespace("mdx", "urn:sun:fm:SAML:2.0:entityconfig");
 			}
 			catch (XmlException xe)
 			{
@@ -107,7 +107,7 @@ namespace Sun.Identity.Saml2
                 const string xpath =
                     "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='assertionTimeSkew']/mdx:Value";
 
-                var value = Saml2Utils.TryGetNodeText(_extendedMetadata, _extendedMetadataNsMgr, xpath);
+                var value = Saml2Utils.TryGetNodeText(m_extendedMetadata, m_extendedMetadataNsMgr, xpath);
                 int seconds;
                 return value != null && Int32.TryParse(value, out seconds)
                     ? TimeSpan.FromSeconds(seconds)
@@ -124,7 +124,7 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				const string xpath = "/md:EntityDescriptor/md:SPSSODescriptor";
-			    var value = Saml2Utils.TryGetAttributeValue(_metadata, _metadataNsMgr, xpath, "AuthnRequestsSigned");
+			    var value = Saml2Utils.TryGetAttributeValue(m_metadata, m_metadataNsMgr, xpath, "AuthnRequestsSigned");
                 return Saml2Utils.GetBoolean(value);
 			}
 		}
@@ -137,7 +137,7 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				const string xpath = "/md:EntityDescriptor";
-			    return Saml2Utils.RequireAttributeValue(_metadata, _metadataNsMgr, xpath, "entityID");
+			    return Saml2Utils.RequireAttributeValue(m_metadata, m_metadataNsMgr, xpath, "entityID");
 			}
 		}
 
@@ -149,7 +149,7 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				const string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig";
-                return Saml2Utils.RequireAttributeValue(_extendedMetadata, _extendedMetadataNsMgr, xpath, "metaAlias");
+                return Saml2Utils.RequireAttributeValue(m_extendedMetadata, m_extendedMetadataNsMgr, xpath, "metaAlias");
 			}
 		}
 
@@ -162,7 +162,7 @@ namespace Sun.Identity.Saml2
 			get
 			{
 			    const string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='encryptionCertAlias']/mdx:Value";
-			    return Saml2Utils.TryGetNodeText(_extendedMetadata, _extendedMetadataNsMgr, xpath);
+			    return Saml2Utils.TryGetNodeText(m_extendedMetadata, m_extendedMetadataNsMgr, xpath);
 			}
 		}
 
@@ -174,7 +174,7 @@ namespace Sun.Identity.Saml2
 			get
 			{
 			    const string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='signatureMethod']/mdx:Value";
-			    var method = Saml2Utils.TryGetNodeText(_extendedMetadata, _extendedMetadataNsMgr, xpath);
+			    var method = Saml2Utils.TryGetNodeText(m_extendedMetadata, m_extendedMetadataNsMgr, xpath);
 			    return string.IsNullOrEmpty(method) ? InternalSignedXml.XmlDsigRSASHA256Url : method;
 			}
 		}
@@ -187,7 +187,7 @@ namespace Sun.Identity.Saml2
 			get
 			{
 			    const string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='digestMethod']/mdx:Value";
-                var method = Saml2Utils.TryGetNodeText(_extendedMetadata, _extendedMetadataNsMgr, xpath);
+                var method = Saml2Utils.TryGetNodeText(m_extendedMetadata, m_extendedMetadataNsMgr, xpath);
                 return string.IsNullOrEmpty(method) ? null : method;
             }
 		}
@@ -202,8 +202,8 @@ namespace Sun.Identity.Saml2
 			{
 				var values = new ArrayList();
 				const string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='relayStateUrlList']/mdx:Value";
-				var root = Saml2Utils.RequireRootElement(_extendedMetadata);
-				var nodeList = root.SelectNodes(xpath, _extendedMetadataNsMgr);
+				var root = Saml2Utils.RequireRootElement(m_extendedMetadata);
+				var nodeList = root.SelectNodes(xpath, m_extendedMetadataNsMgr);
 
 				if (nodeList != null)
 				{
@@ -226,7 +226,7 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				const string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='signingCertAlias']/mdx:Value";
-                return Saml2Utils.TryGetNodeText(_extendedMetadata, _extendedMetadataNsMgr, xpath);
+                return Saml2Utils.TryGetNodeText(m_extendedMetadata, m_extendedMetadataNsMgr, xpath);
             }
 		}
 
@@ -239,7 +239,7 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				const string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='wantArtifactResponseSigned']/mdx:Value";
-                var value = Saml2Utils.TryGetNodeText(_extendedMetadata, _extendedMetadataNsMgr, xpath);
+                var value = Saml2Utils.TryGetNodeText(m_extendedMetadata, m_extendedMetadataNsMgr, xpath);
                 return Saml2Utils.GetBoolean(value);
 			}
 		}
@@ -253,7 +253,7 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				const string xpath = "/md:EntityDescriptor/md:SPSSODescriptor";
-			    var value = Saml2Utils.TryGetAttributeValue(_metadata, _metadataNsMgr, xpath, "WantAssertionsSigned");
+			    var value = Saml2Utils.TryGetAttributeValue(m_metadata, m_metadataNsMgr, xpath, "WantAssertionsSigned");
                 return Saml2Utils.GetBoolean(value);
 			}
 		}
@@ -267,7 +267,7 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				const string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='wantPOSTResponseSigned']/mdx:Value";
-                var value = Saml2Utils.TryGetNodeText(_extendedMetadata, _extendedMetadataNsMgr, xpath);
+                var value = Saml2Utils.TryGetNodeText(m_extendedMetadata, m_extendedMetadataNsMgr, xpath);
                 return Saml2Utils.GetBoolean(value);
 			}
 		}
@@ -281,7 +281,7 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				const string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='wantLogoutRequestSigned']/mdx:Value";
-                var value = Saml2Utils.TryGetNodeText(_extendedMetadata, _extendedMetadataNsMgr, xpath);
+                var value = Saml2Utils.TryGetNodeText(m_extendedMetadata, m_extendedMetadataNsMgr, xpath);
                 return Saml2Utils.GetBoolean(value);
             }
 		}
@@ -295,7 +295,7 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				const string xpath = "/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute[@name='wantLogoutResponseSigned']/mdx:Value";
-                var value = Saml2Utils.TryGetNodeText(_extendedMetadata, _extendedMetadataNsMgr, xpath);
+                var value = Saml2Utils.TryGetNodeText(m_extendedMetadata, m_extendedMetadataNsMgr, xpath);
                 return Saml2Utils.GetBoolean(value);
             }
 		}
@@ -312,7 +312,7 @@ namespace Sun.Identity.Saml2
 		public string GetAssertionConsumerServiceLocation(string binding)
 		{
 		    var xpath = $"/md:EntityDescriptor/md:SPSSODescriptor/md:AssertionConsumerService[@Binding='{binding}']";
-            return Saml2Utils.TryGetAttributeValue(_metadata, _metadataNsMgr, xpath, "Location");
+            return Saml2Utils.TryGetAttributeValue(m_metadata, m_metadataNsMgr, xpath, "Location");
 		}
 
 		/// <summary>
@@ -324,7 +324,7 @@ namespace Sun.Identity.Saml2
 		public string GetAssertionConsumerServiceLocation(string binding, string index)
 		{
 		    var xpath = $"/md:EntityDescriptor/md:SPSSODescriptor/md:AssertionConsumerService[@Binding='{binding}' and index='{index}']";
-            return Saml2Utils.TryGetAttributeValue(_metadata, _metadataNsMgr, xpath, "Location");
+            return Saml2Utils.TryGetAttributeValue(m_metadata, m_metadataNsMgr, xpath, "Location");
         }
 
 		/// <summary>
@@ -419,8 +419,8 @@ namespace Sun.Identity.Saml2
 		/// </returns>
 		public string GetExportableMetadata(bool signMetadata)
 		{
-			var exportableXml = (XmlDocument) _metadata.CloneNode(true);
-			var entityDescriptorNode = exportableXml.SelectSingleNode("/md:EntityDescriptor", _metadataNsMgr);
+			var exportableXml = (XmlDocument) m_metadata.CloneNode(true);
+			var entityDescriptorNode = exportableXml.SelectSingleNode("/md:EntityDescriptor", m_metadataNsMgr);
 
 			if (entityDescriptorNode == null)
 			{
@@ -435,10 +435,10 @@ namespace Sun.Identity.Saml2
 			if (signMetadata)
 			{
 				var descriptorId = exportableXml.CreateAttribute("ID");
-                descriptorId.Value = _saml2Utils.GenerateId();
+                descriptorId.Value = Saml2Utils.GenerateId();
 				entityDescriptorNode.Attributes.Append(descriptorId);
 
-                _saml2Utils.SignXml(SigningCertificateAlias, exportableXml, descriptorId.Value, true, SignatureMethod, DigestMethod);
+                m_saml2Utils.SignXml(SigningCertificateAlias, exportableXml, descriptorId.Value, true, SignatureMethod, DigestMethod);
 			}
 
 			return exportableXml.InnerXml;
@@ -463,8 +463,8 @@ namespace Sun.Identity.Saml2
 			xpath.Append("/mdx:EntityConfig/mdx:SPSSOConfig/mdx:Attribute");
 			xpath.Append("[@name='spAuthncontextClassrefMapping']/mdx:Value");
 
-			var root = Saml2Utils.RequireRootElement(_extendedMetadata);
-			var nodes = root.SelectNodes(xpath.ToString(), _extendedMetadataNsMgr);
+			var root = Saml2Utils.RequireRootElement(m_extendedMetadata);
+			var nodes = root.SelectNodes(xpath.ToString(), m_extendedMetadataNsMgr);
 			return nodes;
 		}
 

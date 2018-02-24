@@ -13,58 +13,62 @@ namespace Sun.Identity.Common
 	/// </summary>
 	public class FileWatcherFedletRepository : IFedletRepository
 	{
-		private readonly IFedletRepository _innerRepository;
-		private readonly FileSystemWatcher _fileSystemWatcher;
-		private readonly Timer _timer;
-		private int _clearCacheAttempts;
+		private readonly IFedletRepository m_innerRepository;
+		private readonly FileSystemWatcher m_fileSystemWatcher;
+		private readonly Timer m_timer;
+		private int m_clearCacheAttempts;
 
-		private Dictionary<string, ICircleOfTrust> _cirlcesOfTrust;
-		private ISamlServiceProvider _serviceProvider;
-		private Dictionary<string, IIdentityProvider> _identityProviders;
-		private readonly string _homeFolder;
+		private Dictionary<string, ICircleOfTrust> m_circlesOfTrust;
+		private ISamlServiceProvider m_serviceProvider;
+		private Dictionary<string, IIdentityProvider> m_identityProviders;
+		private readonly string m_homeFolder;
 
-	    /// <summary>
-	    /// Initializes a new instance of the <see cref="FileWatcherFedletRepository"/> class.
-	    /// </summary>
-	    /// <param name="homeFolder">The folder containing the configuration files.</param>
-	    /// <param name="saml2Utils">Utilities</param>
-	    public FileWatcherFedletRepository(string homeFolder, Saml2Utils saml2Utils)
+        private readonly ILogger m_logger;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FileWatcherFedletRepository"/> class.
+        /// </summary>
+        /// <param name="homeFolder">The folder containing the configuration files.</param>
+        /// <param name="saml2Utils">Utilities</param>
+        /// <param name="logger">Logger</param>
+        public FileWatcherFedletRepository(string homeFolder, Saml2Utils saml2Utils, ILogger logger)
 		{
-			_homeFolder = homeFolder;
-            _innerRepository = new FileFedletRepository(homeFolder, saml2Utils);
-			_fileSystemWatcher = new FileSystemWatcher(homeFolder);
-			_timer = new Timer(ReplaceCache);
-			_fileSystemWatcher.Changed += ClearCache;
-			_fileSystemWatcher.Created += ClearCache;
-			_fileSystemWatcher.Deleted += ClearCache;
-			_fileSystemWatcher.Renamed += ClearCache;
-			_fileSystemWatcher.EnableRaisingEvents = true;
+			m_homeFolder = homeFolder;
+            m_innerRepository = new FileFedletRepository(homeFolder, saml2Utils);
+			m_fileSystemWatcher = new FileSystemWatcher(homeFolder);
+			m_timer = new Timer(ReplaceCache);
+			m_fileSystemWatcher.Changed += ClearCache;
+			m_fileSystemWatcher.Created += ClearCache;
+			m_fileSystemWatcher.Deleted += ClearCache;
+			m_fileSystemWatcher.Renamed += ClearCache;
+			m_fileSystemWatcher.EnableRaisingEvents = true;
+            m_logger = logger;
 		}
 
 		private void ReplaceCache(object state)
 		{
 			try
 			{
-				_clearCacheAttempts++;
+				m_clearCacheAttempts++;
 
 				//don't replace any cached values unless all cached values can be replaced
 				//  if a file is locked, the exception will reschedule replacing the cache
-				var serviceProvider = _innerRepository.GetServiceProvider();
-				var circleOfTrusts = _innerRepository.GetCircleOfTrusts();
-				var identityProviders = _innerRepository.GetIdentityProviders();
+				var serviceProvider = m_innerRepository.GetServiceProvider();
+				var circleOfTrusts = m_innerRepository.GetCircleOfTrusts();
+				var identityProviders = m_innerRepository.GetIdentityProviders();
 
-				_serviceProvider = serviceProvider;
-				_cirlcesOfTrust = circleOfTrusts;
-				_identityProviders = identityProviders;
+				m_serviceProvider = serviceProvider;
+				m_circlesOfTrust = circleOfTrusts;
+				m_identityProviders = identityProviders;
 
-				_clearCacheAttempts = 0;
+				m_clearCacheAttempts = 0;
 			}
 			catch (Exception ex)
 			{
-				if (_clearCacheAttempts > 0 && _clearCacheAttempts % 100 == 0)
+				if (m_clearCacheAttempts > 0 && m_clearCacheAttempts % 100 == 0)
 				{
-					ex.Data["homeFolder"] = _homeFolder;
-					LoggerFactory.GetLogger<ServiceProviderUtility>().Error(ex, "Unable to load configuration");
+					ex.Data["homeFolder"] = m_homeFolder;
+					m_logger.Error(ex, "Unable to load configuration");
 				}
 				ClearCache(null, null);
 			}
@@ -72,25 +76,25 @@ namespace Sun.Identity.Common
 
 		private void ClearCache(object sender, FileSystemEventArgs e)
 		{
-			_timer.Change(500, -1);
+			m_timer.Change(500, -1);
 		}
 
 	    /// <summary>Get all configuration information for all circles of trust.</summary>
 	    public Dictionary<string, ICircleOfTrust> GetCircleOfTrusts()
 		{
-			return _cirlcesOfTrust ?? (_cirlcesOfTrust = _innerRepository.GetCircleOfTrusts());
+			return m_circlesOfTrust ?? (m_circlesOfTrust = m_innerRepository.GetCircleOfTrusts());
 		}
 
 	    /// <summary>Get all configuration information for the service provider.</summary>
 	    public ISamlServiceProvider GetServiceProvider()
 		{
-			return _serviceProvider ?? (_serviceProvider = _innerRepository.GetServiceProvider());
+			return m_serviceProvider ?? (m_serviceProvider = m_innerRepository.GetServiceProvider());
 		}
 
 	    /// <summary>Get all configuration information for all identity providers.</summary>
 	    public Dictionary<string, IIdentityProvider> GetIdentityProviders()
 		{
-			return _identityProviders ?? (_identityProviders = _innerRepository.GetIdentityProviders());
+			return m_identityProviders ?? (m_identityProviders = m_innerRepository.GetIdentityProviders());
 		}
 	}
 }

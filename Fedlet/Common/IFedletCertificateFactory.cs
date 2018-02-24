@@ -10,6 +10,6 @@ namespace Sun.Identity.Common
         /// <summary>
         /// Retrieves a certificate by friendly name.
         /// </summary>
-        X509Certificate2 GetCertificateByFriendlyName(string friendlyName);
+        X509Certificate2 GetCertificateByFriendlyName(string friendlyName, ILogger logger);
     }
 }

@@ -41,7 +41,7 @@ namespace Sun.Identity.Saml2
 		private const string Saml2WriterServiceKey = "sun-fm-saml2-writerservice-url";
 		private const string TrustedProvidersKey = "sun-fm-trusted-providers";
 
-		private readonly HashSet<string> _trustedEntities = new HashSet<string>();
+		private readonly HashSet<string> m_trustedEntities = new HashSet<string>();
 
 
 		/// <summary>
@@ -83,7 +83,7 @@ namespace Sun.Identity.Saml2
 
 				foreach (var t in trusted.Split(separator, StringSplitOptions.RemoveEmptyEntries))
 				{
-					_trustedEntities.Add(t.Trim());
+					m_trustedEntities.Add(t.Trim());
 				}
 			}
 		}
@@ -97,8 +97,8 @@ namespace Sun.Identity.Saml2
 		/// <returns>True if providers are trusted, false otherwise.</returns>
 		public bool AreProvidersTrusted(string serviceProviderEntityId, string identityProviderEntityId)
 		{
-			return _trustedEntities.Contains(serviceProviderEntityId)
-			       && _trustedEntities.Contains(identityProviderEntityId);
+			return m_trustedEntities.Contains(serviceProviderEntityId)
+			       && m_trustedEntities.Contains(identityProviderEntityId);
 		}
 	}
 }

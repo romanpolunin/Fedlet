@@ -18,9 +18,9 @@ namespace Sun.Identity.Common
 	/// </summary>
 	public class FileFedletRepository : IFedletRepository
 	{
-	    private readonly Saml2Utils _saml2Utils;
+	    private readonly Saml2Utils m_saml2Utils;
 	    private const string CircleOfTrustNameAttribute = "cot-name";
-		private readonly DirectoryInfo _homeFolder;
+		private readonly DirectoryInfo m_homeFolder;
 
 	    /// <summary>
 	    /// Initializes a new instance of the <see cref="FileFedletRepository"/> class.
@@ -29,19 +29,19 @@ namespace Sun.Identity.Common
 	    /// <param name="saml2Utils"></param>
 	    public FileFedletRepository(string homeFolder, Saml2Utils saml2Utils)
 		{
-	        _saml2Utils = saml2Utils;
+	        m_saml2Utils = saml2Utils;
 	        if (!Directory.Exists(homeFolder))
 			{
 				throw new ServiceProviderUtilityException(Resources.ServiceProviderUtilityHomeFolderNotFound);
 			}
 
-			_homeFolder = new DirectoryInfo(homeFolder);
+			m_homeFolder = new DirectoryInfo(homeFolder);
 		}
 
 		/// <summary>Get all configuration information for all circles of trust found in the home folder.</summary>
 		public Dictionary<string, ICircleOfTrust> GetCircleOfTrusts()
 		{
-			var circleOfTrusts = _homeFolder
+			var circleOfTrusts = m_homeFolder
 				.GetFiles("fedlet*.cot")
 				.Select(GetCircleOfTrust)
 				.ToDictionary(c => c.Name);
@@ -97,12 +97,12 @@ namespace Sun.Identity.Common
 			try
 			{
 				var metadata = new XmlDocument();
-				metadata.Load(Path.Combine(_homeFolder.FullName, "sp.xml"));
+				metadata.Load(Path.Combine(m_homeFolder.FullName, "sp.xml"));
 
 				var extendedMetadata = new XmlDocument();
-				extendedMetadata.Load(Path.Combine(_homeFolder.FullName, "sp-extended.xml"));
+				extendedMetadata.Load(Path.Combine(m_homeFolder.FullName, "sp-extended.xml"));
 
-				return new ServiceProvider(metadata, extendedMetadata, _saml2Utils);
+				return new ServiceProvider(metadata, extendedMetadata, m_saml2Utils);
 			}
 			catch (DirectoryNotFoundException dnfe)
 			{
@@ -123,7 +123,7 @@ namespace Sun.Identity.Common
 		{
 			try
 			{
-				FileInfo[] files = _homeFolder.GetFiles("idp*.xml");
+				FileInfo[] files = m_homeFolder.GetFiles("idp*.xml");
 				var identityProviders = files
 					.Select(GetIdentityProvider)
 					.Where(idp => idp != null)
@@ -174,7 +174,7 @@ namespace Sun.Identity.Common
 				extendedFilePattern,
 				fileIndex ?? string.Empty);
 
-			var extendedFile = new FileInfo(Path.Combine(_homeFolder.FullName, extendedFileName));
+			var extendedFile = new FileInfo(Path.Combine(m_homeFolder.FullName, extendedFileName));
 			if (!extendedFile.Exists)
 			{
 				return null;
@@ -186,7 +186,7 @@ namespace Sun.Identity.Common
 			var extendedMetadata = new XmlDocument();
 			extendedMetadata.Load(extendedFile.FullName);
 
-            return new IdentityProvider(metadata, extendedMetadata, _saml2Utils);
+            return new IdentityProvider(metadata, extendedMetadata, m_saml2Utils);
 		}
 	}
 }

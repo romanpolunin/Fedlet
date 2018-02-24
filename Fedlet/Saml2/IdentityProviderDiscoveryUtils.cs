@@ -27,11 +27,9 @@
 
 using System;
 using System.Collections;
-using System.Collections.Specialized;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
-using Sun.Identity.Common;
 
 namespace Sun.Identity.Saml2
 {
@@ -44,89 +42,27 @@ namespace Sun.Identity.Saml2
 		#region Members
 
 		/// <summary>
-		/// Constant for the name of the common domain cookie.
-		/// </summary>
-		public const string CommonDomainCookieName = "_saml_idp";
-
-		/// <summary>
-		/// Name of the session attribute used for IDP discovery.
-		/// </summary>
-		private const string CommonDomainDiscoverySessionAttribute = "_cotList";
-
-		/// <summary>
-		/// Name of the session attribute used for storing and recovering
-		/// the original parameters specified prior to IDP discovery.
-		/// </summary>
-		private const string OriginalParametersSessionAttribute = "_paramMap";
-
-		#endregion
-
-		#region Methods
-
-		/// <summary>
-		/// Gets the preferred identity provider entity id based on the value
-		/// found in the query string found in the given HttpRequest.
-		/// </summary>
-		/// <param name="request">HttpRequest containing Common Domain Cookie results.</param>
-		/// <returns>Preferred IDP Entity ID, null if not available.</returns>
-		public static string GetPreferredIdentityProvider(HttpRequest request)
-		{
-			var commonDomainCookieValue =  request.Query[CommonDomainCookieName];
-			return GetPreferredIdentityProvider(commonDomainCookieValue);
-		}
-
-		/// <summary>
-		/// Gets the preferred identity provider entity id based on the value
-		/// found in the specified string.
-		/// </summary>
-		/// <param name="commonDomainCookieValue">Common Domain Cookie value.</param>
-		/// <returns>Preferred IDP Entity ID, null if not available.</returns>
-		public static string GetPreferredIdentityProvider(string commonDomainCookieValue)
-		{
-			string idpEntityId = null;
-
-			if (!string.IsNullOrEmpty(commonDomainCookieValue))
-			{
-				char[] separator = {' '};
-				string[] listOfIdpEntityIds = commonDomainCookieValue.Split(separator);
-
-				if (listOfIdpEntityIds.Length > 0)
-				{
-					idpEntityId = Saml2Utils.Create().ConvertFromBase64(listOfIdpEntityIds[listOfIdpEntityIds.Length - 1]);
-				}
-			}
-
-			return idpEntityId;
-		}
-
-		/// <summary>
 		/// Obtains the next reader service during the discovery process
 		/// being managed by a session variable tracking circle of trusts
 		/// currently being checked.
 		/// </summary>
 		/// <param name="serviceProviderUtility">ServiceProviderUtility containing circle-of-trust information.</param>
-		/// <param name="context">HttpContext containing session, request, and response objects.</param>
 		/// <returns>
 		/// Returns the URL found in the currently checked circle-of-trust file if specified, null otherwise.
 		/// </returns>
-		public static Uri GetReaderServiceUrl(ServiceProviderUtility serviceProviderUtility, HttpContext context)
+		public static Uri GetReaderServiceUrl(ServiceProviderUtility serviceProviderUtility)
 		{
-			var session = context.Session;
 			Uri readerSvcUrl = null;
 
-			var cotList = session?.Get<ArrayList>(CommonDomainDiscoverySessionAttribute);
-			if (cotList == null)
+			// Obtain the list of currently tracked circle-of-trusts with
+			// reader service if not already known.
+			var cotList = new ArrayList();
+			foreach (var cotName in serviceProviderUtility.CircleOfTrusts.Keys)
 			{
-				// Obtain the list of currently tracked circle-of-trusts with
-				// reader service if not already known.
-				cotList = new ArrayList();
-				foreach (var cotName in serviceProviderUtility.CircleOfTrusts.Keys)
+				var cot = serviceProviderUtility.CircleOfTrusts[cotName];
+				if (cot.ReaderServiceUrl != null)
 				{
-					var cot = serviceProviderUtility.CircleOfTrusts[cotName];
-					if (cot.ReaderServiceUrl != null)
-					{
-						cotList.Add(cotName);
-					}
+					cotList.Add(cotName);
 				}
 			}
 
@@ -135,11 +71,6 @@ namespace Sun.Identity.Saml2
 			{
 				// Try the first service in the list
 				var cotName = (string) enumerator.Current;
-				if (session != null)
-				{
-					cotList.Remove(cotName);
-					session.Set(CommonDomainDiscoverySessionAttribute, cotList);
-				}
 				var cot = serviceProviderUtility.CircleOfTrusts[cotName];
 				readerSvcUrl = new Uri(cot.ReaderServiceUrl.AbsoluteUri);
 			}
@@ -174,61 +105,6 @@ namespace Sun.Identity.Saml2
 			redirectUrl.Append(relayStateForReaderSvc);
 
 			response.Redirect(redirectUrl.ToString(), true);
-		}
-
-		/// <summary>
-		/// Resets all session variables used during IDP discovery.
-		/// </summary>
-		/// <param name="context">HttpContext containing session, request, and response objects.</param>
-		public static void ResetDiscovery(HttpContext context)
-		{
-			var session = context.Session;
-			if (session != null)
-			{
-				session.Set(CommonDomainDiscoverySessionAttribute, null);
-				session.Set(OriginalParametersSessionAttribute, null);
-			}
-		}
-
-		/// <summary>
-		/// Stores the query string parameters found in the request for
-		/// later use in the discovery process.
-		/// </summary>
-		/// <param name="context">HttpContext containing session, request, and response objects.</param>
-		/// <returns>
-		/// Returns the NameValueCollection containing the parameters stored
-		/// into the session from the last invocation of the method
-		/// StoreRequestParameters.
-		/// </returns>
-		public static NameValueCollection RetrieveRequestParameters(HttpContext context)
-		{
-			var session = context.Session;
-			return session?.Get<NameValueCollection>(OriginalParametersSessionAttribute);
-		}
-
-		/// <summary>
-		/// Stores the query string parameters found in the request for
-		/// later use in the discovery process.
-		/// </summary>
-		/// <param name="context">HttpContext containing session, request, and response objects.</param>
-		public static void StoreRequestParameters(HttpContext context)
-		{
-			var session = context.Session;
-
-			if (session != null)
-			{
-				var request = context.Request;
-
-				var parameters = session.Get<NameValueCollection>(OriginalParametersSessionAttribute)
-					?? new NameValueCollection();
-
-				foreach (string name in request.Query.Keys)
-				{
-					parameters[name] = request.Query[name];
-				}
-
-				session.Set(OriginalParametersSessionAttribute, parameters);
-			}
 		}
 
 		#endregion
