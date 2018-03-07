@@ -920,7 +920,7 @@ namespace Sun.Identity.Saml2
             else
             {
                 var redirectUrl = GetAuthnRequestRedirectLocation(authnRequest, idpEntityId, parameters);
-                context.Response.Redirect(redirectUrl, true);
+                context.Response.Redirect(redirectUrl);
             }
         }
 
@@ -1109,7 +1109,7 @@ namespace Sun.Identity.Saml2
 
                 parameters = Saml2Utils.GetRequestParameters(context.Request);
                 var redirectUrl = GetLogoutResponseRedirectLocation(logoutResponse, idp.EntityId, parameters);
-                context.Response.Redirect(redirectUrl, true);
+                context.Response.Redirect(redirectUrl);
             }
             else
             {
