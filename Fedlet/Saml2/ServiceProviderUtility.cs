@@ -909,7 +909,7 @@ namespace Sun.Identity.Saml2
             {
                 m_logger.Info("AuthnRequest:\r\n{0}", xmlDoc.OuterXml);
             }
-            
+
             // Send with Redirect or Post based on the 'reqBinding' parameter.
             if (parameters[Saml2Constants.RequestBinding] == Saml2Constants.HttpPostProtocolBinding)
             {
@@ -958,7 +958,7 @@ namespace Sun.Identity.Saml2
             else if (parameters[Saml2Constants.Binding] == Saml2Constants.HttpRedirectProtocolBinding)
             {
                 var redirectUrl = GetLogoutRequestRedirectLocation(logoutRequest, idpEntityId, parameters);
-                context.Response.Redirect(redirectUrl, true);
+                context.Response.Redirect(redirectUrl);
             }
             else if (parameters[Saml2Constants.Binding] == Saml2Constants.HttpSoapProtocolBinding)
             {
