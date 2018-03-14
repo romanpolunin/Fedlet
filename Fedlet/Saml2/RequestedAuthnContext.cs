@@ -25,7 +25,6 @@
  * $Id: RequestedAuthnContext.cs,v 1.1 2009/06/11 18:37:58 ggennaro Exp $
  */
 
-using System;
 using System.Collections;
 using System.Text;
 using Sun.Identity.Properties;
@@ -38,16 +37,12 @@ namespace Sun.Identity.Saml2
 	/// </summary>
 	public class RequestedAuthnContext
 	{
-		#region Members
+        #region Constructors
 
-		#endregion
-
-		#region Constructors
-
-		/// <summary>
-		/// Initializes a new instance of the RequestedAuthnContext class.
-		/// </summary>
-		public RequestedAuthnContext()
+        /// <summary>
+        /// Initializes a new instance of the RequestedAuthnContext class.
+        /// </summary>
+        public RequestedAuthnContext()
 		{
 			Comparison = null;
 			AuthnContextClassRef = new ArrayList();

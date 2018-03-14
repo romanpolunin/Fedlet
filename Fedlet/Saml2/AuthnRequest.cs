@@ -46,12 +46,12 @@ namespace Sun.Identity.Saml2
 	    /// <summary>
 		/// Namespace Manager for this authn request.
 		/// </summary>
-		private readonly XmlNamespaceManager _nsMgr;
+		private readonly XmlNamespaceManager m_nsMgr;
 
 		/// <summary>
 		/// XML representation of the authn request.
 		/// </summary>
-		private readonly XmlDocument _xml;
+		private readonly XmlDocument m_xml;
 
 	    /// <summary>
 	    /// Initializes a new instance of the AuthnRequest class.
@@ -66,17 +66,16 @@ namespace Sun.Identity.Saml2
 	    /// NameValueCollection of varying parameters for use in the 
 	    /// construction of the AuthnRequest.
 	    /// </param>
-	    /// <param name="saml2Utils">Utilities class</param>
-	    public AuthnRequest(IIdentityProvider identityProvider, IServiceProvider serviceProvider, NameValueCollection parameters, Saml2Utils saml2Utils)
+	    public AuthnRequest(IIdentityProvider identityProvider, IServiceProvider serviceProvider, NameValueCollection parameters)
 		{
-	        _xml = new XmlDocument {PreserveWhitespace = true};
+	        m_xml = new XmlDocument {PreserveWhitespace = true};
 
-	        _nsMgr = new XmlNamespaceManager(_xml.NameTable);
-			_nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
-			_nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
+	        m_nsMgr = new XmlNamespaceManager(m_xml.NameTable);
+			m_nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
+			m_nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
 
-            Id = saml2Utils.GenerateId();
-            IssueInstant = saml2Utils.GenerateIssueInstant();
+            Id = Saml2Utils.GenerateId();
+            IssueInstant = Saml2Utils.GenerateIssueInstant();
 			Issuer = serviceProvider.EntityId;
 
 			if (parameters != null)
@@ -177,7 +176,7 @@ namespace Sun.Identity.Saml2
             
             rawXml.Append("</samlp:AuthnRequest>");
 
-			_xml.LoadXml(rawXml.ToString());
+			m_xml.LoadXml(rawXml.ToString());
 		}
 
 	    /// <summary>
@@ -238,7 +237,7 @@ namespace Sun.Identity.Saml2
 		/// <summary>
 		/// Gets the XML representation of the received authn response.
 		/// </summary>
-		public IXPathNavigable XmlDom => _xml;
+		public IXPathNavigable XmlDom => m_xml;
 
 	    /// <summary>
 		/// Getst the RequestedAuthnContext element based on supplied 

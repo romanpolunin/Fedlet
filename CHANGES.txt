@@ -1,6 +1,10 @@
-﻿Fedlet 1.0.6.0 - Dec 2016
+﻿Fedlet 2.0.0.0 - Jan 2018
 
-Switched targeting to .NET 462. 
+Switched targeting to .net standard 2.0
+
+Fedlet 1.0.6.0 - Dec 2016
+
+Switched targeting to .NET 462.
 Expects .Net framework to be able to work with CNG certs and SHA256 without additional hacks.
 Some code cleanup.
 
@@ -20,7 +24,7 @@ Fixed some bugs.
 
 Fedlet 1.0.1.0 - May 2016
 
-Initial release, re-forked from @Daptiv/Fedlet 
+Initial release, re-forked from @Daptiv/Fedlet
 and applied a number of changes accumulated over time.
 
 Added support for AssertionTimeSkew, some bugfixes and code cleanup.

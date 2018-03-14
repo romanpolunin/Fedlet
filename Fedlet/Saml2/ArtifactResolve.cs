@@ -42,12 +42,12 @@ namespace Sun.Identity.Saml2
 		/// <summary>
 		/// Namespace Manager for this class.
 		/// </summary>
-		private readonly XmlNamespaceManager _nsMgr;
+		private readonly XmlNamespaceManager m_nsMgr;
 
 		/// <summary>
 		/// XML representation of class.
 		/// </summary>
-		private readonly XmlDocument _xml;
+		private readonly XmlDocument m_xml;
 
 		#endregion
 
@@ -58,17 +58,16 @@ namespace Sun.Identity.Saml2
 	    /// </summary>
 	    /// <param name="serviceProvider">Service Provider to issue this request</param>
 	    /// <param name="artifact">SAMLv2 Artifact</param>
-	    /// <param name="saml2Utils">Utils object</param>
-	    public ArtifactResolve(IServiceProvider serviceProvider, Artifact artifact, Saml2Utils saml2Utils)
+	    public ArtifactResolve(IServiceProvider serviceProvider, Artifact artifact)
 		{
-	        _xml = new XmlDocument {PreserveWhitespace = true};
+	        m_xml = new XmlDocument {PreserveWhitespace = true};
 
-	        _nsMgr = new XmlNamespaceManager(_xml.NameTable);
-			_nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
-			_nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
+	        m_nsMgr = new XmlNamespaceManager(m_xml.NameTable);
+			m_nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
+			m_nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
 
-            Id = saml2Utils.GenerateId();
-            IssueInstant = saml2Utils.GenerateIssueInstant();
+            Id = Saml2Utils.GenerateId();
+            IssueInstant = Saml2Utils.GenerateIssueInstant();
 			Issuer = serviceProvider.EntityId;
 			Artifact = artifact;
 
@@ -84,7 +83,7 @@ namespace Sun.Identity.Saml2
 			rawXml.Append(" <samlp:Artifact>" + Artifact + "</samlp:Artifact>");
 			rawXml.Append("</samlp:ArtifactResolve>");
 
-			_xml.LoadXml(rawXml.ToString());
+			m_xml.LoadXml(rawXml.ToString());
 		}
 
 		#endregion
@@ -114,7 +113,7 @@ namespace Sun.Identity.Saml2
 		/// <summary>
 		/// Gets the XML representation.
 		/// </summary>
-		public IXPathNavigable XmlDom => _xml;
+		public IXPathNavigable XmlDom => m_xml;
 
 	    #endregion
 

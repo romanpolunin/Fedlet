@@ -45,12 +45,12 @@ namespace Sun.Identity.Saml2
 	    /// <summary>
 		/// Namespace Manager for this authn response.
 		/// </summary>
-		private readonly XmlNamespaceManager _nsMgr;
+		private readonly XmlNamespaceManager m_nsMgr;
 
 		/// <summary>
 		/// XML representation of the authn response.
 		/// </summary>
-		private readonly XmlDocument _xml;
+		private readonly XmlDocument m_xml;
 
 		#endregion
 
@@ -66,15 +66,15 @@ namespace Sun.Identity.Saml2
 		{
 			try
 			{
-			    _xml = new XmlDocument {PreserveWhitespace = true};
-			    _xml.LoadXml(artifactResponse);
-				_nsMgr = new XmlNamespaceManager(_xml.NameTable);
-				_nsMgr.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
-				_nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
-				_nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
+			    m_xml = new XmlDocument {PreserveWhitespace = true};
+			    m_xml.LoadXml(artifactResponse);
+				m_nsMgr = new XmlNamespaceManager(m_xml.NameTable);
+				m_nsMgr.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
+				m_nsMgr.AddNamespace("saml", "urn:oasis:names:tc:SAML:2.0:assertion");
+				m_nsMgr.AddNamespace("samlp", "urn:oasis:names:tc:SAML:2.0:protocol");
 
 				const string xpath = "/samlp:ArtifactResponse/samlp:Response";
-				var response = _xml.DocumentElement?.SelectSingleNode(xpath, _nsMgr);
+				var response = m_xml.DocumentElement?.SelectSingleNode(xpath, m_nsMgr);
 				if (response == null)
 				{
 					throw new Saml2Exception(Resources.ArtifactResponseMissingResponse);
@@ -111,7 +111,7 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				const string xpath = "/samlp:ArtifactResponse";
-                return Saml2Utils.RequireAttributeValue(_xml, _nsMgr, xpath, "ID");
+                return Saml2Utils.RequireAttributeValue(m_xml, m_nsMgr, xpath, "ID");
 			}
 		}
 
@@ -124,7 +124,7 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				const string xpath = "/samlp:ArtifactResponse";
-                return Saml2Utils.TryGetAttributeValue(_xml, _nsMgr, xpath, "InResponseTo");
+                return Saml2Utils.TryGetAttributeValue(m_xml, m_nsMgr, xpath, "InResponseTo");
             }
 		}
 
@@ -137,7 +137,7 @@ namespace Sun.Identity.Saml2
 			get
 			{
 			    const string xpath = "/samlp:ArtifactResponse/saml:Issuer";
-			    return Saml2Utils.RequireNodeText(_xml, _nsMgr, xpath);
+			    return Saml2Utils.RequireNodeText(m_xml, m_nsMgr, xpath);
 			}
 		}
 
@@ -150,7 +150,7 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				const string xpath = "/samlp:ArtifactResponse/ds:Signature/ds:KeyInfo/ds:X509Data/ds:X509Certificate";
-			    return Saml2Utils.TryGetNodeText(_xml, _nsMgr, xpath);
+			    return Saml2Utils.TryGetNodeText(m_xml, m_nsMgr, xpath);
 			}
 		}
 
@@ -163,7 +163,7 @@ namespace Sun.Identity.Saml2
 			get
 			{
 				const string xpath = "/samlp:ArtifactResponse/ds:Signature";
-			    return Saml2Utils.TryGetNode(_xml, _nsMgr, xpath);
+			    return Saml2Utils.TryGetNode(m_xml, m_nsMgr, xpath);
 			}
 		}
 
@@ -171,7 +171,7 @@ namespace Sun.Identity.Saml2
         /// Gets the XML representation of the received artifact response.
         /// <c>null</c> if none provided.
         /// </summary>
-        public IXPathNavigable XmlDom => _xml;
+        public IXPathNavigable XmlDom => m_xml;
 
 	    #endregion
 

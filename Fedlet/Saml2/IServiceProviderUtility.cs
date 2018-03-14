@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Web;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace Sun.Identity.Saml2
 {
     /// <summary>
     /// Utility class to encapsulate configuration and metadata management
-    /// along with convenience methods for retrieveing SAML2 objects.
+    /// along with convenience methods for retrieving SAML2 objects.
     /// </summary>
     public interface IServiceProviderUtility
     {
@@ -30,12 +31,12 @@ namespace Sun.Identity.Saml2
         Dictionary<string, ICircleOfTrust> CircleOfTrusts { get; }
 
         /// <summary>
-        /// Retrieve the ArtifactResponse object with the given SAMLv2 
+        /// Retrieve the ArtifactResponse object with the given SAMLv2
         /// artifact.
         /// </summary>
         /// <param name="artifact">SAMLv2 artifact</param>
         /// <returns>ArtifactResponse object</returns>
-        ArtifactResponse GetArtifactResponse(Artifact artifact);
+        Task<ArtifactResponse> GetArtifactResponseAsync(Artifact artifact);
 
         /// <summary>
         /// Retrieve the AuthnResponse object found within the HttpRequest
@@ -46,7 +47,7 @@ namespace Sun.Identity.Saml2
         /// HttpContext containing session, request, and response objects.
         /// </param>
         /// <returns>AuthnResponse object</returns>
-        AuthnResponse GetAuthnResponse(HttpContextBase context);
+        Task<AuthnResponse> GetAuthnResponseAsync(HttpContext context);
 
         /// <summary>
         /// Retrieve the LogoutRequest object found within the HttpRequest
@@ -57,7 +58,7 @@ namespace Sun.Identity.Saml2
         /// HttpContext containing session, request, and response objects.
         /// </param>
         /// <returns>LogoutRequest object</returns>
-        LogoutRequest GetLogoutRequest(HttpContextBase context);
+        Task<LogoutRequest> GetLogoutRequestAsync(HttpContext context);
 
         /// <summary>
         /// Retrieve the LogoutResponse object found within the HttpRequest
@@ -68,7 +69,7 @@ namespace Sun.Identity.Saml2
         /// HttpContext containing session, request, and response objects.
         /// </param>
         /// <returns>LogoutResponse object</returns>
-        LogoutResponse GetLogoutResponse(HttpContextBase context);
+        Task<LogoutResponse> GetLogoutResponseAsync(HttpContext context);
 
         /// <summary>
         /// Gets the HTML for use of submitting the AuthnRequest with POST.
@@ -86,7 +87,7 @@ namespace Sun.Identity.Saml2
         string GetAuthnRequestPostHtml(AuthnRequest authnRequest, string idpEntityId, NameValueCollection parameters);
 
         /// <summary>
-        /// Gets the AuthnRequest location along with querystring parameters 
+        /// Gets the AuthnRequest location along with querystring parameters
         /// to be used for actual browser requests.
         /// </summary>
         /// <param name="authnRequest">
@@ -118,7 +119,7 @@ namespace Sun.Identity.Saml2
         string GetLogoutRequestPostHtml(LogoutRequest logoutRequest, string idpEntityId, NameValueCollection parameters);
 
         /// <summary>
-        /// Gets the LogoutRequest location along with querystring parameters 
+        /// Gets the LogoutRequest location along with querystring parameters
         /// to be used for actual browser requests.
         /// </summary>
         /// <param name="logoutRequest">
@@ -151,7 +152,7 @@ namespace Sun.Identity.Saml2
                                          NameValueCollection parameters);
 
         /// <summary>
-        /// Gets the LogoutResponse location along with querystring parameters 
+        /// Gets the LogoutResponse location along with query string parameters
         /// to be used for actual browser requests.
         /// </summary>
         /// <param name="logoutResponse">
@@ -168,7 +169,7 @@ namespace Sun.Identity.Saml2
                                                  NameValueCollection parameters);
 
         /// <summary>
-        /// Sends an AuthnRequest to the specified IDP with the given 
+        /// Sends an AuthnRequest to the specified IDP with the given
         /// parameters.
         /// </summary>
         /// <param name="context">
@@ -176,13 +177,13 @@ namespace Sun.Identity.Saml2
         /// </param>
         /// <param name="idpEntityId">Entity ID of the IDP.</param>
         /// <param name="parameters">
-        /// NameValueCollection of varying parameters for use in the 
+        /// NameValueCollection of varying parameters for use in the
         /// construction of the AuthnRequest.
         /// </param>
-        void SendAuthnRequest(HttpContextBase context, string idpEntityId, NameValueCollection parameters);
+        Task SendAuthnRequestAsync(HttpContext context, string idpEntityId, NameValueCollection parameters);
 
         /// <summary>
-        /// Sends a LogoutRequest to the specified IDP with the given 
+        /// Sends a LogoutRequest to the specified IDP with the given
         /// parameters.
         /// </summary>
         /// <param name="context">
@@ -190,10 +191,10 @@ namespace Sun.Identity.Saml2
         /// </param>
         /// <param name="idpEntityId">Entity ID of the IDP.</param>
         /// <param name="parameters">
-        /// NameValueCollection of varying parameters for use in the 
+        /// NameValueCollection of varying parameters for use in the
         /// construction of the LogoutRequest.
         /// </param>
-        void SendLogoutRequest(HttpContextBase context, string idpEntityId, NameValueCollection parameters);
+        Task SendLogoutRequestAsync(HttpContext context, string idpEntityId, NameValueCollection parameters);
 
         /// <summary>
         /// Sends a SOAP LogoutRequest to the specified IDP.
@@ -202,7 +203,7 @@ namespace Sun.Identity.Saml2
         /// LogoutRequest object.
         /// </param>
         /// <param name="idpEntityId">Entity ID of the IDP.</param>
-        void SendSoapLogoutRequest(LogoutRequest logoutRequest, string idpEntityId);
+        Task SendSoapLogoutRequestAsync(LogoutRequest logoutRequest, string idpEntityId);
 
         /// <summary>
         /// Send the SAML LogoutResponse message based on the received
@@ -214,7 +215,7 @@ namespace Sun.Identity.Saml2
         /// <param name="logoutRequest">
         /// LogoutRequest corresponding to the ensuing LogoutResponse to send.
         /// </param>
-        void SendLogoutResponse(HttpContextBase context, LogoutRequest logoutRequest);
+        Task SendLogoutResponseAsync(HttpContext context, LogoutRequest logoutRequest);
 
         /// <summary>
         /// Writes a SOAP LogoutResponse to the Response object found within
@@ -226,7 +227,7 @@ namespace Sun.Identity.Saml2
         /// <param name="logoutRequest">
         /// LogoutRequest object.
         /// </param>
-        void SendSoapLogoutResponse(HttpContextBase context, LogoutRequest logoutRequest);
+        Task SendSoapLogoutResponseAsync(HttpContext context, LogoutRequest logoutRequest);
 
         /// <summary>
         /// Validates the given ArtifactResponse object.
@@ -259,7 +260,7 @@ namespace Sun.Identity.Saml2
 
         /// <summary>
         /// Validates the given LogoutResponse object obtained from a POST. If
-        /// this service provider desires the logout respone to be signed, XML
+        /// this service provider desires the logout response to be signed, XML
         /// signature checking will be performed.
         /// </summary>
         /// <param name="logoutResponse">LogoutResponse object.</param>
@@ -267,7 +268,7 @@ namespace Sun.Identity.Saml2
 
         /// <summary>
         /// Validates the given LogoutResponse object obtained from a
-        /// Redirect. If this service provider desires the logout respone to 
+        /// Redirect. If this service provider desires the logout response to
         /// be signed, XML signature checking will be performed.
         /// </summary>
         /// <param name="logoutResponse">LogoutResponse object.</param>

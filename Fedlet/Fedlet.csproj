@@ -1,155 +1,36 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{3D7FF238-2339-4046-A5D7-92A5F526DEF2}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Sun.Identity</RootNamespace>
-    <AssemblyName>Fedlet</AssemblyName>
-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <SignAssembly>false</SignAssembly>
-    <AssemblyOriginatorKeyFile>
-    </AssemblyOriginatorKeyFile>
-    <FileUpgradeFlags>
-    </FileUpgradeFlags>
-    <OldToolsVersion>3.5</OldToolsVersion>
-    <UpgradeBackupLocation />
-    <PublishUrl>publish\</PublishUrl>
-    <Install>true</Install>
-    <InstallFrom>Disk</InstallFrom>
-    <UpdateEnabled>false</UpdateEnabled>
-    <UpdateMode>Foreground</UpdateMode>
-    <UpdateInterval>7</UpdateInterval>
-    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
-    <UpdatePeriodically>false</UpdatePeriodically>
-    <UpdateRequired>false</UpdateRequired>
-    <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Description>SAML SSO toolkit for SAML 2.0 service provider applications in .NET</Description>
+    <Company>Roman Polunin</Company>
+    <Product>OpenSSO Fedlet for .NET</Product>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <FileVersion>2.0.0.0</FileVersion>
+    <Version>2.0.0</Version>
+    <Copyright>Copyright © Roman Polunin, 2018. Copyright © Sun Microsystems, 2009-2010</Copyright>
+    <Authors>Roman Polunin, Andrei Shenets</Authors>
+    <PackageProjectUrl>https://github.com/romanpolunin/Fedlet</PackageProjectUrl>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/romanpolunin/Fedlet/master/license.txt</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/romanpolunin/Fedlet</RepositoryUrl>
+    <PackageReleaseNotes>Switched targeting to .net standard 2.0</PackageReleaseNotes>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\Fedlet.XML</DocumentationFile>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <DocumentationFile>bin\Debug\Fedlet.xml</DocumentationFile>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release\Fedlet.XML</DocumentationFile>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <DebugSymbols>true</DebugSymbols>
-    <Prefer32Bit>false</Prefer32Bit>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <DocumentationFile>bin\Release\Fedlet.xml</DocumentationFile>
   </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.configuration" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Security" />
-    <Reference Include="System.Web" />
-    <Reference Include="System.Xml" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" Version="2.0.1" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.4.1" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="4.4.1" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Common\EventLogLogger.cs" />
-    <Compile Include="Common\FedletCertificateFactory.cs" />
-    <Compile Include="Common\FileFedletRepository.cs" />
-    <Compile Include="Common\FileWatcherFedletRepository.cs" />
-    <Compile Include="Common\IFedletCertificateFactory.cs" />
-    <Compile Include="Common\IFedletRepository.cs" />
-    <Compile Include="Common\ILogger.cs" />
-    <Compile Include="Common\LoggerFactory.cs" />
-    <Compile Include="Saml2\Artifact.cs" />
-    <Compile Include="Saml2\ArtifactResolve.cs" />
-    <Compile Include="Saml2\ArtifactResponse.cs" />
-    <Compile Include="Saml2\AuthnRequest.cs" />
-    <Compile Include="Saml2\AuthnRequestCache.cs" />
-    <Compile Include="Saml2\ICircleOfTrust.cs" />
-    <Compile Include="Saml2\IIdentityProvider.cs" />
-    <Compile Include="Saml2\IServiceProvider.cs" />
-    <Compile Include="Saml2\IServiceProviderUtility.cs" />
-    <Compile Include="Saml2\LogoutRequestCache.cs" />
-    <Compile Include="Saml2\LogoutResponse.cs" />
-    <Compile Include="Saml2\LogoutRequest.cs" />
-    <Compile Include="Saml2\RequestedAuthnContext.cs" />
-    <Compile Include="Saml2\Exceptions\CircleOfTrustException.cs" />
-    <Compile Include="Saml2\CircleOfTrust.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <Compile Include="Saml2\AuthnResponse.cs" />
-    <Compile Include="Saml2\Exceptions\IdentityProviderException.cs" />
-    <Compile Include="Saml2\Exceptions\Saml2Exception.cs" />
-    <Compile Include="Saml2\Exceptions\ServiceProviderException.cs" />
-    <Compile Include="Saml2\Exceptions\ServiceProviderUtilityException.cs" />
-    <Compile Include="Saml2\IdentityProvider.cs" />
-    <Compile Include="Saml2\IdentityProviderDiscoveryUtils.cs" />
-    <Compile Include="Saml2\Saml2Constants.cs" />
-    <Compile Include="Saml2\Saml2Utils.cs" />
-    <Compile Include="Saml2\ServiceProvider.cs" />
-    <Compile Include="Saml2\ServiceProviderUtility.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Conf\fedlet.cot-template" />
-    <None Include="Conf\idp-extended.xml-template" />
-    <None Include="Conf\sp-extended.xml-template" />
-    <None Include="Conf\sp.xml-template" />
-  </ItemGroup>
-  <ItemGroup>
-    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
-      <Visible>False</Visible>
-      <ProductName>Windows Installer 3.1</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+
 </Project>

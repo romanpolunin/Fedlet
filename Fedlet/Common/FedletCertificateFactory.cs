@@ -25,6 +25,7 @@
  * $Id: FedletCertificateFactory.cs,v 1.1 2010/01/12 18:04:55 ggennaro Exp $
  */
 
+using System;
 using System.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -40,14 +41,18 @@ namespace Sun.Identity.Common
 	    /// <summary>
 		/// Finds the X509 certificate in this machine's key store.
 		/// </summary>
-		/// <param name="friendlyName">
-		/// Friendly name of the certificate
-		/// </param>
+		/// <param name="friendlyName">Friendly name of the certificate</param>
+        /// <param name="logger">Optional logger</param>
 		/// <returns>
 		/// X509Certificate2 object that matches the given friendly name.
 		/// </returns>
-		public X509Certificate2 GetCertificateByFriendlyName(string friendlyName)
+		public X509Certificate2 GetCertificateByFriendlyName(string friendlyName, ILogger logger)
 		{
+            if (string.IsNullOrEmpty(friendlyName))
+            {
+                throw new ArgumentNullException(nameof(friendlyName));
+            }
+
 	        var store = new X509Store(StoreLocation.LocalMachine);
 			string errorMessage = null;
 
@@ -78,9 +83,9 @@ namespace Sun.Identity.Common
 			    store.Close();
 			}
 
-	        if (errorMessage != null)
+	        if (errorMessage != null && logger != null && logger.IsWarnEnabled)
 			{
-                LoggerFactory.GetLogger(typeof(FedletCertificateFactory)).Warning("{0} {1}", Resources.FedletCertificateFactoryGetByFriendlyNameFailed, errorMessage);
+                logger.Warning("{0} {1}", Resources.FedletCertificateFactoryGetByFriendlyNameFailed, errorMessage);
 			}
 
 	        return null;
