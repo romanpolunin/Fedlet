@@ -5,17 +5,20 @@
     <Description>SAML SSO toolkit for SAML 2.0 service provider applications in .NET</Description>
     <Company>Roman Polunin</Company>
     <Product>OpenSSO Fedlet for .NET</Product>
-    <AssemblyVersion>2.0.1.0</AssemblyVersion>
-    <FileVersion>2.0.1.0</FileVersion>
-    <Version>2.0.1</Version>
-    <Copyright>Copyright © Roman Polunin, 2018. Copyright © Sun Microsystems, 2009-2010</Copyright>
+    <AssemblyVersion>2.0.2.0</AssemblyVersion>
+    <FileVersion>2.0.2.0</FileVersion>
+    <Version>2.0.2</Version>
+    <Copyright>Copyright © Roman Polunin, 2018. Copyright © Andrei Shenets, 2018. Copyright © Sun Microsystems, 2009-2010</Copyright>
     <Authors>Roman Polunin, Andrei Shenets</Authors>
     <PackageProjectUrl>https://github.com/romanpolunin/Fedlet</PackageProjectUrl>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/romanpolunin/Fedlet/master/license.txt</PackageLicenseUrl>
+    <PackageLicenseUrl></PackageLicenseUrl>
     <RepositoryUrl>https://github.com/romanpolunin/Fedlet</RepositoryUrl>
     <PackageReleaseNotes>Switched targeting to .net standard 2.0</PackageReleaseNotes>
     <AssemblyName>Fedlet</AssemblyName>
     <RootNamespace>Sun.Identity</RootNamespace>
+    <PackageLicenseFile>license.txt</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageId>RomanPolunin.SamlFedlet</PackageId>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -48,6 +51,13 @@
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\license.txt">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
