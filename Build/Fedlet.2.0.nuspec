@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>RomanPolunin.SamlFedlet</id>
-    <version>2.0.1</version>
+    <version>2.0.2</version>
     <authors>Roman Polunin, Andrei Shenets</authors>
     <owners>Roman Polunin</owners>
     <title>Fedlet, a SAML SSO Toolkit</title>
