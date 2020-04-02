@@ -58,15 +58,20 @@ namespace Sun.Identity.Common
 		{
 			try
 			{
-				char[] separators = { '=' };
+				const char SEPARATOR = '=';
+
 				var attributes = new NameValueCollection();
 
 				var allLines = File.ReadAllLines(fileInfo.FullName);
 				foreach (var line in allLines.Where(l => !string.IsNullOrEmpty(l)))
 				{
-					string[] tokens = line.Split(separators);
-					string key = tokens[0];
-					string value = tokens[1];
+					var separatorIndex = line.IndexOf(SEPARATOR);
+					var key = separatorIndex == -1
+						? line
+						: line.Substring(0, separatorIndex);
+					var value = separatorIndex + 1 >= line.Length
+						? string.Empty
+						: line.Substring(separatorIndex + 1);
 					attributes[key] = value;
 				}
 
