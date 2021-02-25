@@ -25,6 +25,7 @@
  * $Id: IdentityProvider.cs,v 1.6 2010/01/19 18:23:09 ggennaro Exp $
  */
 
+using System;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
 using System.Text;
@@ -87,7 +88,7 @@ namespace Sun.Identity.Saml2
 
 				// Load now since a) it doesn't change and b) its a 
 				// performance dog on Win 2003 64-bit.
-				byte[] byteArray = Encoding.UTF8.GetBytes(EncodedSigningCertificate);
+				byte[] byteArray = Convert.FromBase64String(EncodedSigningCertificate);
 				SigningCertificate = new X509Certificate2(byteArray);
 			}
 			catch (XmlException xe)
