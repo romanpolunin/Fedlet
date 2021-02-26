@@ -5,15 +5,15 @@
     <Description>SAML SSO toolkit for SAML 2.0 service provider applications in .NET</Description>
     <Company>Roman Polunin</Company>
     <Product>OpenSSO Fedlet for .NET</Product>
-    <AssemblyVersion>2.0.2.0</AssemblyVersion>
-    <FileVersion>2.0.2.0</FileVersion>
-    <Version>2.0.2</Version>
-    <Copyright>Copyright © Roman Polunin, 2018. Copyright © Andrei Shenets, 2018. Copyright © Sun Microsystems, 2009-2010</Copyright>
+    <AssemblyVersion>2.1.0.0</AssemblyVersion>
+    <FileVersion>2.1.0.0</FileVersion>
+    <Version>2.1.0</Version>
+    <Copyright>Copyright © Roman Polunin, 2018-2021. Copyright © Andrei Shenets, 2018-2021. Copyright © Sun Microsystems, 2009-2010</Copyright>
     <Authors>Roman Polunin, Andrei Shenets</Authors>
     <PackageProjectUrl>https://github.com/romanpolunin/Fedlet</PackageProjectUrl>
     <PackageLicenseUrl></PackageLicenseUrl>
     <RepositoryUrl>https://github.com/romanpolunin/Fedlet</RepositoryUrl>
-    <PackageReleaseNotes>Switched targeting to .net standard 2.0</PackageReleaseNotes>
+    <PackageReleaseNotes>Changed encoding convention for keys in idp xml files to conform to the standard. It now expects base64 as it should. Thanks @andrei-shenets-itechart</PackageReleaseNotes>
     <AssemblyName>Fedlet</AssemblyName>
     <RootNamespace>Sun.Identity</RootNamespace>
     <PackageLicenseFile>license.txt</PackageLicenseFile>
